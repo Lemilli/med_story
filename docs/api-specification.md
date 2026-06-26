@@ -21,13 +21,17 @@
 
 ## 2. Authentication
 
+**Phase 0 status:** registration, login, refresh, logout, and authenticated `/me` are implemented.
+Password reset endpoints are planned but not implemented yet.
+
 ### POST /auth/register
 Create an account (email/password only).
 ```jsonc
 // Request
 { "email": "user@example.com", "password": "••••••••", "full_name": "Jane Doe", "locale": "en" }
 // 201 Response
-{ "user": { "id": "uuid", "email": "user@example.com", "full_name": "Jane Doe" },
+{ "user": { "id": "uuid", "email": "user@example.com", "full_name": "Jane Doe",
+    "locale": "en", "date_joined": "..." },
   "access": "jwt...", "refresh": "jwt..." }
 ```
 
@@ -41,16 +45,18 @@ Create an account (email/password only).
 
 ### POST /auth/refresh
 ```jsonc
-{ "refresh": "jwt..." }  // → 200 { "access": "jwt..." }
+{ "refresh": "jwt..." }  // → 200 { "access": "jwt...", "refresh": "jwt..."? }
 ```
 
 ### POST /auth/logout
 Blacklists the refresh token. `{ "refresh": "jwt..." }` → `205`.
 
 ### POST /auth/password/reset/request
+Planned.
 `{ "email": "user@example.com" }` → `202` (always, to avoid email enumeration).
 
 ### POST /auth/password/reset/confirm
+Planned.
 `{ "token": "...", "new_password": "••••••••" }` → `200`.
 
 ## 3. Profile & Subjects
@@ -58,7 +64,7 @@ Blacklists the refresh token. `{ "refresh": "jwt..." }` → `205`.
 ### GET /me
 Returns the authenticated user.
 ```jsonc
-{ "id": "uuid", "email": "...", "full_name": "...", "locale": "en", "created_at": "..." }
+{ "id": "uuid", "email": "...", "full_name": "...", "locale": "en", "date_joined": "..." }
 ```
 
 ### PATCH /me
@@ -253,8 +259,8 @@ All errors share one envelope:
 | POST | /auth/login | Log in |
 | POST | /auth/refresh | Refresh access token |
 | POST | /auth/logout | Invalidate refresh token |
-| POST | /auth/password/reset/request | Start password reset |
-| POST | /auth/password/reset/confirm | Complete password reset |
+| POST | /auth/password/reset/request | Start password reset (planned) |
+| POST | /auth/password/reset/confirm | Complete password reset (planned) |
 | GET/PATCH/DELETE | /me | Profile / account deletion |
 | GET/POST | /subjects | List/create patient profiles |
 | GET/PATCH/DELETE | /subjects/{id} | Manage a profile |

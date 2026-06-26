@@ -62,15 +62,15 @@ frontend/lib/
 │   ├── config/                    # env, flavors, constants
 │   ├── network/
 │   │   ├── api_client.dart        # dio instance + base options
-│   │   ├── auth_interceptor.dart  # attach JWT, refresh on 401
-│   │   └── error_mapper.dart      # API error → AppFailure
+│   │   └── auth_interceptor.dart  # attach JWT, refresh on 401
 │   ├── storage/
-│   │   ├── secure_storage.dart    # tokens
+│   │   ├── secure_token_storage.dart # tokens
 │   │   └── local_db.dart          # Isar setup
-│   ├── error/                     # AppFailure types, result helpers
+│   ├── error/
+│   │   └── app_failure.dart       # stable failure codes for UI mapping
 │   └── widgets/                   # shared UI (buttons, empty/error states)
 ├── features/
-│   ├── auth/                      # login, register, password reset
+│   ├── auth/                      # login/register; password reset planned
 │   │   ├── data/ (api, repo)
 │   │   ├── domain/ (models)
 │   │   └── presentation/ (screens, controllers, widgets)
@@ -88,7 +88,8 @@ frontend/lib/
 ## 5. State Management Details (Riverpod)
 
 - **Providers**
-  - `authControllerProvider` (`AsyncNotifier<AuthState>`) — session, token lifecycle.
+  - `authControllerProvider` (`AsyncNotifier<AuthState>`) — session, token lifecycle. **Implemented
+    in Phase 0** with register/login/logout, secure token restore, and `/me` verification.
   - `timelineControllerProvider` — paginated event list with cursor + filters.
   - `documentUploadControllerProvider` — drives local-save + ingest state machine (§7).
   - `summaryControllerProvider` — current summary + regenerate action.
@@ -100,7 +101,8 @@ frontend/lib/
 
 ```
 /                      → Splash / auth gate
-/login, /register, /forgot-password
+/login, /register
+/forgot-password        → planned
 /onboarding            → first-run disclaimer + subject setup
 /home (shell)
   ├── /timeline        → default tab (chronological history)
@@ -177,9 +179,11 @@ Same machine as 7.1.
 
 ## 12. Dependencies to Add (`pubspec.yaml`)
 
-The current scaffold is bare. The MVP will add (latest stable at implementation time):
-`flutter_riverpod`, `go_router`, `dio`, `freezed`/`freezed_annotation`, `json_serializable`,
-`json_annotation`, `flutter_secure_storage`, `isar`/`isar_flutter_libs`, `image_picker`,
-`file_picker`, `record`, `intl`, plus dev deps `build_runner`, `mocktail`.
+Phase 0 has added: `flutter_riverpod`, `go_router`, `dio`, `flutter_secure_storage`,
+`freezed_annotation`, `json_annotation`, `intl`, plus dev deps `build_runner`, `freezed`, and
+`json_serializable`.
+
+Still planned for later phases: `isar`/`isar_flutter_libs`, `image_picker`, `file_picker`,
+`record`, and test helpers such as `mocktail`.
 
 > Versions intentionally omitted here; pin them via the package manager during implementation.

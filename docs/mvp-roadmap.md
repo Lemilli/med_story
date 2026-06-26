@@ -1,5 +1,7 @@
 # MedStory — MVP Roadmap & Milestones
 
+## Important Note: Update this doc after major milestones and major additions to the project
+
 > Delivery plan for the MVP defined in the [BRD](../business_requirements.md). Companion to all
 > docs in this folder. Phases are sequenced to deliver user value early and de-risk the
 > AI-heavy parts.
@@ -26,6 +28,7 @@ generation, and retention over time.
 ## 3. Phases
 
 ### Phase 0 — Foundations (Setup & Skeleton)
+**Status:** Implemented.
 **Goal:** running skeleton, both ends talking, CI in place.
 - Backend: Django + DRF project, PostgreSQL, Redis, Celery, Docker Compose (api, worker, db,
   redis), settings via env, OpenAPI (`drf-spectacular`).
@@ -33,8 +36,15 @@ generation, and retention over time.
 - Auth end-to-end: register/login/refresh (JWT); auth guard on the client.
 - CI: lint, test, build images.
 - **Exit:** user can register, log in, and hit an authenticated `/me` from the app.
+- **Implemented:** backend custom user + JWT auth endpoints, `/me`, OpenAPI routes, Docker Compose,
+  Celery/Redis/Postgres skeleton; Flutter Riverpod/go_router/dio auth stack, secure JWT storage,
+  auth guard, login/register UI, settings `/me` panel; CI for backend checks/tests/image build and
+  Flutter analyze/test/debug APK build.
+- **Verified locally:** Flutter analyze/test, Django check/test, backend Docker image build. Android
+  debug APK build remains to be confirmed in CI or a healthy local Gradle run.
 
 ### Phase 1 — Medical History Core (Manual)
+**Status:** Next.
 **Goal:** the timeline works without AI (proves the data model + UX).
 - Backend: `Subject`, `MedicalEvent` models; events CRUD; `/timeline` with filters + pagination.
 - Frontend: timeline screen (infinite scroll, filters), manual add/edit event, event detail,

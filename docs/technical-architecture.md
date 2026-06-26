@@ -77,7 +77,7 @@ MedStory is a **mobile client + API backend + asynchronous AI pipeline**.
 
 ### 3.2 API Backend (Django + DRF)
 The synchronous request/response surface. Responsibilities:
-- **Auth**: registration, login, JWT issue/refresh, password reset.
+- **Auth**: registration, login, JWT issue/refresh; password reset is planned.
 - **Documents**: metadata, transient ingestion upload, status polling.
 - **Medical Events**: CRUD for the structured medical history.
 - **Timeline**: chronological, paginated read model.

@@ -33,8 +33,6 @@ understandable health story.
 | [security-privacy.md](./security-privacy.md) | Security controls, privacy, GDPR alignment |
 | [mvp-roadmap.md](./mvp-roadmap.md) | Milestones, phases, scope, success metrics |
 
-## Note: Update files in the docs folder after major milestones and major additions to the project
-
 ## Reading Order
 
 1. Start with **technical-architecture.md** for the big picture.
