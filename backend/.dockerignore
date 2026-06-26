@@ -1,0 +1,16 @@
+.git
+.venv
+venv
+__pycache__
+*.py[cod]
+.env
+.env.production
+db.sqlite3
+staticfiles
+media
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+celerybeat-schedule

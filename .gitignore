@@ -1,0 +1,11 @@
+# OS / editor
+.DS_Store
+.idea/
+*.iml
+
+# Environment secrets (also covered in backend/.gitignore)
+.env
+.env.*
+
+# Tooling local overrides
+.impeccable/config.local.json
