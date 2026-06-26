@@ -44,13 +44,18 @@ generation, and retention over time.
   debug APK build remains to be confirmed in CI or a healthy local Gradle run.
 
 ### Phase 1 — Medical History Core (Manual)
-**Status:** Next.
+**Status:** In progress — backend implemented.
 **Goal:** the timeline works without AI (proves the data model + UX).
 - Backend: `Subject`, `MedicalEvent` models; events CRUD; `/timeline` with filters + pagination.
 - Frontend: timeline screen (infinite scroll, filters), manual add/edit event, event detail,
   subject switcher; local cache (Drift).
 - **Exit:** user can manually build and browse a chronological medical history (Scenarios A & E
   without AI).
+- **Implemented:** backend `medical` app with `Subject`, `MedicalEvent`, and `Tag` models; default
+  self-subject creation/resolution; subject CRUD; event CRUD with soft delete; `/timeline` with
+  cursor pagination and filters (`subject_id`, `types`, `from`, `to`, `tag`, `q`); OpenAPI schema
+  coverage; per-user queryset isolation tests.
+- **Verified locally:** Django check/test, migration drift check, and OpenAPI validation.
 
 ### Phase 2 — Documents & Ingestion Pipeline
 **Goal:** upload documents and extract text + structured events automatically.

@@ -80,7 +80,7 @@ Supports the secondary audience (e.g. a parent managing a child). Each user alwa
 | display_name | varchar | e.g. "Myself", "Alex (son)" |
 | relationship | enum | self, child, dependent, other |
 | date_of_birth | date (nullable) | |
-| biological_sex | enum (nullable) | For context only; not diagnostic |
+| biological_sex | enum: female, male (nullable) | For context only; not diagnostic |
 | is_default | bool | The user's own profile |
 | created_at / updated_at | timestamptz | |
 

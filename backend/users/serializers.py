@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
+from medical.services import get_or_create_default_subject
+
 User = get_user_model()
 
 
@@ -25,4 +27,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        return User.objects.create_user(password=password, **validated_data)
+        user = User.objects.create_user(password=password, **validated_data)
+        get_or_create_default_subject(user)
+        return user
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()

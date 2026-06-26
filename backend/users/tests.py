@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from medical.models import Subject
+
 
 class AuthTests(APITestCase):
     def test_register_returns_user_and_tokens(self):
@@ -21,6 +23,14 @@ class AuthTests(APITestCase):
         self.assertIn("access", response.data)
         self.assertIn("refresh", response.data)
         self.assertTrue(get_user_model().objects.filter(email="user@example.com").exists())
+        self.assertTrue(
+            Subject.objects.filter(
+                user__email="user@example.com",
+                display_name="Jane Doe",
+                relationship=Subject.Relationship.SELF,
+                is_default=True,
+            ).exists()
+        )
 
     def test_me_requires_authentication(self):
         response = self.client.get("/api/v1/me")

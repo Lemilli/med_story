@@ -1,10 +1,9 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from users.serializers import RegisterSerializer, UserSerializer
+from users.serializers import LogoutSerializer, RegisterSerializer, UserSerializer
 
 
 class RegisterView(generics.CreateAPIView):
@@ -37,14 +36,13 @@ class MeView(generics.RetrieveUpdateDestroyAPIView):
         return Response({"status": "deletion_scheduled"}, status=status.HTTP_202_ACCEPTED)
 
 
-class LogoutView(APIView):
+class LogoutView(generics.GenericAPIView):
+    serializer_class = LogoutSerializer
+
     def post(self, request):
-        refresh_token = request.data.get("refresh")
-        if not refresh_token:
-            return Response(
-                {"error": {"code": "validation_error", "message": "refresh is required."}},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        refresh_token = serializer.validated_data["refresh"]
 
         try:
             RefreshToken(refresh_token).blacklist()
