@@ -21,7 +21,7 @@ Translate the BRD's UX principles into the app:
 | Networking | **dio** | Interceptors for auth/refresh, retries |
 | Models / immutability | **freezed** + **json_serializable** | Safe DTOs, less boilerplate |
 | Secure storage | **flutter_secure_storage** | JWTs in Keychain/Keystore |
-| Local cache (offline reads) | **Isar** (or drift) | Fast local timeline/summary cache |
+| Local cache (offline reads) | **Drift** | Structured local timeline/summary cache with mature Flutter support |
 | Media capture | **image_picker / camera**, **file_picker** | Document scan & local file storage |
 | Voice | **record** + local audio save | Voice-first capture |
 | Env config | **--dart-define** / flavors | dev/staging/prod base URLs |
@@ -38,7 +38,7 @@ Controllers (Riverpod Notifiers)   ← presentation logic, view-state
   ▼  calls
 Repositories                       ← orchestrate remote + local cache
   ▼  calls
-Data sources (ApiClient, LocalDb)  ← dio + Isar
+Data sources (ApiClient, LocalDb)  ← dio + Drift
   ▼
 DTOs / Domain models (freezed)
 ```
@@ -65,7 +65,7 @@ frontend/lib/
 │   │   └── auth_interceptor.dart  # attach JWT, refresh on 401
 │   ├── storage/
 │   │   ├── secure_token_storage.dart # tokens
-│   │   └── local_db.dart          # Isar setup
+│   │   └── local_database.dart    # Drift setup
 │   ├── error/
 │   │   └── app_failure.dart       # stable failure codes for UI mapping
 │   └── widgets/                   # shared UI (buttons, empty/error states)
@@ -134,7 +134,8 @@ Same machine as 7.1.
 
 ### 7.3 Timeline (Scenario E)
 - Infinite scroll via cursor pagination; filter chips by `event_type`, date range, tag.
-- Reads from Isar cache first (instant), then refreshes from `/timeline` (stale-while-revalidate).
+- Reads from the Drift cache first (instant), then refreshes from `/timeline`
+  (stale-while-revalidate).
 
 ### 7.4 Doctor Summary (Scenario D)
 - `summary` screen shows the structured memory + narrative.
@@ -142,7 +143,8 @@ Same machine as 7.1.
 
 ## 8. Offline & Caching
 
-- **Read-mostly offline**: timeline and current summary cached in Isar; viewable offline.
+- **Read-mostly offline**: timeline and current summary cached in Drift; viewable
+  offline.
 - **Writes require connectivity** for MVP (transient ingestion/AI need the backend); queued
   retry is a post-MVP enhancement.
 - Document/audio binaries are durable on-device only; there is no cross-device sync/backup in MVP.
@@ -164,7 +166,7 @@ Same machine as 7.1.
 
 - JWTs stored only in `flutter_secure_storage`; never in plain prefs or logs.
 - `auth_interceptor` transparently refreshes the access token on `401` and retries once.
-- Medical content is stored only in app-sandboxed storage (Isar + local files), not in
+- Medical content is stored only in app-sandboxed storage (Drift + local files), not in
   insecure storage.
 - Certificate pinning and biometric app-lock are planned post-MVP (see roadmap).
 
@@ -183,7 +185,7 @@ Phase 0 has added: `flutter_riverpod`, `go_router`, `dio`, `flutter_secure_stora
 `freezed_annotation`, `json_annotation`, `intl`, plus dev deps `build_runner`, `freezed`, and
 `json_serializable`.
 
-Still planned for later phases: `isar`/`isar_flutter_libs`, `image_picker`, `file_picker`,
-`record`, and test helpers such as `mocktail`.
+Still planned for later phases: `drift`, `sqlite3_flutter_libs`, `path_provider`,
+`image_picker`, `file_picker`, `record`, and test helpers such as `mocktail`.
 
 > Versions intentionally omitted here; pin them via the package manager during implementation.

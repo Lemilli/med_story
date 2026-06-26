@@ -30,7 +30,7 @@ MedStory is a **mobile client + API backend + asynchronous AI pipeline**.
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                         Flutter App (iOS / Android)                        │
-│ UI · State (Riverpod) · Isar cache + local file store · Secure token store │
+│ UI · State (Riverpod) · Drift cache + local files · Secure tokens   │
 └───────────────────────────────┬──────────────────────────────────────────┘
                                  │ HTTPS / REST (JSON) + JWT
                                  ▼
@@ -70,7 +70,7 @@ MedStory is a **mobile client + API backend + asynchronous AI pipeline**.
 - Targets iOS and Android from a single codebase.
 - Talks to the backend exclusively via the REST API over HTTPS.
 - Stores JWTs in platform secure storage (Keychain / Keystore).
-- Caches the timeline and summary locally (Isar) for fast, partly-offline reads.
+- Caches the timeline and summary locally with Drift for fast, partly-offline reads.
 - Handles capture: document scan/photo, file upload, and voice recording.
 - Keeps raw document/audio files on-device only (no cross-device sync/backup in MVP).
 - Details in [frontend-architecture.md](./frontend-architecture.md).
@@ -158,7 +158,7 @@ GET /timeline?cursor=...&types=...  → paginated chronological events (read fro
 
 ### Frontend
 See [frontend-architecture.md](./frontend-architecture.md). Summary: Flutter, Riverpod,
-go_router, dio, freezed, flutter_secure_storage, Isar.
+go_router, dio, freezed, flutter_secure_storage, Drift.
 
 ### Infrastructure
 | Concern | Choice |

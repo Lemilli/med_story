@@ -111,7 +111,7 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 ## 11. Client-Side Security
 
 - JWTs only in `flutter_secure_storage`; never in logs or plaintext prefs.
-- Local cache (Isar) lives in the app sandbox; cleared on logout/deletion.
+- Local cache (Drift) lives in the app sandbox; cleared on logout/deletion.
 - Planned post-MVP: biometric app-lock, certificate pinning, jailbreak/root awareness.
 
 ## 12. Environments & Access Control

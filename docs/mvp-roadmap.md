@@ -48,7 +48,7 @@ generation, and retention over time.
 **Goal:** the timeline works without AI (proves the data model + UX).
 - Backend: `Subject`, `MedicalEvent` models; events CRUD; `/timeline` with filters + pagination.
 - Frontend: timeline screen (infinite scroll, filters), manual add/edit event, event detail,
-  subject switcher; local cache (Isar).
+  subject switcher; local cache (Drift).
 - **Exit:** user can manually build and browse a chronological medical history (Scenarios A & E
   without AI).
 
