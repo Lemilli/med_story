@@ -218,4 +218,160 @@ class AppLocalizationsEn extends AppLocalizations {
   String pendingActionMessage(String title, String message) {
     return '$title: $message';
   }
+
+  @override
+  String get timelineHeadline => 'Your medical story';
+
+  @override
+  String get timelineSubtitle =>
+      'Browse the events you have saved, newest first.';
+
+  @override
+  String get timelineEmptyTitle => 'Start with one event';
+
+  @override
+  String get timelineEmptyMessage =>
+      'Add a symptom, medication, diagnosis, procedure, or note you want to remember.';
+
+  @override
+  String get timelineNoSubjectTitle => 'No subject found';
+
+  @override
+  String get timelineNoSubjectMessage =>
+      'MedStory could not load a profile for this timeline.';
+
+  @override
+  String get timelineAddEvent => 'Add event';
+
+  @override
+  String get timelineSearchLabel => 'Search title or description';
+
+  @override
+  String get timelineFiltersAction => 'Filters';
+
+  @override
+  String get timelineAllTypes => 'All types';
+
+  @override
+  String get timelineOfflineNotice =>
+      'Showing saved timeline items. Refresh when you are back online.';
+
+  @override
+  String get timelineLoadMore => 'Load more';
+
+  @override
+  String get timelineRefresh => 'Refresh timeline';
+
+  @override
+  String get subjectSwitcherLabel => 'Timeline subject';
+
+  @override
+  String get subjectDefaultLabel => 'Default';
+
+  @override
+  String get eventTypeSymptom => 'Symptom';
+
+  @override
+  String get eventTypeDiagnosis => 'Diagnosis';
+
+  @override
+  String get eventTypeMedication => 'Medication';
+
+  @override
+  String get eventTypeExamination => 'Examination';
+
+  @override
+  String get eventTypeProcedure => 'Procedure';
+
+  @override
+  String get eventTypeHospitalization => 'Hospitalization';
+
+  @override
+  String get eventTypeTreatmentOutcome => 'Treatment outcome';
+
+  @override
+  String get eventTypeNote => 'Note';
+
+  @override
+  String get eventNewTitle => 'Add event';
+
+  @override
+  String get eventEditTitle => 'Edit event';
+
+  @override
+  String get eventDetailTitle => 'Event detail';
+
+  @override
+  String get eventTitleLabel => 'Title';
+
+  @override
+  String get eventDescriptionLabel => 'Description';
+
+  @override
+  String get eventTypeLabel => 'Event type';
+
+  @override
+  String get eventDateLabel => 'Event date';
+
+  @override
+  String get eventEndDateLabel => 'End date';
+
+  @override
+  String get eventTagsLabel => 'Tags';
+
+  @override
+  String get eventTagsHelper => 'Separate tags with commas.';
+
+  @override
+  String get eventAttributesLabel => 'Structured details';
+
+  @override
+  String get eventAttributesHelper =>
+      'Optional JSON object for details such as dose, severity, or result.';
+
+  @override
+  String get eventCreateAction => 'Save event';
+
+  @override
+  String get eventSaveAction => 'Save changes';
+
+  @override
+  String get eventEditAction => 'Edit';
+
+  @override
+  String get eventDeleteAction => 'Delete';
+
+  @override
+  String get eventDeleteConfirmTitle => 'Delete this event?';
+
+  @override
+  String get eventDeleteConfirmMessage =>
+      'It will be removed from your timeline.';
+
+  @override
+  String get eventCancelAction => 'Cancel';
+
+  @override
+  String get eventRequiredValidation => 'This field is required.';
+
+  @override
+  String get eventInvalidJsonValidation =>
+      'Enter a valid JSON object or leave this empty.';
+
+  @override
+  String get eventBoundaryNote =>
+      'MedStory organizes your information; it does not diagnose or recommend treatment.';
+
+  @override
+  String get eventUnconfirmedBadge => 'Needs review';
+
+  @override
+  String get eventConfirmedBadge => 'Confirmed';
+
+  @override
+  String get eventDetailsEmptyDescription => 'No description added.';
+
+  @override
+  String get eventNetworkRequired =>
+      'Saving changes requires a connection to MedStory.';
 }

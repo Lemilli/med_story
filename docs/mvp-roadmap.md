@@ -44,7 +44,7 @@ generation, and retention over time.
   debug APK build remains to be confirmed in CI or a healthy local Gradle run.
 
 ### Phase 1 — Medical History Core (Manual)
-**Status:** In progress — backend implemented.
+**Status:** Implemented.
 **Goal:** the timeline works without AI (proves the data model + UX).
 - Backend: `Subject`, `MedicalEvent` models; events CRUD; `/timeline` with filters + pagination.
 - Frontend: timeline screen (infinite scroll, filters), manual add/edit event, event detail,
@@ -54,8 +54,14 @@ generation, and retention over time.
 - **Implemented:** backend `medical` app with `Subject`, `MedicalEvent`, and `Tag` models; default
   self-subject creation/resolution; subject CRUD; event CRUD with soft delete; `/timeline` with
   cursor pagination and filters (`subject_id`, `types`, `from`, `to`, `tag`, `q`); OpenAPI schema
-  coverage; per-user queryset isolation tests.
-- **Verified locally:** Django check/test, migration drift check, and OpenAPI validation.
+  coverage; per-user queryset isolation tests. Flutter Phase 1 frontend with Drift-backed subject
+  and event cache, typed medical models, subject/event/timeline API clients and repositories,
+  selected-subject and timeline pagination controllers, localized timeline screen, manual
+  create/edit event form, event detail/delete flow, authenticated `/timeline` landing route, and
+  logout cache clearing.
+- **Verified locally:** Django check/test, migration drift check, OpenAPI validation, Flutter
+  code generation, `flutter analyze`, and `flutter test` with focused model, pagination, and local
+  cache coverage.
 
 ### Phase 2 — Documents & Ingestion Pipeline
 **Goal:** upload documents and extract text + structured events automatically.

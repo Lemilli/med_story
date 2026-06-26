@@ -217,4 +217,159 @@ class AppLocalizationsRu extends AppLocalizations {
   String pendingActionMessage(String title, String message) {
     return '$title: $message';
   }
+
+  @override
+  String get timelineHeadline => 'Ваша медицинская история';
+
+  @override
+  String get timelineSubtitle =>
+      'Просматривайте сохранённые события, начиная с самых новых.';
+
+  @override
+  String get timelineEmptyTitle => 'Начните с одного события';
+
+  @override
+  String get timelineEmptyMessage =>
+      'Добавьте симптом, лекарство, диагноз, процедуру или заметку, которую важно помнить.';
+
+  @override
+  String get timelineNoSubjectTitle => 'Профиль не найден';
+
+  @override
+  String get timelineNoSubjectMessage =>
+      'MedStory не удалось загрузить профиль для этой хронологии.';
+
+  @override
+  String get timelineAddEvent => 'Добавить событие';
+
+  @override
+  String get timelineSearchLabel => 'Поиск по названию или описанию';
+
+  @override
+  String get timelineFiltersAction => 'Фильтры';
+
+  @override
+  String get timelineAllTypes => 'Все типы';
+
+  @override
+  String get timelineOfflineNotice =>
+      'Показаны сохранённые события. Обновите, когда подключение восстановится.';
+
+  @override
+  String get timelineLoadMore => 'Загрузить ещё';
+
+  @override
+  String get timelineRefresh => 'Обновить хронологию';
+
+  @override
+  String get subjectSwitcherLabel => 'Профиль хронологии';
+
+  @override
+  String get subjectDefaultLabel => 'Основной';
+
+  @override
+  String get eventTypeSymptom => 'Симптом';
+
+  @override
+  String get eventTypeDiagnosis => 'Диагноз';
+
+  @override
+  String get eventTypeMedication => 'Лекарство';
+
+  @override
+  String get eventTypeExamination => 'Обследование';
+
+  @override
+  String get eventTypeProcedure => 'Процедура';
+
+  @override
+  String get eventTypeHospitalization => 'Госпитализация';
+
+  @override
+  String get eventTypeTreatmentOutcome => 'Результат лечения';
+
+  @override
+  String get eventTypeNote => 'Заметка';
+
+  @override
+  String get eventNewTitle => 'Добавить событие';
+
+  @override
+  String get eventEditTitle => 'Изменить событие';
+
+  @override
+  String get eventDetailTitle => 'Сведения о событии';
+
+  @override
+  String get eventTitleLabel => 'Название';
+
+  @override
+  String get eventDescriptionLabel => 'Описание';
+
+  @override
+  String get eventTypeLabel => 'Тип события';
+
+  @override
+  String get eventDateLabel => 'Дата события';
+
+  @override
+  String get eventEndDateLabel => 'Дата окончания';
+
+  @override
+  String get eventTagsLabel => 'Теги';
+
+  @override
+  String get eventTagsHelper => 'Разделяйте теги запятыми.';
+
+  @override
+  String get eventAttributesLabel => 'Структурированные детали';
+
+  @override
+  String get eventAttributesHelper =>
+      'Необязательный JSON-объект с деталями: дозой, тяжестью или результатом.';
+
+  @override
+  String get eventCreateAction => 'Сохранить событие';
+
+  @override
+  String get eventSaveAction => 'Сохранить изменения';
+
+  @override
+  String get eventEditAction => 'Изменить';
+
+  @override
+  String get eventDeleteAction => 'Удалить';
+
+  @override
+  String get eventDeleteConfirmTitle => 'Удалить это событие?';
+
+  @override
+  String get eventDeleteConfirmMessage => 'Оно исчезнет из вашей хронологии.';
+
+  @override
+  String get eventCancelAction => 'Отмена';
+
+  @override
+  String get eventRequiredValidation => 'Это поле обязательно.';
+
+  @override
+  String get eventInvalidJsonValidation =>
+      'Введите корректный JSON-объект или оставьте поле пустым.';
+
+  @override
+  String get eventBoundaryNote =>
+      'MedStory упорядочивает вашу информацию; он не ставит диагнозы и не рекомендует лечение.';
+
+  @override
+  String get eventUnconfirmedBadge => 'Нужно проверить';
+
+  @override
+  String get eventConfirmedBadge => 'Подтверждено';
+
+  @override
+  String get eventDetailsEmptyDescription => 'Описание не добавлено.';
+
+  @override
+  String get eventNetworkRequired =>
+      'Для сохранения изменений нужно подключение к MedStory.';
 }

@@ -469,6 +469,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{title}: {message}'**
   String pendingActionMessage(String title, String message);
+
+  /// No description provided for @timelineHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your medical story'**
+  String get timelineHeadline;
+
+  /// No description provided for @timelineSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse the events you have saved, newest first.'**
+  String get timelineSubtitle;
+
+  /// No description provided for @timelineEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with one event'**
+  String get timelineEmptyTitle;
+
+  /// No description provided for @timelineEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a symptom, medication, diagnosis, procedure, or note you want to remember.'**
+  String get timelineEmptyMessage;
+
+  /// No description provided for @timelineNoSubjectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No subject found'**
+  String get timelineNoSubjectTitle;
+
+  /// No description provided for @timelineNoSubjectMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'MedStory could not load a profile for this timeline.'**
+  String get timelineNoSubjectMessage;
+
+  /// No description provided for @timelineAddEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Add event'**
+  String get timelineAddEvent;
+
+  /// No description provided for @timelineSearchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Search title or description'**
+  String get timelineSearchLabel;
+
+  /// No description provided for @timelineFiltersAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get timelineFiltersAction;
+
+  /// No description provided for @timelineAllTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'All types'**
+  String get timelineAllTypes;
+
+  /// No description provided for @timelineOfflineNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing saved timeline items. Refresh when you are back online.'**
+  String get timelineOfflineNotice;
+
+  /// No description provided for @timelineLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get timelineLoadMore;
+
+  /// No description provided for @timelineRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh timeline'**
+  String get timelineRefresh;
+
+  /// No description provided for @subjectSwitcherLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline subject'**
+  String get subjectSwitcherLabel;
+
+  /// No description provided for @subjectDefaultLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get subjectDefaultLabel;
+
+  /// No description provided for @eventTypeSymptom.
+  ///
+  /// In en, this message translates to:
+  /// **'Symptom'**
+  String get eventTypeSymptom;
+
+  /// No description provided for @eventTypeDiagnosis.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnosis'**
+  String get eventTypeDiagnosis;
+
+  /// No description provided for @eventTypeMedication.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication'**
+  String get eventTypeMedication;
+
+  /// No description provided for @eventTypeExamination.
+  ///
+  /// In en, this message translates to:
+  /// **'Examination'**
+  String get eventTypeExamination;
+
+  /// No description provided for @eventTypeProcedure.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure'**
+  String get eventTypeProcedure;
+
+  /// No description provided for @eventTypeHospitalization.
+  ///
+  /// In en, this message translates to:
+  /// **'Hospitalization'**
+  String get eventTypeHospitalization;
+
+  /// No description provided for @eventTypeTreatmentOutcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment outcome'**
+  String get eventTypeTreatmentOutcome;
+
+  /// No description provided for @eventTypeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get eventTypeNote;
+
+  /// No description provided for @eventNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add event'**
+  String get eventNewTitle;
+
+  /// No description provided for @eventEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit event'**
+  String get eventEditTitle;
+
+  /// No description provided for @eventDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event detail'**
+  String get eventDetailTitle;
+
+  /// No description provided for @eventTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get eventTitleLabel;
+
+  /// No description provided for @eventDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get eventDescriptionLabel;
+
+  /// No description provided for @eventTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Event type'**
+  String get eventTypeLabel;
+
+  /// No description provided for @eventDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Event date'**
+  String get eventDateLabel;
+
+  /// No description provided for @eventEndDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get eventEndDateLabel;
+
+  /// No description provided for @eventTagsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get eventTagsLabel;
+
+  /// No description provided for @eventTagsHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Separate tags with commas.'**
+  String get eventTagsHelper;
+
+  /// No description provided for @eventAttributesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Structured details'**
+  String get eventAttributesLabel;
+
+  /// No description provided for @eventAttributesHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional JSON object for details such as dose, severity, or result.'**
+  String get eventAttributesHelper;
+
+  /// No description provided for @eventCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save event'**
+  String get eventCreateAction;
+
+  /// No description provided for @eventSaveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get eventSaveAction;
+
+  /// No description provided for @eventEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get eventEditAction;
+
+  /// No description provided for @eventDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get eventDeleteAction;
+
+  /// No description provided for @eventDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this event?'**
+  String get eventDeleteConfirmTitle;
+
+  /// No description provided for @eventDeleteConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'It will be removed from your timeline.'**
+  String get eventDeleteConfirmMessage;
+
+  /// No description provided for @eventCancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get eventCancelAction;
+
+  /// No description provided for @eventRequiredValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required.'**
+  String get eventRequiredValidation;
+
+  /// No description provided for @eventInvalidJsonValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid JSON object or leave this empty.'**
+  String get eventInvalidJsonValidation;
+
+  /// No description provided for @eventBoundaryNote.
+  ///
+  /// In en, this message translates to:
+  /// **'MedStory organizes your information; it does not diagnose or recommend treatment.'**
+  String get eventBoundaryNote;
+
+  /// No description provided for @eventUnconfirmedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs review'**
+  String get eventUnconfirmedBadge;
+
+  /// No description provided for @eventConfirmedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get eventConfirmedBadge;
+
+  /// No description provided for @eventDetailsEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description added.'**
+  String get eventDetailsEmptyDescription;
+
+  /// No description provided for @eventNetworkRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving changes requires a connection to MedStory.'**
+  String get eventNetworkRequired;
 }
 
 class _AppLocalizationsDelegate

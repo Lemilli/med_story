@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/storage/local_database.dart';
 import '../../../core/storage/secure_token_storage.dart';
 import '../domain/auth_models.dart';
 import 'auth_api.dart';
@@ -8,14 +9,20 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
     api: ref.watch(authApiProvider),
     tokenStorage: ref.watch(secureTokenStorageProvider),
+    localDatabase: ref.watch(localDatabaseProvider),
   );
 });
 
 class AuthRepository {
-  const AuthRepository({required this.api, required this.tokenStorage});
+  const AuthRepository({
+    required this.api,
+    required this.tokenStorage,
+    required this.localDatabase,
+  });
 
   final AuthApi api;
   final SecureTokenStorage tokenStorage;
+  final LocalDatabase localDatabase;
 
   Future<AuthState> restoreSession() async {
     final accessToken = await tokenStorage.readAccessToken();
@@ -79,5 +86,6 @@ class AuthRepository {
       }
     }
     await tokenStorage.clearTokens();
+    await localDatabase.clearAll();
   }
 }

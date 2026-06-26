@@ -6,9 +6,12 @@ import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/screens/auth_form_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 import '../features/capture/presentation/screens/capture_screen.dart';
+import '../features/events/presentation/screens/event_detail_screen.dart';
+import '../features/events/presentation/screens/event_form_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
 import '../features/shell/presentation/screens/app_shell.dart';
 import '../features/shell/presentation/screens/placeholder_tab_screen.dart';
+import '../features/timeline/presentation/screens/timeline_screen.dart';
 import '../l10n/l10n.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -35,7 +38,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
       if (isAuthenticated && (isAuthRoute || location == '/')) {
-        return '/capture';
+        return '/timeline';
       }
 
       return null;
@@ -52,7 +55,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             const AuthFormScreen(mode: AuthFormMode.register),
       ),
-      GoRoute(path: '/home', redirect: (context, state) => '/capture'),
+      GoRoute(path: '/home', redirect: (context, state) => '/timeline'),
+      GoRoute(
+        path: '/events/new',
+        builder: (context, state) => const EventFormScreen(),
+      ),
+      GoRoute(
+        path: '/events/:id',
+        builder: (context, state) =>
+            EventDetailScreen(eventId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/events/:id/edit',
+        builder: (context, state) =>
+            EventFormScreen(eventId: state.pathParameters['id']!),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppShell(navigationShell: navigationShell);
@@ -62,16 +79,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/timeline',
-                pageBuilder: (context, state) {
-                  final l10n = context.l10n;
-                  return NoTransitionPage(
-                    child: PlaceholderTabScreen(
-                      icon: Icons.history_rounded,
-                      title: l10n.timelineTitle,
-                      message: l10n.timelineMessage,
-                    ),
-                  );
-                },
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: TimelineScreen()),
               ),
             ],
           ),
