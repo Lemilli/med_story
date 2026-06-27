@@ -27,7 +27,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final location = state.matchedLocation;
       final isAuthRoute = location == '/login' || location == '/register';
 
-      if (authState.isLoading) {
+      if (authState.isLoading && !isAuthRoute) {
         return location == '/' ? null : '/';
       }
 

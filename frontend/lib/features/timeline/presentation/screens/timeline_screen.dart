@@ -177,10 +177,10 @@ class _TimelineHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSpacing.md),
-        FilledButton.icon(
+        IconButton.filled(
           onPressed: onAdd,
           icon: const Icon(Icons.add_rounded),
-          label: Text(l10n.timelineAddEvent),
+          color: AppColors.clinicalWhite,
         ),
       ],
     );

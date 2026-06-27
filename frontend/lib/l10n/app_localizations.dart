@@ -434,6 +434,36 @@ abstract class AppLocalizations {
   /// **'Check your email and password, then try again.'**
   String get authFailedMessage;
 
+  /// No description provided for @authEmailAlreadyExistsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This email already has a MedStory account. Log in instead, or use another email.'**
+  String get authEmailAlreadyExistsMessage;
+
+  /// No description provided for @authInvalidEmailMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address. Example: name@example.com'**
+  String get authInvalidEmailMessage;
+
+  /// No description provided for @authEmailRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email address to create an account.'**
+  String get authEmailRequiredMessage;
+
+  /// No description provided for @authPasswordNotAcceptedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a stronger password. Use at least 8 characters and avoid common passwords.'**
+  String get authPasswordNotAcceptedMessage;
+
+  /// No description provided for @authRegisterFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not create your account. Check your details and try again.'**
+  String get authRegisterFailedMessage;
+
   /// No description provided for @networkFailedMessage.
   ///
   /// In en, this message translates to:
@@ -509,7 +539,7 @@ abstract class AppLocalizations {
   /// No description provided for @timelineAddEvent.
   ///
   /// In en, this message translates to:
-  /// **'Add event'**
+  /// **'Add'**
   String get timelineAddEvent;
 
   /// No description provided for @timelineSearchLabel.

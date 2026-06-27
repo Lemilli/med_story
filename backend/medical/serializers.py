@@ -8,7 +8,15 @@ from medical.services import get_or_create_default_subject
 @extend_schema_field(serializers.ListField(child=serializers.CharField()))
 class TagNamesField(serializers.Field):
     def to_representation(self, value):
-        return [tag.name for tag in value.all()]
+        event = value.instance
+        if not event.pk:
+            return []
+        # Preserve the order tags were assigned (through-table insertion order).
+        return list(
+            value.through.objects.filter(medicalevent_id=event.pk)
+            .order_by("id")
+            .values_list("tag__name", flat=True)
+        )
 
     def to_internal_value(self, data):
         if not isinstance(data, list):
@@ -102,7 +110,9 @@ class MedicalEventSerializer(serializers.ModelSerializer):
             Tag.objects.get_or_create(user=event.user, name=name)[0]
             for name in tag_names
         ]
-        event.tags.set(tags)
+        event.tags.clear()
+        for tag in tags:
+            event.tags.add(tag)
 
     def create(self, validated_data):
         tag_names = validated_data.pop("tags", [])

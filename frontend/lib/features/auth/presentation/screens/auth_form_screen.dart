@@ -61,6 +61,7 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                         controller: _fullNameController,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.name],
+                        enabled: !isLoading,
                         decoration: InputDecoration(
                           labelText: l10n.authFullNameLabel,
                           helperText: l10n.authFullNameHelper,
@@ -152,10 +153,28 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
       return null;
     }
     final l10n = context.l10n;
-    if (error is AppFailure && error.message == 'auth_failed') {
-      return l10n.authFailedMessage;
+    if (error is! AppFailure) {
+      return l10n.networkFailedMessage;
     }
-    return l10n.networkFailedMessage;
+    switch (error.message) {
+      case 'auth_invalid_credentials':
+      case 'auth_failed':
+        return l10n.authFailedMessage;
+      case 'auth_email_already_exists':
+        return l10n.authEmailAlreadyExistsMessage;
+      case 'auth_invalid_email':
+        return l10n.authInvalidEmailMessage;
+      case 'auth_email_required':
+        return l10n.authEmailRequiredMessage;
+      case 'auth_password_not_accepted':
+        return l10n.authPasswordNotAcceptedMessage;
+      case 'auth_register_failed':
+        return l10n.authRegisterFailedMessage;
+      case 'network_failed':
+        return l10n.networkFailedMessage;
+      default:
+        return l10n.networkFailedMessage;
+    }
   }
 
   Future<void> _submit() async {
@@ -261,23 +280,40 @@ class _AuthErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.quietSurface,
-        border: Border.all(color: AppColors.controlledCrimson),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.info_outline_rounded,
-              color: AppColors.controlledCrimson,
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(child: Text(message)),
-          ],
+    final textTheme = Theme.of(context).textTheme;
+
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: message,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.quietSurface,
+          border: Border.all(color: AppColors.controlledCrimson),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.controlledCrimson,
+                size: 22,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  message,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.patientInk,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

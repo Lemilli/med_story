@@ -199,6 +199,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'Check your email and password, then try again.';
 
   @override
+  String get authEmailAlreadyExistsMessage =>
+      'This email already has a MedStory account. Log in instead, or use another email.';
+
+  @override
+  String get authInvalidEmailMessage =>
+      'Enter a valid email address. Example: name@example.com';
+
+  @override
+  String get authEmailRequiredMessage =>
+      'Enter your email address to create an account.';
+
+  @override
+  String get authPasswordNotAcceptedMessage =>
+      'Choose a stronger password. Use at least 8 characters and avoid common passwords.';
+
+  @override
+  String get authRegisterFailedMessage =>
+      'We could not create your account. Check your details and try again.';
+
+  @override
   String get networkFailedMessage =>
       'We could not reach MedStory. Check your connection and try again.';
 
@@ -241,7 +261,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'MedStory could not load a profile for this timeline.';
 
   @override
-  String get timelineAddEvent => 'Add event';
+  String get timelineAddEvent => 'Add';
 
   @override
   String get timelineSearchLabel => 'Search title or description';

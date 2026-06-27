@@ -198,6 +198,26 @@ class AppLocalizationsRu extends AppLocalizations {
       'Проверьте email и пароль, затем попробуйте снова.';
 
   @override
+  String get authEmailAlreadyExistsMessage =>
+      'Для этого email уже есть аккаунт MedStory. Войдите или используйте другой email.';
+
+  @override
+  String get authInvalidEmailMessage =>
+      'Введите корректный email. Например: name@example.com';
+
+  @override
+  String get authEmailRequiredMessage =>
+      'Введите email, чтобы создать аккаунт.';
+
+  @override
+  String get authPasswordNotAcceptedMessage =>
+      'Выберите более надёжный пароль: минимум 8 символов, без распространённых вариантов.';
+
+  @override
+  String get authRegisterFailedMessage =>
+      'Не удалось создать аккаунт. Проверьте данные и попробуйте снова.';
+
+  @override
   String get networkFailedMessage =>
       'Не удалось подключиться к MedStory. Проверьте соединение и попробуйте снова.';
 
@@ -240,7 +260,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'MedStory не удалось загрузить профиль для этой хронологии.';
 
   @override
-  String get timelineAddEvent => 'Добавить событие';
+  String get timelineAddEvent => 'Добавить';
 
   @override
   String get timelineSearchLabel => 'Поиск по названию или описанию';
