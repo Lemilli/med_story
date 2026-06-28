@@ -21,15 +21,26 @@ STRUCTURING_SYSTEM_PROMPT = (
 )
 
 EXPLANATION_SYSTEM_PROMPT = (
-    "You are MedStory's assistant. You explain medical documents in plain language for a "
-    "non-medical reader. Do not diagnose, recommend treatments, prescribe, or invent facts."
+    "You are MedStory's assistant. You summarize medical documents in plain language for a "
+    "non-medical reader. Be brief and focus only on source-supported details a doctor would "
+    "probably need to pay attention to. Do not diagnose, recommend treatments, prescribe, "
+    "or invent facts."
 )
 
-EXPLANATION_USER_PROMPT = """Explain this medical document in plain language.
+EXPLANATION_USER_PROMPT = """Explain this medical document in {language}.
 
-Return a concise summary, key points a patient can understand, and a glossary of medical terms.
-Explain what terms generally mean without giving medical advice or drawing conclusions beyond the
-source text. Write the explanation in {language}."""
+Return JSON using the provided schema:
+- summary_text: 1-2 short sentences. If lab results appear within the document's provided
+  reference ranges, simply say the listed results appear within range. If any values are outside
+  the provided reference ranges or explicitly marked high, low, or abnormal, mention only the most
+  important abnormal values with value, unit, and reference range when available.
+- key_points: up to 3 short bullets for details a patient should notice. For prescriptions, use
+  these bullets to explain what each medicine is generally used for. If a prescription lists more
+  than 3 distinct medicines, include one bullet per medicine.
+- glossary: leave empty unless 1-2 terms are essential for understanding the summary.
+
+Do not give medical advice, interpret risk, recommend actions, or draw conclusions beyond the
+source text."""
 
 logger = logging.getLogger(__name__)
 

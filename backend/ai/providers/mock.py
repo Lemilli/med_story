@@ -15,15 +15,11 @@ class MockLLMProvider:
     ) -> dict:
         if "summary_text" in schema.get("properties", {}):
             return {
-                "summary_text": "This document contains medical information in plain language.",
+                "summary_text": "The document lists a CRP result of 12 mg/L, which is above the shown reference of < 5 mg/L.",
                 "key_points": [
-                    "Review the extracted details and confirm anything important.",
-                    "Ask a clinician if anything is unclear or concerning.",
+                    "CRP is commonly used as a marker related to inflammation.",
                 ],
-                "glossary": {
-                    "CRP": "C-reactive protein, a blood marker that can be related to inflammation.",
-                    "CBC": "Complete blood count, a common blood test.",
-                },
+                "glossary": {},
             }
 
         normalized = user.casefold()

@@ -539,6 +539,15 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(document.document_date, date(2024, 5, 3))
         self.assertEqual(document.title, "Olymp blood test results")
         self.assertTrue(document.explanations.exists())
+        explanation_prompt = captured["explanation_prompt"]
+        self.assertIn("1-2 short sentences", explanation_prompt)
+        self.assertIn("appear within the document's provided", explanation_prompt)
+        self.assertIn("outside", explanation_prompt)
+        self.assertIn("reference ranges", explanation_prompt)
+        self.assertIn("prescriptions", explanation_prompt)
+        self.assertIn("what each medicine is generally used for", explanation_prompt)
+        self.assertIn("glossary: leave empty", explanation_prompt)
+        self.assertIn("Do not give medical advice", explanation_prompt)
 
         event = document.medical_events.get()
         self.assertEqual(event.event_type, MedicalEvent.EventType.EXAMINATION)
