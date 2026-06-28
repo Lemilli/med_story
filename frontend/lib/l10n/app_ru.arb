@@ -15,24 +15,117 @@
   "captureSubtitle": "Запишите то, что помните. Разложить по полочкам можно позже.",
   "recordVoiceTitle": "Записать голос",
   "recordVoiceDescription": "Расскажите о воспоминании, симптоме или лечении.",
+  "recordVoiceDeferredDescription": "Голосовая запись появится позже. Сейчас используйте документ, фото или файл.",
   "recordVoiceSemanticHint": "Начинает голосовую запись. Перед сохранением можно прослушать.",
+  "recordVoiceDeferredSemanticHint": "Голосовая запись запланирована на будущий этап.",
   "voiceCaptureTitle": "Голосовая запись",
   "voiceCaptureMessage": "Запись с микрофона будет подключена к контроллеру захвата.",
+  "voiceCaptureDeferredMessage": "Голосовая запись отложена до этапа voice-first.",
   "scanDocumentTitle": "Сканировать документ",
-  "scanDocumentDescription": "Сканируйте записи, письма, отчёты или рецепты.",
-  "scanDocumentSemanticHint": "Начинает захват документа. Предложения ИИ можно проверить позже.",
+  "scanDocumentDescription": "Используйте камеру для записей, отчётов, рецептов или писем.",
+  "scanDocumentSemanticHint": "Открывает камеру для медицинского документа.",
   "documentScanTitle": "Сканирование документа",
   "documentScanMessage": "Камера и захват файлов будут подключены к загрузке.",
   "writeNoteTitle": "Написать заметку",
   "writeNoteDescription": "Введите мысли, вопросы или детали, которые помните.",
+  "writeNoteDeferredDescription": "Текстовые заметки пока остаются ручными. Добавляйте события на вкладке хронологии.",
   "writeNoteSemanticHint": "Открывает текстовую заметку.",
+  "writeNoteDeferredSemanticHint": "Захват текстовых заметок запланирован на будущий этап.",
   "textNoteTitle": "Текстовая заметка",
   "textNoteMessage": "Ручной ввод заметок будет добавлен в этот поток.",
+  "textNoteDeferredMessage": "На этапе 2 обработка документов работает с фото и файлами. Ручные заметки пока остаются событиями хронологии.",
   "addPhotoTitle": "Добавить фото или файл",
-  "addPhotoDescription": "Прикрепите изображения или файлы с устройства.",
-  "addPhotoSemanticHint": "Открывает выбор фото или файла.",
+  "addPhotoDescription": "Выберите изображение документа из фотогалереи.",
+  "addPhotoSemanticHint": "Открывает галерею для выбора изображения документа.",
+  "chooseFileTitle": "Выбрать PDF или изображение",
+  "chooseFileDescription": "Загрузите PDF, PNG или JPEG до 5 МБ.",
+  "chooseFileSemanticHint": "Открывает выбор файла PDF или изображения.",
   "photoOrFileTitle": "Фото или файл",
   "photoOrFileMessage": "Галерея и выбор файлов будут подключены далее.",
+  "documentSelectionEmpty": "Выберите фото с камеры, изображение из галереи или PDF/изображение. MedStory сохранит оригинал только на этом устройстве и один раз отправит байты на обработку.",
+  "documentReviewTitle": "Проверьте документ",
+  "documentUntitledTitle": "Документ",
+  "documentTitleLabel": "Название документа",
+  "documentTypeLabel": "Тип документа",
+  "documentDateLabel": "Дата документа",
+  "documentDateAddAction": "Добавить дату документа",
+  "documentDateSelected": "Дата документа: {date}",
+  "@documentDateSelected": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentDefaultSubject": "Документ будет добавлен в основной профиль хронологии.",
+  "documentSelectedSubject": "Документ будет добавлен в профиль {name}.",
+  "@documentSelectedSubject": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "documentFileMetadata": "{mimeType} • {size}",
+  "@documentFileMetadata": {
+    "placeholders": {
+      "mimeType": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "documentUploadAction": "Загрузить и обработать",
+  "documentUploadIdle": "Готово к обработке, когда вы будете готовы.",
+  "documentUploadUploading": "Сохраняем локально и отправляем на разовую обработку...",
+  "documentUploadProcessing": "Извлекаем текст и предложенные события. После завершения можно уйти с экрана.",
+  "documentUploadProcessed": "Обработка завершена. Открываем сведения о документе.",
+  "documentUploadFailedMessage": "Не удалось обработать документ. Проверьте файл и попробуйте снова.",
+  "documentFileTooLargeMessage": "Выберите файл размером не более 5 МБ.",
+  "documentUnsupportedFileMessage": "На этапе 2 поддерживаются только PDF и изображения.",
+  "documentProcessingFailedMessage": "Обработка не удалась. Оригинал файла остаётся на этом устройстве.",
+  "documentProcessingTimeoutMessage": "Обработка занимает больше времени, чем ожидалось. Откройте документ ещё раз, чтобы обновить статус.",
+  "documentSourceMissingMessage": "MedStory не удалось найти выбранный файл на этом устройстве.",
+  "documentDetailTitle": "Сведения о документе",
+  "documentDateUnknown": "Дата не указана",
+  "documentMimeTypeLabel": "Тип файла",
+  "documentStorageLabel": "Хранение",
+  "documentLocalOnlyValue": "Оригинал сохранён только на этом устройстве",
+  "documentRemoteStorageValue": "Хранится удалённо",
+  "documentExtractedTextLabel": "Извлечённый текст",
+  "documentAvailableValue": "Доступен",
+  "documentNotAvailableValue": "Недоступен",
+  "documentEventCountLabel": "Предложенные события",
+  "documentEventCountValue": "{count, plural, =0{Нет событий} =1{1 событие} other{{count} событий}}",
+  "@documentEventCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "documentCreatedAtLabel": "Создан",
+  "documentUpdatedAtLabel": "Обновлён",
+  "documentDetailProcessingNote": "Обработка ещё идёт. Потяните вниз, чтобы обновить статус.",
+  "documentDetailPrivacyNote": "Оригинал документа остаётся в песочнице приложения. Бэкенд обрабатывает загруженные байты временно и возвращает только метаданные и предложенные события.",
+  "documentDeleteAction": "Удалить документ",
+  "documentDeleteConfirmTitle": "Удалить этот документ?",
+  "documentDeleteConfirmMessage": "Связанные события также могут исчезнуть из хронологии.",
+  "documentOpenTimelineAction": "Открыть хронологию",
+  "documentStatusPending": "Ожидает",
+  "documentStatusProcessing": "Обрабатывается",
+  "documentStatusProcessed": "Обработан",
+  "documentStatusFailed": "Ошибка",
+  "documentTypeLabResult": "Лабораторный результат",
+  "documentTypeReport": "Отчёт",
+  "documentTypePrescription": "Рецепт",
+  "documentTypeProcedureSummary": "Сводка процедуры",
+  "documentTypeNote": "Заметка",
+  "documentTypeImage": "Изображение",
+  "documentTypeAudio": "Аудио",
+  "documentTypeOther": "Другое",
   "privacyPanelSemanticLabel": "Только для вас. Вы проверяете предложения ИИ перед добавлением в хронологию.",
   "privacyPanelTitle": "Только для вас",
   "privacyPanelDescription": "Вы проверяете предложения ИИ перед добавлением в хронологию.",
@@ -124,6 +217,19 @@
   "eventBoundaryNote": "MedStory упорядочивает вашу информацию; он не ставит диагнозы и не рекомендует лечение.",
   "eventUnconfirmedBadge": "Нужно проверить",
   "eventConfirmedBadge": "Подтверждено",
+  "eventConfirmAction": "Подтвердить событие",
+  "eventConfirmedMessage": "Событие подтверждено.",
+  "eventAiSuggestedNote": "ИИ предложил это событие из документа. Проверьте его, прежде чем полагаться на него.",
+  "eventAiConfirmedNote": "Вы подтвердили это событие, предложенное ИИ.",
+  "eventConfidenceValue": "Уверенность извлечения: {value}",
+  "@eventConfidenceValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "eventOpenSourceDocumentAction": "Открыть исходный документ",
   "eventDetailsEmptyDescription": "Описание не добавлено.",
   "eventNetworkRequired": "Для сохранения изменений нужно подключение к MedStory."
 }

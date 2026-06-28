@@ -57,8 +57,16 @@ class AppLocalizationsRu extends AppLocalizations {
       'Расскажите о воспоминании, симптоме или лечении.';
 
   @override
+  String get recordVoiceDeferredDescription =>
+      'Голосовая запись появится позже. Сейчас используйте документ, фото или файл.';
+
+  @override
   String get recordVoiceSemanticHint =>
       'Начинает голосовую запись. Перед сохранением можно прослушать.';
+
+  @override
+  String get recordVoiceDeferredSemanticHint =>
+      'Голосовая запись запланирована на будущий этап.';
 
   @override
   String get voiceCaptureTitle => 'Голосовая запись';
@@ -68,15 +76,19 @@ class AppLocalizationsRu extends AppLocalizations {
       'Запись с микрофона будет подключена к контроллеру захвата.';
 
   @override
+  String get voiceCaptureDeferredMessage =>
+      'Голосовая запись отложена до этапа voice-first.';
+
+  @override
   String get scanDocumentTitle => 'Сканировать документ';
 
   @override
   String get scanDocumentDescription =>
-      'Сканируйте записи, письма, отчёты или рецепты.';
+      'Используйте камеру для записей, отчётов, рецептов или писем.';
 
   @override
   String get scanDocumentSemanticHint =>
-      'Начинает захват документа. Предложения ИИ можно проверить позже.';
+      'Открывает камеру для медицинского документа.';
 
   @override
   String get documentScanTitle => 'Сканирование документа';
@@ -93,7 +105,15 @@ class AppLocalizationsRu extends AppLocalizations {
       'Введите мысли, вопросы или детали, которые помните.';
 
   @override
+  String get writeNoteDeferredDescription =>
+      'Текстовые заметки пока остаются ручными. Добавляйте события на вкладке хронологии.';
+
+  @override
   String get writeNoteSemanticHint => 'Открывает текстовую заметку.';
+
+  @override
+  String get writeNoteDeferredSemanticHint =>
+      'Захват текстовых заметок запланирован на будущий этап.';
 
   @override
   String get textNoteTitle => 'Текстовая заметка';
@@ -103,14 +123,29 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ручной ввод заметок будет добавлен в этот поток.';
 
   @override
+  String get textNoteDeferredMessage =>
+      'На этапе 2 обработка документов работает с фото и файлами. Ручные заметки пока остаются событиями хронологии.';
+
+  @override
   String get addPhotoTitle => 'Добавить фото или файл';
 
   @override
   String get addPhotoDescription =>
-      'Прикрепите изображения или файлы с устройства.';
+      'Выберите изображение документа из фотогалереи.';
 
   @override
-  String get addPhotoSemanticHint => 'Открывает выбор фото или файла.';
+  String get addPhotoSemanticHint =>
+      'Открывает галерею для выбора изображения документа.';
+
+  @override
+  String get chooseFileTitle => 'Выбрать PDF или изображение';
+
+  @override
+  String get chooseFileDescription => 'Загрузите PDF, PNG или JPEG до 5 МБ.';
+
+  @override
+  String get chooseFileSemanticHint =>
+      'Открывает выбор файла PDF или изображения.';
 
   @override
   String get photoOrFileTitle => 'Фото или файл';
@@ -118,6 +153,196 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get photoOrFileMessage =>
       'Галерея и выбор файлов будут подключены далее.';
+
+  @override
+  String get documentSelectionEmpty =>
+      'Выберите фото с камеры, изображение из галереи или PDF/изображение. MedStory сохранит оригинал только на этом устройстве и один раз отправит байты на обработку.';
+
+  @override
+  String get documentReviewTitle => 'Проверьте документ';
+
+  @override
+  String get documentUntitledTitle => 'Документ';
+
+  @override
+  String get documentTitleLabel => 'Название документа';
+
+  @override
+  String get documentTypeLabel => 'Тип документа';
+
+  @override
+  String get documentDateLabel => 'Дата документа';
+
+  @override
+  String get documentDateAddAction => 'Добавить дату документа';
+
+  @override
+  String documentDateSelected(String date) {
+    return 'Дата документа: $date';
+  }
+
+  @override
+  String get documentDefaultSubject =>
+      'Документ будет добавлен в основной профиль хронологии.';
+
+  @override
+  String documentSelectedSubject(String name) {
+    return 'Документ будет добавлен в профиль $name.';
+  }
+
+  @override
+  String documentFileMetadata(String mimeType, String size) {
+    return '$mimeType • $size';
+  }
+
+  @override
+  String get documentUploadAction => 'Загрузить и обработать';
+
+  @override
+  String get documentUploadIdle =>
+      'Готово к обработке, когда вы будете готовы.';
+
+  @override
+  String get documentUploadUploading =>
+      'Сохраняем локально и отправляем на разовую обработку...';
+
+  @override
+  String get documentUploadProcessing =>
+      'Извлекаем текст и предложенные события. После завершения можно уйти с экрана.';
+
+  @override
+  String get documentUploadProcessed =>
+      'Обработка завершена. Открываем сведения о документе.';
+
+  @override
+  String get documentUploadFailedMessage =>
+      'Не удалось обработать документ. Проверьте файл и попробуйте снова.';
+
+  @override
+  String get documentFileTooLargeMessage =>
+      'Выберите файл размером не более 5 МБ.';
+
+  @override
+  String get documentUnsupportedFileMessage =>
+      'На этапе 2 поддерживаются только PDF и изображения.';
+
+  @override
+  String get documentProcessingFailedMessage =>
+      'Обработка не удалась. Оригинал файла остаётся на этом устройстве.';
+
+  @override
+  String get documentProcessingTimeoutMessage =>
+      'Обработка занимает больше времени, чем ожидалось. Откройте документ ещё раз, чтобы обновить статус.';
+
+  @override
+  String get documentSourceMissingMessage =>
+      'MedStory не удалось найти выбранный файл на этом устройстве.';
+
+  @override
+  String get documentDetailTitle => 'Сведения о документе';
+
+  @override
+  String get documentDateUnknown => 'Дата не указана';
+
+  @override
+  String get documentMimeTypeLabel => 'Тип файла';
+
+  @override
+  String get documentStorageLabel => 'Хранение';
+
+  @override
+  String get documentLocalOnlyValue =>
+      'Оригинал сохранён только на этом устройстве';
+
+  @override
+  String get documentRemoteStorageValue => 'Хранится удалённо';
+
+  @override
+  String get documentExtractedTextLabel => 'Извлечённый текст';
+
+  @override
+  String get documentAvailableValue => 'Доступен';
+
+  @override
+  String get documentNotAvailableValue => 'Недоступен';
+
+  @override
+  String get documentEventCountLabel => 'Предложенные события';
+
+  @override
+  String documentEventCountValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count событий',
+      one: '1 событие',
+      zero: 'Нет событий',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get documentCreatedAtLabel => 'Создан';
+
+  @override
+  String get documentUpdatedAtLabel => 'Обновлён';
+
+  @override
+  String get documentDetailProcessingNote =>
+      'Обработка ещё идёт. Потяните вниз, чтобы обновить статус.';
+
+  @override
+  String get documentDetailPrivacyNote =>
+      'Оригинал документа остаётся в песочнице приложения. Бэкенд обрабатывает загруженные байты временно и возвращает только метаданные и предложенные события.';
+
+  @override
+  String get documentDeleteAction => 'Удалить документ';
+
+  @override
+  String get documentDeleteConfirmTitle => 'Удалить этот документ?';
+
+  @override
+  String get documentDeleteConfirmMessage =>
+      'Связанные события также могут исчезнуть из хронологии.';
+
+  @override
+  String get documentOpenTimelineAction => 'Открыть хронологию';
+
+  @override
+  String get documentStatusPending => 'Ожидает';
+
+  @override
+  String get documentStatusProcessing => 'Обрабатывается';
+
+  @override
+  String get documentStatusProcessed => 'Обработан';
+
+  @override
+  String get documentStatusFailed => 'Ошибка';
+
+  @override
+  String get documentTypeLabResult => 'Лабораторный результат';
+
+  @override
+  String get documentTypeReport => 'Отчёт';
+
+  @override
+  String get documentTypePrescription => 'Рецепт';
+
+  @override
+  String get documentTypeProcedureSummary => 'Сводка процедуры';
+
+  @override
+  String get documentTypeNote => 'Заметка';
+
+  @override
+  String get documentTypeImage => 'Изображение';
+
+  @override
+  String get documentTypeAudio => 'Аудио';
+
+  @override
+  String get documentTypeOther => 'Другое';
 
   @override
   String get privacyPanelSemanticLabel =>
@@ -385,6 +610,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get eventConfirmedBadge => 'Подтверждено';
+
+  @override
+  String get eventConfirmAction => 'Подтвердить событие';
+
+  @override
+  String get eventConfirmedMessage => 'Событие подтверждено.';
+
+  @override
+  String get eventAiSuggestedNote =>
+      'ИИ предложил это событие из документа. Проверьте его, прежде чем полагаться на него.';
+
+  @override
+  String get eventAiConfirmedNote =>
+      'Вы подтвердили это событие, предложенное ИИ.';
+
+  @override
+  String eventConfidenceValue(String value) {
+    return 'Уверенность извлечения: $value';
+  }
+
+  @override
+  String get eventOpenSourceDocumentAction => 'Открыть исходный документ';
 
   @override
   String get eventDetailsEmptyDescription => 'Описание не добавлено.';

@@ -188,11 +188,23 @@ abstract class AppLocalizations {
   /// **'Speak a memory, symptom update, or treatment note.'**
   String get recordVoiceDescription;
 
+  /// No description provided for @recordVoiceDeferredDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice capture comes later. Use a document, photo, or file for now.'**
+  String get recordVoiceDeferredDescription;
+
   /// No description provided for @recordVoiceSemanticHint.
   ///
   /// In en, this message translates to:
   /// **'Starts a voice capture. You can review before saving.'**
   String get recordVoiceSemanticHint;
+
+  /// No description provided for @recordVoiceDeferredSemanticHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice capture is planned for a later phase.'**
+  String get recordVoiceDeferredSemanticHint;
 
   /// No description provided for @voiceCaptureTitle.
   ///
@@ -206,6 +218,12 @@ abstract class AppLocalizations {
   /// **'Microphone recording will be wired to the capture controller next.'**
   String get voiceCaptureMessage;
 
+  /// No description provided for @voiceCaptureDeferredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice capture is deferred until the voice-first phase.'**
+  String get voiceCaptureDeferredMessage;
+
   /// No description provided for @scanDocumentTitle.
   ///
   /// In en, this message translates to:
@@ -215,13 +233,13 @@ abstract class AppLocalizations {
   /// No description provided for @scanDocumentDescription.
   ///
   /// In en, this message translates to:
-  /// **'Scan records, letters, reports, or prescriptions.'**
+  /// **'Use the camera for records, reports, prescriptions, or letters.'**
   String get scanDocumentDescription;
 
   /// No description provided for @scanDocumentSemanticHint.
   ///
   /// In en, this message translates to:
-  /// **'Starts document capture. You can review AI suggestions later.'**
+  /// **'Opens the camera to capture a medical document.'**
   String get scanDocumentSemanticHint;
 
   /// No description provided for @documentScanTitle.
@@ -248,11 +266,23 @@ abstract class AppLocalizations {
   /// **'Type thoughts, questions, or details you remember.'**
   String get writeNoteDescription;
 
+  /// No description provided for @writeNoteDeferredDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Text notes stay manual for now. Add timeline events from the Timeline tab.'**
+  String get writeNoteDeferredDescription;
+
   /// No description provided for @writeNoteSemanticHint.
   ///
   /// In en, this message translates to:
   /// **'Opens a text note capture.'**
   String get writeNoteSemanticHint;
+
+  /// No description provided for @writeNoteDeferredSemanticHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Text note capture is planned for a later phase.'**
+  String get writeNoteDeferredSemanticHint;
 
   /// No description provided for @textNoteTitle.
   ///
@@ -266,6 +296,12 @@ abstract class AppLocalizations {
   /// **'Manual note entry will be added to this flow next.'**
   String get textNoteMessage;
 
+  /// No description provided for @textNoteDeferredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'For Phase 2, document ingestion handles photos and files. Manual notes stay in timeline events.'**
+  String get textNoteDeferredMessage;
+
   /// No description provided for @addPhotoTitle.
   ///
   /// In en, this message translates to:
@@ -275,14 +311,32 @@ abstract class AppLocalizations {
   /// No description provided for @addPhotoDescription.
   ///
   /// In en, this message translates to:
-  /// **'Attach images or files from your device.'**
+  /// **'Choose a document image from your photo library.'**
   String get addPhotoDescription;
 
   /// No description provided for @addPhotoSemanticHint.
   ///
   /// In en, this message translates to:
-  /// **'Opens photo or file selection.'**
+  /// **'Opens the photo library to choose a document image.'**
   String get addPhotoSemanticHint;
+
+  /// No description provided for @chooseFileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose PDF or image'**
+  String get chooseFileTitle;
+
+  /// No description provided for @chooseFileDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a PDF, PNG, or JPEG up to 5 MB.'**
+  String get chooseFileDescription;
+
+  /// No description provided for @chooseFileSemanticHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens file selection for a PDF or image document.'**
+  String get chooseFileSemanticHint;
 
   /// No description provided for @photoOrFileTitle.
   ///
@@ -295,6 +349,324 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Gallery and file picker support will be connected next.'**
   String get photoOrFileMessage;
+
+  /// No description provided for @documentSelectionEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a camera photo, gallery image, or PDF/image file. MedStory will store the original only on this device and send bytes once for processing.'**
+  String get documentSelectionEmpty;
+
+  /// No description provided for @documentReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review document'**
+  String get documentReviewTitle;
+
+  /// No description provided for @documentUntitledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get documentUntitledTitle;
+
+  /// No description provided for @documentTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Document title'**
+  String get documentTitleLabel;
+
+  /// No description provided for @documentTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Document type'**
+  String get documentTypeLabel;
+
+  /// No description provided for @documentDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Document date'**
+  String get documentDateLabel;
+
+  /// No description provided for @documentDateAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add document date'**
+  String get documentDateAddAction;
+
+  /// No description provided for @documentDateSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Document date: {date}'**
+  String documentDateSelected(String date);
+
+  /// No description provided for @documentDefaultSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'This document will use your default timeline profile.'**
+  String get documentDefaultSubject;
+
+  /// No description provided for @documentSelectedSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'This document will be added to {name}.'**
+  String documentSelectedSubject(String name);
+
+  /// No description provided for @documentFileMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'{mimeType} • {size}'**
+  String documentFileMetadata(String mimeType, String size);
+
+  /// No description provided for @documentUploadAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload and process'**
+  String get documentUploadAction;
+
+  /// No description provided for @documentUploadIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to process when you are.'**
+  String get documentUploadIdle;
+
+  /// No description provided for @documentUploadUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving locally and uploading for one-time processing...'**
+  String get documentUploadUploading;
+
+  /// No description provided for @documentUploadProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting text and suggested events. You can leave this screen after it finishes.'**
+  String get documentUploadProcessing;
+
+  /// No description provided for @documentUploadProcessed.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing complete. Opening the document detail.'**
+  String get documentUploadProcessed;
+
+  /// No description provided for @documentUploadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not process this document. Check the file and try again.'**
+  String get documentUploadFailedMessage;
+
+  /// No description provided for @documentFileTooLargeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a file that is 5 MB or smaller.'**
+  String get documentFileTooLargeMessage;
+
+  /// No description provided for @documentUnsupportedFileMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Phase 2 supports PDFs and images only.'**
+  String get documentUnsupportedFileMessage;
+
+  /// No description provided for @documentProcessingFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing failed. The original file remains on this device.'**
+  String get documentProcessingFailedMessage;
+
+  /// No description provided for @documentProcessingTimeoutMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing is taking longer than expected. Open the document again to refresh its status.'**
+  String get documentProcessingTimeoutMessage;
+
+  /// No description provided for @documentSourceMissingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'MedStory could not find the selected file on this device.'**
+  String get documentSourceMissingMessage;
+
+  /// No description provided for @documentDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Document detail'**
+  String get documentDetailTitle;
+
+  /// No description provided for @documentDateUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'No date set'**
+  String get documentDateUnknown;
+
+  /// No description provided for @documentMimeTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'File type'**
+  String get documentMimeTypeLabel;
+
+  /// No description provided for @documentStorageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get documentStorageLabel;
+
+  /// No description provided for @documentLocalOnlyValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Original saved on this device only'**
+  String get documentLocalOnlyValue;
+
+  /// No description provided for @documentRemoteStorageValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored remotely'**
+  String get documentRemoteStorageValue;
+
+  /// No description provided for @documentExtractedTextLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracted text'**
+  String get documentExtractedTextLabel;
+
+  /// No description provided for @documentAvailableValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get documentAvailableValue;
+
+  /// No description provided for @documentNotAvailableValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available'**
+  String get documentNotAvailableValue;
+
+  /// No description provided for @documentEventCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested events'**
+  String get documentEventCountLabel;
+
+  /// No description provided for @documentEventCountValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No events} =1{1 event} other{{count} events}}'**
+  String documentEventCountValue(int count);
+
+  /// No description provided for @documentCreatedAtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get documentCreatedAtLabel;
+
+  /// No description provided for @documentUpdatedAtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get documentUpdatedAtLabel;
+
+  /// No description provided for @documentDetailProcessingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing is still running. Pull to refresh this status.'**
+  String get documentDetailProcessingNote;
+
+  /// No description provided for @documentDetailPrivacyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The original document stays in the app sandbox. The backend processes uploaded bytes transiently and returns only metadata and suggested events.'**
+  String get documentDetailPrivacyNote;
+
+  /// No description provided for @documentDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete document'**
+  String get documentDeleteAction;
+
+  /// No description provided for @documentDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this document?'**
+  String get documentDeleteConfirmTitle;
+
+  /// No description provided for @documentDeleteConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Its derived events may also be removed from your timeline.'**
+  String get documentDeleteConfirmMessage;
+
+  /// No description provided for @documentOpenTimelineAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open timeline'**
+  String get documentOpenTimelineAction;
+
+  /// No description provided for @documentStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get documentStatusPending;
+
+  /// No description provided for @documentStatusProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing'**
+  String get documentStatusProcessing;
+
+  /// No description provided for @documentStatusProcessed.
+  ///
+  /// In en, this message translates to:
+  /// **'Processed'**
+  String get documentStatusProcessed;
+
+  /// No description provided for @documentStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get documentStatusFailed;
+
+  /// No description provided for @documentTypeLabResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Lab result'**
+  String get documentTypeLabResult;
+
+  /// No description provided for @documentTypeReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get documentTypeReport;
+
+  /// No description provided for @documentTypePrescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Prescription'**
+  String get documentTypePrescription;
+
+  /// No description provided for @documentTypeProcedureSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure summary'**
+  String get documentTypeProcedureSummary;
+
+  /// No description provided for @documentTypeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get documentTypeNote;
+
+  /// No description provided for @documentTypeImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get documentTypeImage;
+
+  /// No description provided for @documentTypeAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get documentTypeAudio;
+
+  /// No description provided for @documentTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get documentTypeOther;
 
   /// No description provided for @privacyPanelSemanticLabel.
   ///
@@ -781,6 +1153,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirmed'**
   String get eventConfirmedBadge;
+
+  /// No description provided for @eventConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm event'**
+  String get eventConfirmAction;
+
+  /// No description provided for @eventConfirmedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Event confirmed.'**
+  String get eventConfirmedMessage;
+
+  /// No description provided for @eventAiSuggestedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'AI suggested this event from a document. Review it before relying on it.'**
+  String get eventAiSuggestedNote;
+
+  /// No description provided for @eventAiConfirmedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You confirmed this AI-suggested event.'**
+  String get eventAiConfirmedNote;
+
+  /// No description provided for @eventConfidenceValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Extraction confidence: {value}'**
+  String eventConfidenceValue(String value);
+
+  /// No description provided for @eventOpenSourceDocumentAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source document'**
+  String get eventOpenSourceDocumentAction;
 
   /// No description provided for @eventDetailsEmptyDescription.
   ///

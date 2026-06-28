@@ -102,7 +102,19 @@ class _EventDetailBody extends ConsumerWidget {
               ),
             ),
           ],
+          if (event.source == EventSource.aiDocument) ...[
+            const SizedBox(height: AppSpacing.md),
+            _AiSourcePanel(event: event),
+          ],
           const SizedBox(height: AppSpacing.lg),
+          if (event.source == EventSource.aiDocument && !event.isConfirmed) ...[
+            FilledButton.icon(
+              onPressed: () => _confirmEvent(context, ref),
+              icon: const Icon(Icons.check_circle_outline_rounded),
+              label: Text(l10n.eventConfirmAction),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
           Row(
             children: [
               Expanded(
@@ -166,6 +178,75 @@ class _EventDetailBody extends ConsumerWidget {
     if (context.mounted) {
       context.go('/timeline');
     }
+  }
+
+  Future<void> _confirmEvent(BuildContext context, WidgetRef ref) async {
+    await ref.read(eventFormControllerProvider.notifier).confirm(event.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.eventConfirmedMessage),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+}
+
+class _AiSourcePanel extends StatelessWidget {
+  const _AiSourcePanel({required this.event});
+
+  final MedicalEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final textTheme = Theme.of(context).textTheme;
+    final confidence = event.confidence;
+
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.auto_awesome_outlined,
+                color: AppColors.deepClinicalBlue,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  event.isConfirmed
+                      ? l10n.eventAiConfirmedNote
+                      : l10n.eventAiSuggestedNote,
+                  style: textTheme.bodyMedium?.copyWith(height: 1.35),
+                ),
+              ),
+            ],
+          ),
+          if (confidence != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              l10n.eventConfidenceValue('${(confidence * 100).round()}%'),
+              style: textTheme.bodyMedium?.copyWith(
+                color: AppColors.secondaryInk,
+              ),
+            ),
+          ],
+          if (event.sourceDocumentId != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            TextButton.icon(
+              onPressed: () =>
+                  context.push('/documents/${event.sourceDocumentId}'),
+              icon: const Icon(Icons.description_outlined),
+              label: Text(l10n.eventOpenSourceDocumentAction),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 

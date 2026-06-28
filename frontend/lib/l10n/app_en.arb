@@ -15,24 +15,117 @@
   "captureSubtitle": "Capture what you remember. You can organize it later.",
   "recordVoiceTitle": "Record voice",
   "recordVoiceDescription": "Speak a memory, symptom update, or treatment note.",
+  "recordVoiceDeferredDescription": "Voice capture comes later. Use a document, photo, or file for now.",
   "recordVoiceSemanticHint": "Starts a voice capture. You can review before saving.",
+  "recordVoiceDeferredSemanticHint": "Voice capture is planned for a later phase.",
   "voiceCaptureTitle": "Voice capture",
   "voiceCaptureMessage": "Microphone recording will be wired to the capture controller next.",
+  "voiceCaptureDeferredMessage": "Voice capture is deferred until the voice-first phase.",
   "scanDocumentTitle": "Scan document",
-  "scanDocumentDescription": "Scan records, letters, reports, or prescriptions.",
-  "scanDocumentSemanticHint": "Starts document capture. You can review AI suggestions later.",
+  "scanDocumentDescription": "Use the camera for records, reports, prescriptions, or letters.",
+  "scanDocumentSemanticHint": "Opens the camera to capture a medical document.",
   "documentScanTitle": "Document scan",
   "documentScanMessage": "Camera and file capture will be wired to the upload flow next.",
   "writeNoteTitle": "Write a note",
   "writeNoteDescription": "Type thoughts, questions, or details you remember.",
+  "writeNoteDeferredDescription": "Text notes stay manual for now. Add timeline events from the Timeline tab.",
   "writeNoteSemanticHint": "Opens a text note capture.",
+  "writeNoteDeferredSemanticHint": "Text note capture is planned for a later phase.",
   "textNoteTitle": "Text note",
   "textNoteMessage": "Manual note entry will be added to this flow next.",
+  "textNoteDeferredMessage": "For Phase 2, document ingestion handles photos and files. Manual notes stay in timeline events.",
   "addPhotoTitle": "Add photo or file",
-  "addPhotoDescription": "Attach images or files from your device.",
-  "addPhotoSemanticHint": "Opens photo or file selection.",
+  "addPhotoDescription": "Choose a document image from your photo library.",
+  "addPhotoSemanticHint": "Opens the photo library to choose a document image.",
+  "chooseFileTitle": "Choose PDF or image",
+  "chooseFileDescription": "Upload a PDF, PNG, or JPEG up to 5 MB.",
+  "chooseFileSemanticHint": "Opens file selection for a PDF or image document.",
   "photoOrFileTitle": "Photo or file",
   "photoOrFileMessage": "Gallery and file picker support will be connected next.",
+  "documentSelectionEmpty": "Choose a camera photo, gallery image, or PDF/image file. MedStory will store the original only on this device and send bytes once for processing.",
+  "documentReviewTitle": "Review document",
+  "documentUntitledTitle": "Document",
+  "documentTitleLabel": "Document title",
+  "documentTypeLabel": "Document type",
+  "documentDateLabel": "Document date",
+  "documentDateAddAction": "Add document date",
+  "documentDateSelected": "Document date: {date}",
+  "@documentDateSelected": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentDefaultSubject": "This document will use your default timeline profile.",
+  "documentSelectedSubject": "This document will be added to {name}.",
+  "@documentSelectedSubject": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "documentFileMetadata": "{mimeType} • {size}",
+  "@documentFileMetadata": {
+    "placeholders": {
+      "mimeType": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "documentUploadAction": "Upload and process",
+  "documentUploadIdle": "Ready to process when you are.",
+  "documentUploadUploading": "Saving locally and uploading for one-time processing...",
+  "documentUploadProcessing": "Extracting text and suggested events. You can leave this screen after it finishes.",
+  "documentUploadProcessed": "Processing complete. Opening the document detail.",
+  "documentUploadFailedMessage": "We could not process this document. Check the file and try again.",
+  "documentFileTooLargeMessage": "Choose a file that is 5 MB or smaller.",
+  "documentUnsupportedFileMessage": "Phase 2 supports PDFs and images only.",
+  "documentProcessingFailedMessage": "Processing failed. The original file remains on this device.",
+  "documentProcessingTimeoutMessage": "Processing is taking longer than expected. Open the document again to refresh its status.",
+  "documentSourceMissingMessage": "MedStory could not find the selected file on this device.",
+  "documentDetailTitle": "Document detail",
+  "documentDateUnknown": "No date set",
+  "documentMimeTypeLabel": "File type",
+  "documentStorageLabel": "Storage",
+  "documentLocalOnlyValue": "Original saved on this device only",
+  "documentRemoteStorageValue": "Stored remotely",
+  "documentExtractedTextLabel": "Extracted text",
+  "documentAvailableValue": "Available",
+  "documentNotAvailableValue": "Not available",
+  "documentEventCountLabel": "Suggested events",
+  "documentEventCountValue": "{count, plural, =0{No events} =1{1 event} other{{count} events}}",
+  "@documentEventCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "documentCreatedAtLabel": "Created",
+  "documentUpdatedAtLabel": "Updated",
+  "documentDetailProcessingNote": "Processing is still running. Pull to refresh this status.",
+  "documentDetailPrivacyNote": "The original document stays in the app sandbox. The backend processes uploaded bytes transiently and returns only metadata and suggested events.",
+  "documentDeleteAction": "Delete document",
+  "documentDeleteConfirmTitle": "Delete this document?",
+  "documentDeleteConfirmMessage": "Its derived events may also be removed from your timeline.",
+  "documentOpenTimelineAction": "Open timeline",
+  "documentStatusPending": "Pending",
+  "documentStatusProcessing": "Processing",
+  "documentStatusProcessed": "Processed",
+  "documentStatusFailed": "Failed",
+  "documentTypeLabResult": "Lab result",
+  "documentTypeReport": "Report",
+  "documentTypePrescription": "Prescription",
+  "documentTypeProcedureSummary": "Procedure summary",
+  "documentTypeNote": "Note",
+  "documentTypeImage": "Image",
+  "documentTypeAudio": "Audio",
+  "documentTypeOther": "Other",
   "privacyPanelSemanticLabel": "Private to you. You review AI suggestions before they join your timeline.",
   "privacyPanelTitle": "Private to you",
   "privacyPanelDescription": "You review AI suggestions before they join your timeline.",
@@ -124,6 +217,19 @@
   "eventBoundaryNote": "MedStory organizes your information; it does not diagnose or recommend treatment.",
   "eventUnconfirmedBadge": "Needs review",
   "eventConfirmedBadge": "Confirmed",
+  "eventConfirmAction": "Confirm event",
+  "eventConfirmedMessage": "Event confirmed.",
+  "eventAiSuggestedNote": "AI suggested this event from a document. Review it before relying on it.",
+  "eventAiConfirmedNote": "You confirmed this AI-suggested event.",
+  "eventConfidenceValue": "Extraction confidence: {value}",
+  "@eventConfidenceValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "eventOpenSourceDocumentAction": "Open source document",
   "eventDetailsEmptyDescription": "No description added.",
   "eventNetworkRequired": "Saving changes requires a connection to MedStory."
 }

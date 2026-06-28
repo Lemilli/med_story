@@ -6,6 +6,7 @@ import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/screens/auth_form_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 import '../features/capture/presentation/screens/capture_screen.dart';
+import '../features/documents/presentation/screens/document_detail_screen.dart';
 import '../features/events/presentation/screens/event_detail_screen.dart';
 import '../features/events/presentation/screens/event_form_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
@@ -69,6 +70,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/events/:id/edit',
         builder: (context, state) =>
             EventFormScreen(eventId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/documents/:id',
+        builder: (context, state) =>
+            DocumentDetailScreen(documentId: state.pathParameters['id']!),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

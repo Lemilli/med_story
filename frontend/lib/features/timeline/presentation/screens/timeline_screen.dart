@@ -7,6 +7,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../events/domain/medical_event.dart';
+import '../../../events/presentation/controllers/event_controllers.dart';
 import '../../../events/presentation/event_type_l10n.dart';
 import '../../../subjects/presentation/controllers/subject_controller.dart';
 import '../../domain/timeline_filters.dart';
@@ -290,13 +291,13 @@ class _TimelineFilters extends StatelessWidget {
   }
 }
 
-class _TimelineEventRow extends StatelessWidget {
+class _TimelineEventRow extends ConsumerWidget {
   const _TimelineEventRow({required this.event});
 
   final MedicalEvent event;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final date = DateTime.tryParse(event.eventDate);
@@ -360,11 +361,43 @@ class _TimelineEventRow extends StatelessWidget {
                       .toList(growable: false),
                 ),
               ],
+              if (event.source == EventSource.aiDocument &&
+                  !event.isConfirmed) ...[
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  l10n.eventAiSuggestedNote,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.secondaryInk,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.icon(
+                    onPressed: () => _confirmEvent(context, ref),
+                    icon: const Icon(Icons.check_circle_outline_rounded),
+                    label: Text(l10n.eventConfirmAction),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _confirmEvent(BuildContext context, WidgetRef ref) async {
+    await ref.read(eventFormControllerProvider.notifier).confirm(event.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.eventConfirmedMessage),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 }
 

@@ -59,8 +59,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Speak a memory, symptom update, or treatment note.';
 
   @override
+  String get recordVoiceDeferredDescription =>
+      'Voice capture comes later. Use a document, photo, or file for now.';
+
+  @override
   String get recordVoiceSemanticHint =>
       'Starts a voice capture. You can review before saving.';
+
+  @override
+  String get recordVoiceDeferredSemanticHint =>
+      'Voice capture is planned for a later phase.';
 
   @override
   String get voiceCaptureTitle => 'Voice capture';
@@ -70,15 +78,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Microphone recording will be wired to the capture controller next.';
 
   @override
+  String get voiceCaptureDeferredMessage =>
+      'Voice capture is deferred until the voice-first phase.';
+
+  @override
   String get scanDocumentTitle => 'Scan document';
 
   @override
   String get scanDocumentDescription =>
-      'Scan records, letters, reports, or prescriptions.';
+      'Use the camera for records, reports, prescriptions, or letters.';
 
   @override
   String get scanDocumentSemanticHint =>
-      'Starts document capture. You can review AI suggestions later.';
+      'Opens the camera to capture a medical document.';
 
   @override
   String get documentScanTitle => 'Document scan';
@@ -95,7 +107,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Type thoughts, questions, or details you remember.';
 
   @override
+  String get writeNoteDeferredDescription =>
+      'Text notes stay manual for now. Add timeline events from the Timeline tab.';
+
+  @override
   String get writeNoteSemanticHint => 'Opens a text note capture.';
+
+  @override
+  String get writeNoteDeferredSemanticHint =>
+      'Text note capture is planned for a later phase.';
 
   @override
   String get textNoteTitle => 'Text note';
@@ -105,13 +125,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'Manual note entry will be added to this flow next.';
 
   @override
+  String get textNoteDeferredMessage =>
+      'For Phase 2, document ingestion handles photos and files. Manual notes stay in timeline events.';
+
+  @override
   String get addPhotoTitle => 'Add photo or file';
 
   @override
-  String get addPhotoDescription => 'Attach images or files from your device.';
+  String get addPhotoDescription =>
+      'Choose a document image from your photo library.';
 
   @override
-  String get addPhotoSemanticHint => 'Opens photo or file selection.';
+  String get addPhotoSemanticHint =>
+      'Opens the photo library to choose a document image.';
+
+  @override
+  String get chooseFileTitle => 'Choose PDF or image';
+
+  @override
+  String get chooseFileDescription => 'Upload a PDF, PNG, or JPEG up to 5 MB.';
+
+  @override
+  String get chooseFileSemanticHint =>
+      'Opens file selection for a PDF or image document.';
 
   @override
   String get photoOrFileTitle => 'Photo or file';
@@ -119,6 +155,194 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get photoOrFileMessage =>
       'Gallery and file picker support will be connected next.';
+
+  @override
+  String get documentSelectionEmpty =>
+      'Choose a camera photo, gallery image, or PDF/image file. MedStory will store the original only on this device and send bytes once for processing.';
+
+  @override
+  String get documentReviewTitle => 'Review document';
+
+  @override
+  String get documentUntitledTitle => 'Document';
+
+  @override
+  String get documentTitleLabel => 'Document title';
+
+  @override
+  String get documentTypeLabel => 'Document type';
+
+  @override
+  String get documentDateLabel => 'Document date';
+
+  @override
+  String get documentDateAddAction => 'Add document date';
+
+  @override
+  String documentDateSelected(String date) {
+    return 'Document date: $date';
+  }
+
+  @override
+  String get documentDefaultSubject =>
+      'This document will use your default timeline profile.';
+
+  @override
+  String documentSelectedSubject(String name) {
+    return 'This document will be added to $name.';
+  }
+
+  @override
+  String documentFileMetadata(String mimeType, String size) {
+    return '$mimeType • $size';
+  }
+
+  @override
+  String get documentUploadAction => 'Upload and process';
+
+  @override
+  String get documentUploadIdle => 'Ready to process when you are.';
+
+  @override
+  String get documentUploadUploading =>
+      'Saving locally and uploading for one-time processing...';
+
+  @override
+  String get documentUploadProcessing =>
+      'Extracting text and suggested events. You can leave this screen after it finishes.';
+
+  @override
+  String get documentUploadProcessed =>
+      'Processing complete. Opening the document detail.';
+
+  @override
+  String get documentUploadFailedMessage =>
+      'We could not process this document. Check the file and try again.';
+
+  @override
+  String get documentFileTooLargeMessage =>
+      'Choose a file that is 5 MB or smaller.';
+
+  @override
+  String get documentUnsupportedFileMessage =>
+      'Phase 2 supports PDFs and images only.';
+
+  @override
+  String get documentProcessingFailedMessage =>
+      'Processing failed. The original file remains on this device.';
+
+  @override
+  String get documentProcessingTimeoutMessage =>
+      'Processing is taking longer than expected. Open the document again to refresh its status.';
+
+  @override
+  String get documentSourceMissingMessage =>
+      'MedStory could not find the selected file on this device.';
+
+  @override
+  String get documentDetailTitle => 'Document detail';
+
+  @override
+  String get documentDateUnknown => 'No date set';
+
+  @override
+  String get documentMimeTypeLabel => 'File type';
+
+  @override
+  String get documentStorageLabel => 'Storage';
+
+  @override
+  String get documentLocalOnlyValue => 'Original saved on this device only';
+
+  @override
+  String get documentRemoteStorageValue => 'Stored remotely';
+
+  @override
+  String get documentExtractedTextLabel => 'Extracted text';
+
+  @override
+  String get documentAvailableValue => 'Available';
+
+  @override
+  String get documentNotAvailableValue => 'Not available';
+
+  @override
+  String get documentEventCountLabel => 'Suggested events';
+
+  @override
+  String documentEventCountValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count events',
+      one: '1 event',
+      zero: 'No events',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get documentCreatedAtLabel => 'Created';
+
+  @override
+  String get documentUpdatedAtLabel => 'Updated';
+
+  @override
+  String get documentDetailProcessingNote =>
+      'Processing is still running. Pull to refresh this status.';
+
+  @override
+  String get documentDetailPrivacyNote =>
+      'The original document stays in the app sandbox. The backend processes uploaded bytes transiently and returns only metadata and suggested events.';
+
+  @override
+  String get documentDeleteAction => 'Delete document';
+
+  @override
+  String get documentDeleteConfirmTitle => 'Delete this document?';
+
+  @override
+  String get documentDeleteConfirmMessage =>
+      'Its derived events may also be removed from your timeline.';
+
+  @override
+  String get documentOpenTimelineAction => 'Open timeline';
+
+  @override
+  String get documentStatusPending => 'Pending';
+
+  @override
+  String get documentStatusProcessing => 'Processing';
+
+  @override
+  String get documentStatusProcessed => 'Processed';
+
+  @override
+  String get documentStatusFailed => 'Failed';
+
+  @override
+  String get documentTypeLabResult => 'Lab result';
+
+  @override
+  String get documentTypeReport => 'Report';
+
+  @override
+  String get documentTypePrescription => 'Prescription';
+
+  @override
+  String get documentTypeProcedureSummary => 'Procedure summary';
+
+  @override
+  String get documentTypeNote => 'Note';
+
+  @override
+  String get documentTypeImage => 'Image';
+
+  @override
+  String get documentTypeAudio => 'Audio';
+
+  @override
+  String get documentTypeOther => 'Other';
 
   @override
   String get privacyPanelSemanticLabel =>
@@ -387,6 +611,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventConfirmedBadge => 'Confirmed';
+
+  @override
+  String get eventConfirmAction => 'Confirm event';
+
+  @override
+  String get eventConfirmedMessage => 'Event confirmed.';
+
+  @override
+  String get eventAiSuggestedNote =>
+      'AI suggested this event from a document. Review it before relying on it.';
+
+  @override
+  String get eventAiConfirmedNote => 'You confirmed this AI-suggested event.';
+
+  @override
+  String eventConfidenceValue(String value) {
+    return 'Extraction confidence: $value';
+  }
+
+  @override
+  String get eventOpenSourceDocumentAction => 'Open source document';
 
   @override
   String get eventDetailsEmptyDescription => 'No description added.';
