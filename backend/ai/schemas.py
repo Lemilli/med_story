@@ -18,7 +18,7 @@ ALLOWED_EVENT_TYPES = {
 EVENT_EXTRACTION_JSON_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["document_date", "events"],
+    "required": ["document_date", "suggested_title", "events"],
     "properties": {
         "document_date": {"type": ["string", "null"], "format": "date"},
         "suggested_title": {"type": ["string", "null"]},

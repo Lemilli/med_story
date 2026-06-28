@@ -64,6 +64,8 @@ generation, and retention over time.
   cache coverage.
 
 ### Phase 2 — Documents & Ingestion Pipeline
+**Status:** Implemented with pluggable providers; OpenAI LLM/OCR wiring added, mock providers
+remain for deterministic local tests.
 **Goal:** upload documents and extract text + structured events automatically.
 - Backend: `Document` model (metadata only), `/documents/{id}/ingest`, status polling;
   transient ingestion path (no file persistence); Celery ingestion task; **OCR** + **LLM
@@ -72,6 +74,9 @@ generation, and retention over time.
   document list/detail,
   "confirm AI event" UX.
 - **Exit:** upload a document → see extracted, confirmable events on the timeline (Scenario A).
+- **Provider notes:** set `AI_LLM_PROVIDER=openai`, `AI_OCR_PROVIDER=openai`, and
+  `AI_OPENAI_API_KEY` for real document extraction. `AI_STT_PROVIDER` remains mock until Phase 5
+  voice capture is implemented.
 
 ### Phase 3 — Understanding (Explanations)
 **Goal:** plain-language explanations of documents (Scenario B).

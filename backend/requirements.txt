@@ -9,3 +9,4 @@ celery>=5.4,<5.5
 redis>=5.0,<5.1
 argon2-cffi>=23.1,<24.0
 gunicorn>=22.0,<23.0
+openai>=1.95,<2.0

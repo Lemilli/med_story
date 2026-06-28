@@ -17,6 +17,10 @@ services:
       AI_LLM_PROVIDER: ${AI_LLM_PROVIDER:-mock}
       AI_OCR_PROVIDER: ${AI_OCR_PROVIDER:-mock}
       AI_STT_PROVIDER: ${AI_STT_PROVIDER:-mock}
+      AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
+      AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-5.1-mini}
+      AI_OPENAI_OCR_MODEL: ${AI_OPENAI_OCR_MODEL:-gpt-5.1-mini}
+      AI_OPENAI_TIMEOUT_SECONDS: ${AI_OPENAI_TIMEOUT_SECONDS:-60}
     depends_on:
       - db
       - redis
@@ -37,6 +41,10 @@ services:
       AI_LLM_PROVIDER: ${AI_LLM_PROVIDER:-mock}
       AI_OCR_PROVIDER: ${AI_OCR_PROVIDER:-mock}
       AI_STT_PROVIDER: ${AI_STT_PROVIDER:-mock}
+      AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
+      AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-5.1-mini}
+      AI_OPENAI_OCR_MODEL: ${AI_OPENAI_OCR_MODEL:-gpt-5.1-mini}
+      AI_OPENAI_TIMEOUT_SECONDS: ${AI_OPENAI_TIMEOUT_SECONDS:-60}
     depends_on:
       - db
       - redis

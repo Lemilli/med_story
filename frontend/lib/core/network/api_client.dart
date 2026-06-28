@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import '../config/app_config.dart';
 import '../storage/secure_token_storage.dart';
@@ -22,6 +24,19 @@ final apiClientProvider = Provider<Dio>((ref) {
       baseUrl: AppConfig.apiBaseUrl,
     ),
   );
+
+  if (kDebugMode) {
+    dio.interceptors.add(
+      PrettyDioLogger(
+        requestHeader: true,
+        requestBody: true,
+        responseHeader: true,
+        responseBody: true,
+        error: true,
+        compact: true,
+      ),
+    );
+  }
 
   return dio;
 });

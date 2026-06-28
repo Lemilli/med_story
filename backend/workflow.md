@@ -38,6 +38,21 @@ Useful URLs:
 Optional local environment overrides can go in `.env`. The Compose file already provides safe
 development defaults, so `.env` is not required to start.
 
+To use real OpenAI-backed document processing locally, set these values in `backend/.env` before
+starting Compose:
+
+```bash
+AI_LLM_PROVIDER=openai
+AI_OCR_PROVIDER=openai
+AI_OPENAI_API_KEY=<your-openai-api-key>
+AI_OPENAI_MODEL=<your-model>
+AI_OPENAI_OCR_MODEL=<your-model>
+```
+
+`AI_STT_PROVIDER` still defaults to `mock`; voice capture is planned for Phase 5. The API and
+Celery worker both need the same AI settings because ingestion is queued from the API and processed
+by the worker.
+
 ## Production Flow: VPS
 
 Production on a VPS uses `docker-compose.prod.yml`, not the local development Compose file.
@@ -77,9 +92,13 @@ DATABASE_URL=postgres://medstory:<strong-db-password>@db:5432/medstory
 CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_RESULT_BACKEND=redis://redis:6379/0
 
-AI_LLM_PROVIDER=mock
-AI_OCR_PROVIDER=mock
+AI_LLM_PROVIDER=openai
+AI_OCR_PROVIDER=openai
 AI_STT_PROVIDER=mock
+AI_OPENAI_API_KEY=<your-openai-api-key>
+AI_OPENAI_MODEL=<your-model>
+AI_OPENAI_OCR_MODEL=<your-model>
+AI_OPENAI_TIMEOUT_SECONDS=60
 ```
 
 Build and start production services:

@@ -36,6 +36,12 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   _SelectedDocumentFile? _selectedFile;
 
   @override
+  void initState() {
+    super.initState();
+    _retrieveLostImageData();
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     super.dispose();
@@ -196,8 +202,35 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     );
   }
 
+  Future<void> _retrieveLostImageData() async {
+    if (!Platform.isAndroid) {
+      return;
+    }
+
+    final response = await _imagePicker.retrieveLostData();
+    if (!mounted || response.isEmpty) {
+      return;
+    }
+
+    final image = response.files?.firstOrNull ?? response.file;
+    if (image != null) {
+      await _setPickedFile(
+        path: image.path,
+        fileName: image.name,
+        mimeType: image.mimeType ?? _mimeTypeForName(image.name),
+        defaultType: DocumentType.image,
+      );
+      return;
+    }
+
+    final message = response.exception?.message;
+    if (message != null && message.isNotEmpty) {
+      _showSnack(message);
+    }
+  }
+
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'png', 'jpg', 'jpeg'],
       withData: false,
