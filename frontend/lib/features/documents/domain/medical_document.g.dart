@@ -58,6 +58,7 @@ Map<String, dynamic> _$MedicalDocumentToJson(_MedicalDocument instance) =>
     };
 
 const _$DocumentTypeEnumMap = {
+  DocumentType.medicalRecord: 'medical_record',
   DocumentType.labResult: 'lab_result',
   DocumentType.report: 'report',
   DocumentType.prescription: 'prescription',

@@ -15,7 +15,6 @@ import '../../../../l10n/l10n.dart';
 import '../../../documents/data/document_repository.dart';
 import '../../../documents/domain/medical_document.dart';
 import '../../../documents/presentation/controllers/document_controllers.dart';
-import '../../../documents/presentation/document_l10n.dart';
 import '../../../subjects/presentation/controllers/subject_controller.dart';
 
 const _maxDocumentBytes = 5 * 1024 * 1024;
@@ -28,11 +27,7 @@ class CaptureScreen extends ConsumerStatefulWidget {
 }
 
 class _CaptureScreenState extends ConsumerState<CaptureScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
   final _imagePicker = ImagePicker();
-  DocumentType _docType = DocumentType.report;
-  DateTime? _documentDate;
   _SelectedDocumentFile? _selectedFile;
 
   @override
@@ -42,136 +37,128 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   }
 
   @override
-  void dispose() {
-    _titleController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final l10n = context.l10n;
     final uploadState = ref.watch(documentUploadControllerProvider);
-
+    final uploadStage = uploadState.maybeWhen(
+      data: (state) => state.stage,
+      orElse: () => null,
+    );
+    final isUploadBusy =
+        uploadStage == DocumentUploadStage.uploading ||
+        uploadStage == DocumentUploadStage.processing;
     return SafeArea(
-      child: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.xxxl,
-          ),
-          children: [
-            Text(
-              l10n.captureHeadline,
-              style: textTheme.headlineLarge?.copyWith(
-                color: AppColors.patientInk,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.4,
-                height: 1.05,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              l10n.captureSubtitle,
-              style: textTheme.titleMedium?.copyWith(
-                color: AppColors.secondaryInk,
-                fontWeight: FontWeight.w600,
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            MedStoryActionRow(
-              icon: Icons.document_scanner_outlined,
-              title: l10n.scanDocumentTitle,
-              description: l10n.scanDocumentDescription,
-              isPrimary: true,
-              semanticHint: l10n.scanDocumentSemanticHint,
-              onTap: () => _pickCameraImage(),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            MedStoryActionRow(
-              icon: Icons.add_photo_alternate_outlined,
-              title: l10n.addPhotoTitle,
-              description: l10n.addPhotoDescription,
-              isPrimary: true,
-              semanticHint: l10n.addPhotoSemanticHint,
-              onTap: () => _pickGalleryImage(),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            MedStoryActionRow(
-              icon: Icons.attach_file_rounded,
-              title: l10n.chooseFileTitle,
-              description: l10n.chooseFileDescription,
-              semanticHint: l10n.chooseFileSemanticHint,
-              onTap: () => _pickFile(),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            if (_selectedFile == null)
-              _EmptySelectionPanel(message: l10n.documentSelectionEmpty)
-            else
-              _UploadReviewPanel(
-                selectedFile: _selectedFile!,
-                titleController: _titleController,
-                documentType: _docType,
-                documentDate: _documentDate,
-                onTypeChanged: (type) => setState(() => _docType = type),
-                onDateChanged: (date) => setState(() => _documentDate = date),
-              ),
-            const SizedBox(height: AppSpacing.md),
-            uploadState.when(
-              data: (state) => _UploadStatusPanel(stage: state.stage),
-              loading: () => const _UploadStatusPanel(
-                stage: DocumentUploadStage.uploading,
-              ),
-              error: (error, _) => _InlineNotice(
-                icon: Icons.error_outline_rounded,
-                message: _documentErrorMessage(context, error),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            FilledButton.icon(
-              onPressed: _selectedFile == null || uploadState.isLoading
-                  ? null
-                  : _submit,
-              icon: uploadState.isLoading
-                  ? const SizedBox.square(
-                      dimension: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.cloud_upload_outlined),
-              label: Text(l10n.documentUploadAction),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            MedStoryActionRow(
-              icon: Icons.mic_none_rounded,
-              title: l10n.recordVoiceTitle,
-              description: l10n.recordVoiceDeferredDescription,
-              semanticHint: l10n.recordVoiceDeferredSemanticHint,
-              onTap: () => _showDeferredAction(
-                title: l10n.voiceCaptureTitle,
-                message: l10n.voiceCaptureDeferredMessage,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            MedStoryActionRow(
-              icon: Icons.edit_note_rounded,
-              title: l10n.writeNoteTitle,
-              description: l10n.writeNoteDeferredDescription,
-              semanticHint: l10n.writeNoteDeferredSemanticHint,
-              onTap: () => _showDeferredAction(
-                title: l10n.textNoteTitle,
-                message: l10n.textNoteDeferredMessage,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            const _PrivacyPanel(),
-            const SizedBox(height: AppSpacing.lg),
-            const _BoundaryNote(),
-          ],
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xxxl,
         ),
+        children: [
+          Text(
+            l10n.captureHeadline,
+            style: textTheme.headlineLarge?.copyWith(
+              color: AppColors.patientInk,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.4,
+              height: 1.05,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            l10n.captureSubtitle,
+            style: textTheme.titleMedium?.copyWith(
+              color: AppColors.secondaryInk,
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          MedStoryActionRow(
+            icon: Icons.document_scanner_outlined,
+            title: l10n.scanDocumentTitle,
+            description: l10n.scanDocumentDescription,
+            isPrimary: true,
+            semanticHint: l10n.scanDocumentSemanticHint,
+            onTap: () {
+              if (!isUploadBusy) {
+                _pickCameraImage();
+              }
+            },
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          MedStoryActionRow(
+            icon: Icons.add_photo_alternate_outlined,
+            title: l10n.addPhotoTitle,
+            description: l10n.addPhotoDescription,
+            isPrimary: true,
+            semanticHint: l10n.addPhotoSemanticHint,
+            onTap: () {
+              if (!isUploadBusy) {
+                _pickGalleryImage();
+              }
+            },
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          MedStoryActionRow(
+            icon: Icons.attach_file_rounded,
+            title: l10n.chooseFileTitle,
+            description: l10n.chooseFileDescription,
+            semanticHint: l10n.chooseFileSemanticHint,
+            onTap: () {
+              if (!isUploadBusy) {
+                _pickFile();
+              }
+            },
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          if (_selectedFile == null)
+            _EmptySelectionPanel(message: l10n.documentSelectionEmpty)
+          else
+            _SelectedFilePanel(selectedFile: _selectedFile!),
+          const SizedBox(height: AppSpacing.md),
+          uploadState.when(
+            data: (state) => _UploadStatusPanelView(
+              state: state,
+              onViewResult: () => _viewProcessedDocument(state),
+            ),
+            loading: () => const _UploadStatusPanelView(
+              state: DocumentUploadState(stage: DocumentUploadStage.uploading),
+            ),
+            error: (error, _) => _UploadErrorPanel(
+              message: _documentErrorMessage(context, error),
+              onRetry: _clearSelection,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          MedStoryActionRow(
+            icon: Icons.mic_none_rounded,
+            title: l10n.recordVoiceTitle,
+            description: l10n.recordVoiceDeferredDescription,
+            semanticHint: l10n.recordVoiceDeferredSemanticHint,
+            onTap: () => _showDeferredAction(
+              title: l10n.voiceCaptureTitle,
+              message: l10n.voiceCaptureDeferredMessage,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          MedStoryActionRow(
+            icon: Icons.edit_note_rounded,
+            title: l10n.writeNoteTitle,
+            description: l10n.writeNoteDeferredDescription,
+            semanticHint: l10n.writeNoteDeferredSemanticHint,
+            onTap: () => _showDeferredAction(
+              title: l10n.textNoteTitle,
+              message: l10n.textNoteDeferredMessage,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          const _PrivacyPanel(),
+          const SizedBox(height: AppSpacing.lg),
+          const _BoundaryNote(),
+        ],
       ),
     );
   }
@@ -185,7 +172,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       path: image.path,
       fileName: image.name,
       mimeType: image.mimeType ?? _mimeTypeForName(image.name),
-      defaultType: DocumentType.image,
     );
   }
 
@@ -198,7 +184,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       path: image.path,
       fileName: image.name,
       mimeType: image.mimeType ?? _mimeTypeForName(image.name),
-      defaultType: DocumentType.image,
     );
   }
 
@@ -218,7 +203,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         path: image.path,
         fileName: image.name,
         mimeType: image.mimeType ?? _mimeTypeForName(image.name),
-        defaultType: DocumentType.image,
       );
       return;
     }
@@ -245,9 +229,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       fileName: file.name,
       mimeType: _mimeTypeForName(file.name),
       sizeBytes: file.size,
-      defaultType: _mimeTypeForName(file.name) == 'application/pdf'
-          ? DocumentType.report
-          : DocumentType.image,
     );
   }
 
@@ -255,7 +236,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     required String path,
     required String fileName,
     required String mimeType,
-    required DocumentType defaultType,
     int? sizeBytes,
   }) async {
     final l10n = context.l10n;
@@ -277,48 +257,56 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         mimeType: mimeType,
         sizeBytes: resolvedSize,
       );
-      _docType = defaultType;
-      if (_titleController.text.trim().isEmpty) {
-        _titleController.text = _titleFromFileName(
-          fileName,
-          fallback: l10n.documentUntitledTitle,
-        );
-      }
     });
-    ref.read(documentUploadControllerProvider.notifier).reset();
+    await _uploadSelectedFile();
   }
 
-  Future<void> _submit() async {
+  Future<void> _uploadSelectedFile() async {
     final selectedFile = _selectedFile;
-    if (selectedFile == null || !_formKey.currentState!.validate()) {
+    if (selectedFile == null) {
       return;
     }
 
+    ref.read(documentUploadControllerProvider.notifier).reset();
     final subjectState = ref
         .read(subjectControllerProvider)
         .maybeWhen(data: (state) => state, orElse: () => null);
-    final document = await ref
-        .read(documentUploadControllerProvider.notifier)
-        .upload(
-          DocumentUploadDraft(
-            title: _titleController.text.trim(),
-            docType: _docType,
-            subjectId: subjectState?.selectedSubjectId,
-            documentDate: _documentDate == null
-                ? null
-                : _dateOnly(_documentDate!),
-            source: DocumentSourceFile(
-              path: selectedFile.path,
-              fileName: selectedFile.fileName,
-              mimeType: selectedFile.mimeType,
+    try {
+      await ref
+          .read(documentUploadControllerProvider.notifier)
+          .upload(
+            DocumentUploadDraft(
+              title: _titleFromFileName(
+                selectedFile.fileName,
+                fallback: context.l10n.documentUntitledTitle,
+              ),
+              docType: DocumentType.medicalRecord,
+              subjectId: subjectState?.selectedSubjectId,
+              source: DocumentSourceFile(
+                path: selectedFile.path,
+                fileName: selectedFile.fileName,
+                mimeType: selectedFile.mimeType,
+              ),
             ),
-          ),
-        );
+          );
+    } on Object {
+      if (mounted) {
+        setState(() => _selectedFile = null);
+      }
+    }
+  }
 
-    if (!mounted) {
+  void _clearSelection() {
+    setState(() => _selectedFile = null);
+    ref.read(documentUploadControllerProvider.notifier).reset();
+  }
+
+  void _viewProcessedDocument(DocumentUploadState state) {
+    final documentId = state.document?.id ?? state.documentId;
+    if (documentId == null) {
       return;
     }
-    context.push('/documents/${document.id}');
+    context.push('/documents/$documentId');
   }
 
   void _showDeferredAction({required String title, required String message}) {
@@ -332,106 +320,57 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   }
 }
 
-class _UploadReviewPanel extends ConsumerWidget {
-  const _UploadReviewPanel({
-    required this.selectedFile,
-    required this.titleController,
-    required this.documentType,
-    required this.documentDate,
-    required this.onTypeChanged,
-    required this.onDateChanged,
-  });
+class _SelectedFilePanel extends StatelessWidget {
+  const _SelectedFilePanel({required this.selectedFile});
 
   final _SelectedDocumentFile selectedFile;
-  final TextEditingController titleController;
-  final DocumentType documentType;
-  final DateTime? documentDate;
-  final ValueChanged<DocumentType> onTypeChanged;
-  final ValueChanged<DateTime?> onDateChanged;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final textTheme = Theme.of(context).textTheme;
-    final subjects = ref.watch(subjectControllerProvider);
-
     return _Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             l10n.documentReviewTitle,
-            style: textTheme.titleLarge?.copyWith(
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: AppColors.patientInk,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          _FileSummary(selectedFile: selectedFile),
           const SizedBox(height: AppSpacing.md),
-          TextFormField(
-            controller: titleController,
-            decoration: InputDecoration(labelText: l10n.documentTitleLabel),
-            textInputAction: TextInputAction.next,
-            validator: (value) => value == null || value.trim().isEmpty
-                ? l10n.eventRequiredValidation
-                : null,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          DropdownButtonFormField<DocumentType>(
-            initialValue: documentType,
-            decoration: InputDecoration(labelText: l10n.documentTypeLabel),
-            items: DocumentType.values
-                .where((type) => type != DocumentType.audio)
-                .map(
-                  (type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type.label(l10n)),
-                  ),
-                )
-                .toList(growable: false),
-            onChanged: (type) {
-              if (type != null) {
-                onTypeChanged(type);
-              }
-            },
-          ),
-          const SizedBox(height: AppSpacing.md),
-          subjects.maybeWhen(
-            data: (state) => Text(
-              state.selectedSubject == null
-                  ? l10n.documentDefaultSubject
-                  : l10n.documentSelectedSubject(
-                      state.selectedSubject!.displayName,
+          Row(
+            children: [
+              const Icon(
+                Icons.description_outlined,
+                color: AppColors.deepClinicalBlue,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      selectedFile.fileName,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-              style: textTheme.bodyMedium?.copyWith(
-                color: AppColors.secondaryInk,
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      l10n.documentFileMetadata(
+                        selectedFile.mimeType,
+                        _formatBytes(selectedFile.sizeBytes),
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.secondaryInk,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            orElse: () => Text(
-              l10n.documentDefaultSubject,
-              style: textTheme.bodyMedium?.copyWith(
-                color: AppColors.secondaryInk,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          OutlinedButton.icon(
-            onPressed: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: documentDate ?? DateTime.now(),
-                firstDate: DateTime(1900),
-                lastDate: DateTime.now(),
-              );
-              onDateChanged(picked);
-            },
-            icon: const Icon(Icons.calendar_month_outlined),
-            label: Text(
-              documentDate == null
-                  ? l10n.documentDateAddAction
-                  : l10n.documentDateSelected(_dateOnly(documentDate!)),
-            ),
+            ],
           ),
         ],
       ),
@@ -439,78 +378,91 @@ class _UploadReviewPanel extends ConsumerWidget {
   }
 }
 
-class _FileSummary extends StatelessWidget {
-  const _FileSummary({required this.selectedFile});
+class _UploadStatusPanelView extends StatelessWidget {
+  const _UploadStatusPanelView({required this.state, this.onViewResult});
 
-  final _SelectedDocumentFile selectedFile;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.quietSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.clinicalLine),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.description_outlined,
-              color: AppColors.deepClinicalBlue,
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    selectedFile.fileName,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    l10n.documentFileMetadata(
-                      selectedFile.mimeType,
-                      _formatBytes(selectedFile.sizeBytes),
-                    ),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.secondaryInk,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _UploadStatusPanel extends StatelessWidget {
-  const _UploadStatusPanel({required this.stage});
-
-  final DocumentUploadStage stage;
+  final DocumentUploadState state;
+  final VoidCallback? onViewResult;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final stage = state.stage;
     final message = switch (stage) {
       DocumentUploadStage.idle => l10n.documentUploadIdle,
       DocumentUploadStage.uploading => l10n.documentUploadUploading,
       DocumentUploadStage.processing => l10n.documentUploadProcessing,
       DocumentUploadStage.processed => l10n.documentUploadProcessed,
     };
-    return _InlineNotice(
-      icon: stage == DocumentUploadStage.processed
-          ? Icons.check_circle_outline_rounded
-          : Icons.info_outline_rounded,
-      message: message,
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                stage == DocumentUploadStage.processed
+                    ? Icons.check_circle_outline_rounded
+                    : Icons.info_outline_rounded,
+                color: AppColors.deepClinicalBlue,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          if (stage == DocumentUploadStage.uploading ||
+              stage == DocumentUploadStage.processing) ...[
+            const SizedBox(height: AppSpacing.md),
+            const LinearProgressIndicator(),
+          ],
+          if (stage == DocumentUploadStage.processed &&
+              onViewResult != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            FilledButton.icon(
+              onPressed: onViewResult,
+              icon: const Icon(Icons.open_in_new_rounded),
+              label: Text(l10n.documentViewResultAction),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _UploadErrorPanel extends StatelessWidget {
+  const _UploadErrorPanel({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.deepClinicalBlue,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(l10n.documentRetryAction),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -619,27 +571,6 @@ class _BoundaryNote extends StatelessWidget {
   }
 }
 
-class _InlineNotice extends StatelessWidget {
-  const _InlineNotice({required this.icon, required this.message});
-
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return _Panel(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.deepClinicalBlue),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(child: Text(message)),
-        ],
-      ),
-    );
-  }
-}
-
 class _Panel extends StatelessWidget {
   const _Panel({required this.child});
 
@@ -695,12 +626,6 @@ String _titleFromFileName(String fileName, {required String fallback}) {
     return fallback;
   }
   return basename.replaceAll(RegExp(r'[_-]+'), ' ');
-}
-
-String _dateOnly(DateTime date) {
-  final month = date.month.toString().padLeft(2, '0');
-  final day = date.day.toString().padLeft(2, '0');
-  return '${date.year}-$month-$day';
 }
 
 String _formatBytes(int bytes) {

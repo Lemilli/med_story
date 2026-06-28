@@ -4,6 +4,7 @@ import '../domain/medical_document.dart';
 extension DocumentTypeL10n on DocumentType {
   String label(AppLocalizations l10n) {
     return switch (this) {
+      DocumentType.medicalRecord => l10n.documentTypeMedicalRecord,
       DocumentType.labResult => l10n.documentTypeLabResult,
       DocumentType.report => l10n.documentTypeReport,
       DocumentType.prescription => l10n.documentTypePrescription,

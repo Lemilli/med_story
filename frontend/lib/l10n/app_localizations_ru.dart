@@ -156,10 +156,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get documentSelectionEmpty =>
-      'Выберите фото с камеры, изображение из галереи или PDF/изображение. MedStory сохранит оригинал только на этом устройстве и один раз отправит байты на обработку.';
+      'Выберите фото с камеры, изображение из галереи или PDF/изображение. MedStory сразу начнёт обработку.';
 
   @override
-  String get documentReviewTitle => 'Проверьте документ';
+  String get documentProcessingTitle => 'Обработка файла';
+
+  @override
+  String get documentReviewTitle => 'Выбранный документ';
 
   @override
   String get documentUntitledTitle => 'Документ';
@@ -196,11 +199,16 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get documentViewResultAction => 'Посмотреть результат';
+
+  @override
+  String get documentRetryAction => 'Выбрать другой файл';
+
+  @override
   String get documentUploadAction => 'Загрузить и обработать';
 
   @override
-  String get documentUploadIdle =>
-      'Готово к обработке, когда вы будете готовы.';
+  String get documentUploadIdle => 'Выберите файл, чтобы начать обработку.';
 
   @override
   String get documentUploadUploading =>
@@ -212,7 +220,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get documentUploadProcessed =>
-      'Обработка завершена. Открываем сведения о документе.';
+      'Обработка завершена. Можно посмотреть результат.';
 
   @override
   String get documentUploadFailedMessage =>
@@ -319,6 +327,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get documentStatusFailed => 'Ошибка';
+
+  @override
+  String get documentTypeMedicalRecord => 'Медицинская запись';
 
   @override
   String get documentTypeLabResult => 'Лабораторный результат';
@@ -624,6 +635,15 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get eventAiConfirmedNote =>
       'Вы подтвердили это событие, предложенное ИИ.';
+
+  @override
+  String get eventResultTitle => 'Результат';
+
+  @override
+  String get eventNotesTitle => 'Заметки';
+
+  @override
+  String get eventStructuredDetailsTitle => 'Детали';
 
   @override
   String eventConfidenceValue(String value) {

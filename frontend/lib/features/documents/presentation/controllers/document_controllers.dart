@@ -34,9 +34,15 @@ class DocumentUploadController extends AsyncNotifier<DocumentUploadState> {
           documentId: result.documentId,
         ),
       );
-      final document = await repository.pollDocumentUntilTerminal(
-        id: result.documentId,
-      );
+      late final MedicalDocument document;
+      try {
+        document = await repository.pollDocumentUntilTerminal(
+          id: result.documentId,
+        );
+      } on Object {
+        await _deleteFailedDocument(repository, result.documentId);
+        rethrow;
+      }
       state = AsyncValue.data(
         DocumentUploadState(
           stage: DocumentUploadStage.processed,
@@ -56,6 +62,17 @@ class DocumentUploadController extends AsyncNotifier<DocumentUploadState> {
     state = const AsyncValue.data(
       DocumentUploadState(stage: DocumentUploadStage.idle),
     );
+  }
+
+  Future<void> _deleteFailedDocument(
+    DocumentRepository repository,
+    String documentId,
+  ) async {
+    try {
+      await repository.deleteDocument(documentId);
+    } on Object {
+      // Do not hide the processing failure from the capture flow.
+    }
   }
 }
 

@@ -63,6 +63,7 @@ class Tag(models.Model):
 
 class Document(models.Model):
     class DocumentType(models.TextChoices):
+        MEDICAL_RECORD = "medical_record", "Medical record"
         LAB_RESULT = "lab_result", "Lab result"
         REPORT = "report", "Report"
         PRESCRIPTION = "prescription", "Prescription"

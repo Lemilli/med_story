@@ -63,6 +63,8 @@ abstract class DocumentStatusUpdate with _$DocumentStatusUpdate {
 }
 
 enum DocumentType {
+  @JsonValue('medical_record')
+  medicalRecord,
   @JsonValue('lab_result')
   labResult,
   report,
@@ -86,6 +88,7 @@ enum DocumentStatus {
 extension DocumentTypeApiName on DocumentType {
   String get apiName {
     return switch (this) {
+      DocumentType.medicalRecord => 'medical_record',
       DocumentType.labResult => 'lab_result',
       DocumentType.report => 'report',
       DocumentType.prescription => 'prescription',

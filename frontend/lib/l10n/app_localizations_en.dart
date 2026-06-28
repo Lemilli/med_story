@@ -158,10 +158,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentSelectionEmpty =>
-      'Choose a camera photo, gallery image, or PDF/image file. MedStory will store the original only on this device and send bytes once for processing.';
+      'Choose a camera photo, gallery image, or PDF/image file. MedStory will start processing it automatically.';
 
   @override
-  String get documentReviewTitle => 'Review document';
+  String get documentProcessingTitle => 'Processing upload';
+
+  @override
+  String get documentReviewTitle => 'Selected document';
 
   @override
   String get documentUntitledTitle => 'Document';
@@ -198,10 +201,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get documentViewResultAction => 'View result';
+
+  @override
+  String get documentRetryAction => 'Try another file';
+
+  @override
   String get documentUploadAction => 'Upload and process';
 
   @override
-  String get documentUploadIdle => 'Ready to process when you are.';
+  String get documentUploadIdle => 'Choose a file to start processing.';
 
   @override
   String get documentUploadUploading =>
@@ -213,7 +222,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentUploadProcessed =>
-      'Processing complete. Opening the document detail.';
+      'Processing complete. You can view the result now.';
 
   @override
   String get documentUploadFailedMessage =>
@@ -319,6 +328,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentStatusFailed => 'Failed';
+
+  @override
+  String get documentTypeMedicalRecord => 'Medical record';
 
   @override
   String get documentTypeLabResult => 'Lab result';
@@ -624,6 +636,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventAiConfirmedNote => 'You confirmed this AI-suggested event.';
+
+  @override
+  String get eventResultTitle => 'Result';
+
+  @override
+  String get eventNotesTitle => 'Notes';
+
+  @override
+  String get eventStructuredDetailsTitle => 'Details';
 
   @override
   String eventConfidenceValue(String value) {

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -76,11 +74,14 @@ class _EventDetailBody extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
           _Panel(
-            child: Text(
-              event.description.isEmpty
-                  ? l10n.eventDetailsEmptyDescription
-                  : event.description,
-              style: textTheme.bodyLarge?.copyWith(height: 1.45),
+            child: _DetailSection(
+              title: l10n.eventResultTitle,
+              child: Text(
+                event.description.isEmpty
+                    ? l10n.eventDetailsEmptyDescription
+                    : event.description,
+                style: textTheme.bodyLarge?.copyWith(height: 1.45),
+              ),
             ),
           ),
           if (event.tags.isNotEmpty) ...[
@@ -93,18 +94,16 @@ class _EventDetailBody extends ConsumerWidget {
                   .toList(),
             ),
           ],
-          if (event.attributes.isNotEmpty) ...[
+          if (_detailAttributes(event.attributes).isNotEmpty) ...[
             const SizedBox(height: AppSpacing.md),
             _Panel(
-              child: Text(
-                const JsonEncoder.withIndent('  ').convert(event.attributes),
-                style: textTheme.bodyMedium,
+              child: _DetailSection(
+                title: l10n.eventStructuredDetailsTitle,
+                child: _AttributeList(
+                  attributes: _detailAttributes(event.attributes),
+                ),
               ),
             ),
-          ],
-          if (event.source == EventSource.aiDocument) ...[
-            const SizedBox(height: AppSpacing.md),
-            _AiSourcePanel(event: event),
           ],
           const SizedBox(height: AppSpacing.lg),
           if (event.source == EventSource.aiDocument && !event.isConfirmed) ...[
@@ -134,6 +133,11 @@ class _EventDetailBody extends ConsumerWidget {
               ),
             ],
           ),
+          ..._bottomAttributePanels(context, event.attributes),
+          if (event.source == EventSource.aiDocument) ...[
+            const SizedBox(height: AppSpacing.md),
+            _AiSourcePanel(event: event),
+          ],
           const SizedBox(height: AppSpacing.lg),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,6 +194,121 @@ class _EventDetailBody extends ConsumerWidget {
         ),
       );
     }
+  }
+}
+
+List<Widget> _bottomAttributePanels(
+  BuildContext context,
+  Map<String, dynamic> attributes,
+) {
+  final l10n = context.l10n;
+  final panels = <Widget>[];
+  final result = attributes['result'];
+  final notes = attributes['notes'];
+  if (_hasAttributeValue(result)) {
+    panels.addAll([
+      const SizedBox(height: AppSpacing.md),
+      _Panel(
+        child: _DetailSection(
+          title: l10n.eventResultTitle,
+          child: Text(_formatAttributeValue(result)),
+        ),
+      ),
+    ]);
+  }
+  if (_hasAttributeValue(notes)) {
+    panels.addAll([
+      const SizedBox(height: AppSpacing.md),
+      _Panel(
+        child: _DetailSection(
+          title: l10n.eventNotesTitle,
+          child: Text(_formatAttributeValue(notes)),
+        ),
+      ),
+    ]);
+  }
+  return panels;
+}
+
+class _DetailSection extends StatelessWidget {
+  const _DetailSection({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: textTheme.titleSmall?.copyWith(
+            color: AppColors.patientInk,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        child,
+      ],
+    );
+  }
+}
+
+class _AttributeList extends StatelessWidget {
+  const _AttributeList({required this.attributes});
+
+  final Map<String, dynamic> attributes;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = attributes.entries.toList(growable: false);
+    return Column(
+      children: [
+        for (var index = 0; index < entries.length; index++) ...[
+          if (index > 0) const Divider(height: AppSpacing.lg),
+          _AttributeRow(entry: entries[index]),
+        ],
+      ],
+    );
+  }
+}
+
+class _AttributeRow extends StatelessWidget {
+  const _AttributeRow({required this.entry});
+
+  final MapEntry<String, dynamic> entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            _humanizeAttributeKey(entry.key),
+            style: textTheme.bodyMedium?.copyWith(
+              color: AppColors.secondaryInk,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          flex: 3,
+          child: Text(
+            _formatAttributeValue(entry.value),
+            style: textTheme.bodyMedium?.copyWith(
+              color: AppColors.patientInk,
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -269,4 +388,75 @@ class _Panel extends StatelessWidget {
       ),
     );
   }
+}
+
+String _humanizeAttributeKey(String key) {
+  final words = key
+      .replaceAll(RegExp(r'[_-]+'), ' ')
+      .replaceAllMapped(
+        RegExp(r'([a-z])([A-Z])'),
+        (match) => '${match.group(1)} ${match.group(2)}',
+      )
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty)
+      .toList(growable: false);
+  if (words.isEmpty) {
+    return key;
+  }
+  return words
+      .map(
+        (word) => word.length == 1
+            ? word.toUpperCase()
+            : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+      )
+      .join(' ');
+}
+
+Map<String, dynamic> _detailAttributes(Map<String, dynamic> attributes) {
+  return Map.fromEntries(
+    attributes.entries.where(
+      (entry) =>
+          entry.key != 'result' &&
+          entry.key != 'notes' &&
+          _hasAttributeValue(entry.value),
+    ),
+  );
+}
+
+bool _hasAttributeValue(Object? value) {
+  if (value == null) {
+    return false;
+  }
+  if (value is String) {
+    return value.trim().isNotEmpty;
+  }
+  if (value is Iterable) {
+    return value.any(_hasAttributeValue);
+  }
+  if (value is Map) {
+    return value.values.any(_hasAttributeValue);
+  }
+  return true;
+}
+
+String _formatAttributeValue(Object? value) {
+  if (value == null) {
+    return 'Not specified';
+  }
+  if (value is Iterable) {
+    return value.map(_formatAttributeValue).join(', ');
+  }
+  if (value is Map) {
+    return value.entries
+        .map((entry) {
+          final key = _humanizeAttributeKey(entry.key.toString());
+          return '$key: ${_formatAttributeValue(entry.value)}';
+        })
+        .join('\n');
+  }
+  if (value is bool) {
+    return value ? 'Yes' : 'No';
+  }
+  return value.toString();
 }

@@ -353,13 +353,19 @@ abstract class AppLocalizations {
   /// No description provided for @documentSelectionEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Choose a camera photo, gallery image, or PDF/image file. MedStory will store the original only on this device and send bytes once for processing.'**
+  /// **'Choose a camera photo, gallery image, or PDF/image file. MedStory will start processing it automatically.'**
   String get documentSelectionEmpty;
+
+  /// No description provided for @documentProcessingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing upload'**
+  String get documentProcessingTitle;
 
   /// No description provided for @documentReviewTitle.
   ///
   /// In en, this message translates to:
-  /// **'Review document'**
+  /// **'Selected document'**
   String get documentReviewTitle;
 
   /// No description provided for @documentUntitledTitle.
@@ -416,6 +422,18 @@ abstract class AppLocalizations {
   /// **'{mimeType} • {size}'**
   String documentFileMetadata(String mimeType, String size);
 
+  /// No description provided for @documentViewResultAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View result'**
+  String get documentViewResultAction;
+
+  /// No description provided for @documentRetryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another file'**
+  String get documentRetryAction;
+
   /// No description provided for @documentUploadAction.
   ///
   /// In en, this message translates to:
@@ -425,7 +443,7 @@ abstract class AppLocalizations {
   /// No description provided for @documentUploadIdle.
   ///
   /// In en, this message translates to:
-  /// **'Ready to process when you are.'**
+  /// **'Choose a file to start processing.'**
   String get documentUploadIdle;
 
   /// No description provided for @documentUploadUploading.
@@ -443,7 +461,7 @@ abstract class AppLocalizations {
   /// No description provided for @documentUploadProcessed.
   ///
   /// In en, this message translates to:
-  /// **'Processing complete. Opening the document detail.'**
+  /// **'Processing complete. You can view the result now.'**
   String get documentUploadProcessed;
 
   /// No description provided for @documentUploadFailedMessage.
@@ -619,6 +637,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed'**
   String get documentStatusFailed;
+
+  /// No description provided for @documentTypeMedicalRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical record'**
+  String get documentTypeMedicalRecord;
 
   /// No description provided for @documentTypeLabResult.
   ///
@@ -1177,6 +1201,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You confirmed this AI-suggested event.'**
   String get eventAiConfirmedNote;
+
+  /// No description provided for @eventResultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get eventResultTitle;
+
+  /// No description provided for @eventNotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get eventNotesTitle;
+
+  /// No description provided for @eventStructuredDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get eventStructuredDetailsTitle;
 
   /// No description provided for @eventConfidenceValue.
   ///

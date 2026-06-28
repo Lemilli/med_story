@@ -41,12 +41,18 @@ class DocumentRepository {
         localUriHint: localFile.localUriHint,
       ),
     );
-    final ingest = await api.ingestDocument(
-      documentId: created.id,
-      filePath: localFile.path,
-      fileName: localFile.fileName,
-      mimeType: localFile.mimeType,
-    );
+    late final DocumentStatusUpdate ingest;
+    try {
+      ingest = await api.ingestDocument(
+        documentId: created.id,
+        filePath: localFile.path,
+        fileName: localFile.fileName,
+        mimeType: localFile.mimeType,
+      );
+    } on Object {
+      await _deleteCreatedDocument(created.id);
+      rethrow;
+    }
     return DocumentIngestionResult(
       documentId: created.id,
       localFile: localFile,
@@ -76,6 +82,14 @@ class DocumentRepository {
 
   Future<void> deleteDocument(String id) {
     return api.deleteDocument(id);
+  }
+
+  Future<void> _deleteCreatedDocument(String id) async {
+    try {
+      await deleteDocument(id);
+    } on Object {
+      // Preserve the original upload/processing failure for retry messaging.
+    }
   }
 
   Future<MedicalDocument> pollDocumentUntilTerminal({
