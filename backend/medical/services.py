@@ -1,3 +1,6 @@
+import logging
+
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
@@ -10,6 +13,8 @@ STRUCTURING_SYSTEM_PROMPT = (
     "You are MedStory's assistant. You organize medical information for a non-medical reader. "
     "Do not diagnose, recommend treatments, or invent values that are not present in the source."
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_or_create_default_subject(user):
@@ -29,6 +34,19 @@ def get_or_create_default_subject(user):
 def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
     from medical.models import Document, MedicalEvent, ProcessingJob
 
+    job_id = getattr(job, "id", None)
+    logger.info(
+        "Document ingestion phase=start document_id=%s job_id=%s mime_type=%s size_bytes=%s ocr_provider=%s llm_provider=%s ocr_model=%s llm_model=%s",
+        document.id,
+        job_id,
+        mime_type,
+        len(file_bytes),
+        settings.AI_OCR_PROVIDER,
+        settings.AI_LLM_PROVIDER,
+        settings.AI_OPENAI_OCR_MODEL,
+        settings.AI_OPENAI_MODEL,
+    )
+
     now = timezone.now()
     if job is not None:
         job.status = ProcessingJob.Status.RUNNING
@@ -40,12 +58,32 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
 
     try:
         ocr_result = get_ocr_provider().extract_text(file_bytes=file_bytes, mime=mime_type)
+        logger.info(
+            "Document ingestion phase=ocr_complete document_id=%s job_id=%s extracted_text_length=%s language=%s",
+            document.id,
+            job_id,
+            len(ocr_result.text or ""),
+            ocr_result.language or "",
+        )
         structured_payload = get_llm_provider().complete_json(
             system=STRUCTURING_SYSTEM_PROMPT,
             user=ocr_result.text,
             schema=EVENT_EXTRACTION_JSON_SCHEMA,
         )
-        extraction = validate_event_extraction(structured_payload)
+        logger.info(
+            "Document ingestion phase=structured_output_complete document_id=%s job_id=%s top_level_keys=%s",
+            document.id,
+            job_id,
+            sorted(structured_payload.keys()) if isinstance(structured_payload, dict) else type(structured_payload).__name__,
+        )
+        extraction = validate_event_extraction(structured_payload, default_date=timezone.localdate())
+        logger.info(
+            "Document ingestion phase=validation_complete document_id=%s job_id=%s event_count=%s document_date=%s",
+            document.id,
+            job_id,
+            len(extraction["events"]),
+            extraction["document_date"],
+        )
 
         with transaction.atomic():
             document.extracted_text = ocr_result.text
@@ -97,10 +135,29 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
                 job.finished_at = timezone.now()
                 job.error_message = ""
                 job.save(update_fields=("status", "finished_at", "error_message", "updated_at"))
+        logger.info(
+            "Document ingestion phase=complete document_id=%s job_id=%s event_count=%s",
+            document.id,
+            job_id,
+            len(extraction["events"]),
+        )
     except (SchemaValidationError, ValueError) as exc:
+        logger.exception(
+            "Document ingestion phase=failed document_id=%s job_id=%s exception_type=%s error=%s",
+            document.id,
+            job_id,
+            exc.__class__.__name__,
+            exc,
+        )
         _mark_ingestion_failed(document=document, job=job, message=str(exc) or "Document processing failed.")
         raise
     except Exception as exc:
+        logger.exception(
+            "Document ingestion phase=failed document_id=%s job_id=%s exception_type=%s",
+            document.id,
+            job_id,
+            exc.__class__.__name__,
+        )
         _mark_ingestion_failed(document=document, job=job, message="Document processing failed.")
         raise exc
 

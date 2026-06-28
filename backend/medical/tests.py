@@ -1,4 +1,5 @@
 import base64
+import json
 from datetime import date
 from pathlib import Path
 from unittest.mock import patch
@@ -578,6 +579,140 @@ class AIProviderTests(SimpleTestCase):
         self.assertFalse(measurement_schema["additionalProperties"])
         self.assertFalse(medication_schema["additionalProperties"])
 
+    def test_event_extraction_normalizes_recoverable_model_output(self):
+        from ai.schemas import validate_event_extraction
+
+        long_title = "X" * 300
+        extraction = validate_event_extraction(
+            {
+                "document_date": "03.05.2024",
+                "suggested_title": long_title,
+                "events": [
+                    {
+                        "event_type": "lab_result",
+                        "title": long_title,
+                        "description": 123,
+                        "event_date": "04/05/2024",
+                        "attributes": [],
+                        "confidence": 1.7,
+                    },
+                    {
+                        "event_type": "not a known type",
+                        "title": "  Unknown thing  ",
+                        "description": None,
+                        "event_date": "bad date",
+                        "attributes": {"notes": "kept"},
+                        "confidence": "0.42",
+                    },
+                    {
+                        "event_type": "note",
+                        "title": "",
+                        "description": "Skipped because title is required",
+                        "event_date": "2024-05-06",
+                        "attributes": {},
+                        "confidence": 0.5,
+                    },
+                ],
+            },
+            default_date=date(2026, 6, 28),
+        )
+
+        self.assertEqual(extraction["document_date"], date(2024, 5, 3))
+        self.assertEqual(len(extraction["suggested_title"]), 255)
+        self.assertEqual(len(extraction["events"]), 2)
+
+        first_event = extraction["events"][0]
+        self.assertEqual(first_event["event_type"], "examination")
+        self.assertEqual(first_event["event_date"], date(2024, 5, 4))
+        self.assertEqual(len(first_event["title"]), 255)
+        self.assertEqual(first_event["description"], "123")
+        self.assertEqual(first_event["attributes"], {})
+        self.assertEqual(first_event["confidence"], 1.0)
+
+        second_event = extraction["events"][1]
+        self.assertEqual(second_event["event_type"], "note")
+        self.assertEqual(second_event["title"], "Unknown thing")
+        self.assertEqual(second_event["event_date"], date(2024, 5, 3))
+        self.assertEqual(second_event["confidence"], 0.42)
+
+    def test_event_extraction_defaults_missing_dates_to_today(self):
+        from ai.schemas import validate_event_extraction
+
+        extraction = validate_event_extraction(
+            {
+                "document_date": None,
+                "suggested_title": None,
+                "events": [
+                    {
+                        "event_type": "note",
+                        "title": "Undated note",
+                        "description": None,
+                        "event_date": None,
+                        "attributes": {},
+                        "confidence": None,
+                    },
+                ],
+            },
+            default_date=date(2026, 6, 28),
+        )
+
+        self.assertEqual(extraction["document_date"], date(2026, 6, 28))
+        self.assertEqual(extraction["events"][0]["event_date"], date(2026, 6, 28))
+        self.assertEqual(extraction["events"][0]["confidence"], 0.5)
+
+    @override_settings(
+        AI_OPENAI_API_KEY="test-key",
+        AI_OPENAI_MODEL="gpt-test-llm",
+        AI_OPENAI_TIMEOUT_SECONDS=12,
+    )
+    def test_openai_llm_provider_removes_unsupported_json_schema_keywords(self):
+        from ai.providers.openai import OpenAILLMProvider
+        from ai.schemas import EVENT_EXTRACTION_JSON_SCHEMA
+
+        fake_client = FakeOpenAIClient(output_text='{"document_date":null,"suggested_title":null,"events":[]}')
+
+        with patch("ai.providers.openai._build_client", return_value=fake_client):
+            result = OpenAILLMProvider().complete_json(
+                system="System prompt",
+                user="OCR text",
+                schema=EVENT_EXTRACTION_JSON_SCHEMA,
+            )
+
+        self.assertEqual(result["events"], [])
+        call = fake_client.responses.calls[0]
+        self.assertEqual(call["model"], "gpt-test-llm")
+        sent_schema = call["text"]["format"]["schema"]
+        serialized_schema = json.dumps(sent_schema)
+        self.assertNotIn('"format"', serialized_schema)
+        self.assertNotIn('"minLength"', serialized_schema)
+        self.assertNotIn('"maxLength"', serialized_schema)
+        self.assertNotIn('"minimum"', serialized_schema)
+        self.assertNotIn('"maximum"', serialized_schema)
+        self.assertEqual(EVENT_EXTRACTION_JSON_SCHEMA["properties"]["document_date"]["format"], "date")
+
+    @override_settings(AI_OPENAI_API_KEY="test-key", AI_OPENAI_MODEL="gpt-test-llm")
+    def test_openai_llm_provider_includes_api_error_body(self):
+        from ai.providers.openai import OpenAIProviderError, OpenAILLMProvider
+        from ai.schemas import EVENT_EXTRACTION_JSON_SCHEMA
+
+        fake_client = FakeOpenAIClient(output_text="")
+        fake_client.responses.error = FakeOpenAIAPIError(
+            status_code=400,
+            body={"error": {"message": "Invalid schema for response_format"}},
+        )
+
+        with patch("ai.providers.openai._build_client", return_value=fake_client):
+            with self.assertRaises(OpenAIProviderError) as raised:
+                OpenAILLMProvider().complete_json(
+                    system="System prompt",
+                    user="OCR text",
+                    schema=EVENT_EXTRACTION_JSON_SCHEMA,
+                )
+
+        message = str(raised.exception)
+        self.assertIn("OpenAI structured output request failed status=400", message)
+        self.assertIn("Invalid schema for response_format", message)
+
 
 class FakeOpenAIClient:
     def __init__(self, *, output_text):
@@ -588,7 +723,17 @@ class FakeOpenAIResponses:
     def __init__(self, *, output_text):
         self.output_text = output_text
         self.calls = []
+        self.error = None
 
     def create(self, **kwargs):
         self.calls.append(kwargs)
+        if self.error is not None:
+            raise self.error
         return type("OpenAIResponse", (), {"output_text": self.output_text})()
+
+
+class FakeOpenAIAPIError(Exception):
+    def __init__(self, *, status_code, body):
+        super().__init__("Bad request")
+        self.status_code = status_code
+        self.body = body
