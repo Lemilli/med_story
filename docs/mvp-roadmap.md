@@ -79,6 +79,7 @@ remain for deterministic local tests.
   voice capture is implemented.
 
 ### Phase 3 — Understanding (Explanations)
+**Status:** Implemented.
 **Goal:** plain-language explanations of documents (Scenario B).
 - Backend: `DocumentExplanation`, explanation task + endpoints, regenerate (language).
 - Frontend: explanation view (summary, key points, glossary), localization wiring.
