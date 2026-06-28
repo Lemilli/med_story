@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from medical.models import Document, MedicalEvent, ProcessingJob, Subject, Tag
+from medical.models import Document, DocumentExplanation, MedicalEvent, ProcessingJob, Subject, Tag
 
 
 @admin.register(Subject)
@@ -25,6 +25,14 @@ class DocumentAdmin(admin.ModelAdmin):
     list_filter = ("doc_type", "status", "deleted_at")
     search_fields = ("title", "mime_type", "user__email", "subject__display_name")
     readonly_fields = ("created_at", "updated_at", "deleted_at")
+
+
+@admin.register(DocumentExplanation)
+class DocumentExplanationAdmin(admin.ModelAdmin):
+    list_display = ("document", "language", "model_name", "created_at")
+    list_filter = ("language", "model_name")
+    search_fields = ("document__title", "summary_text", "document__user__email")
+    readonly_fields = ("created_at",)
 
 
 @admin.register(ProcessingJob)

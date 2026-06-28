@@ -16,11 +16,12 @@ from medical.serializers import (
     SUPPORTED_DOCUMENT_MIME_PREFIXES,
     SUPPORTED_DOCUMENT_MIME_TYPES,
     DocumentSerializer,
+    DocumentExplanationSerializer,
     MedicalEventSerializer,
     SubjectSerializer,
 )
 from medical.services import get_or_create_default_subject
-from medical.tasks import ingest_document_task
+from medical.tasks import explain_document_task, ingest_document_task
 
 
 class DocumentCursorPagination(CursorPagination):
@@ -290,3 +291,65 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
         if details is not None:
             payload["error"]["details"] = details
         return Response(payload, status=http_status)
+
+
+class DocumentExplanationView(DocumentQuerysetMixin, generics.GenericAPIView):
+    serializer_class = DocumentExplanationSerializer
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return self.get_base_queryset().prefetch_related("explanations")
+
+    def get(self, request, *args, **kwargs):
+        document = self.get_object()
+        explanation = document.explanations.order_by("-created_at").first()
+        if explanation is None:
+            return Response(
+                {
+                    "error": {
+                        "code": "not_ready",
+                        "message": "Document explanation is not ready yet.",
+                        "details": {"status": document.status},
+                    }
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(self.get_serializer(explanation).data, status=status.HTTP_200_OK)
+
+
+class DocumentExplanationRegenerateView(DocumentQuerysetMixin, generics.GenericAPIView):
+    serializer_class = DocumentExplanationSerializer
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return self.get_base_queryset()
+
+    def post(self, request, *args, **kwargs):
+        document = self.get_object()
+        if not document.extracted_text:
+            return Response(
+                {
+                    "error": {
+                        "code": "not_ready",
+                        "message": "Document text is not available for explanation.",
+                        "details": {"status": document.status},
+                    }
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        language = request.data.get("language") if isinstance(request.data, dict) else None
+        if language is not None and (not isinstance(language, str) or not language.strip()):
+            raise ValidationError({"language": ["language must be a non-empty string."]})
+
+        job = ProcessingJob.objects.create(
+            user=document.user,
+            document=document,
+            job_type=ProcessingJob.JobType.EXPLANATION,
+            status=ProcessingJob.Status.QUEUED,
+        )
+        result = explain_document_task.delay(str(document.id), str(job.id), language.strip() if isinstance(language, str) else None)
+        job.task_id = result.id or ""
+        job.save(update_fields=("task_id", "updated_at"))
+
+        return Response({"job_id": str(job.id), "status": ProcessingJob.Status.QUEUED}, status=status.HTTP_202_ACCEPTED)

@@ -5,7 +5,13 @@ from django.db import transaction
 from django.utils import timezone
 
 from ai.providers.factory import get_llm_provider, get_ocr_provider
-from ai.schemas import EVENT_EXTRACTION_JSON_SCHEMA, SchemaValidationError, validate_event_extraction
+from ai.schemas import (
+    DOCUMENT_EXPLANATION_JSON_SCHEMA,
+    EVENT_EXTRACTION_JSON_SCHEMA,
+    SchemaValidationError,
+    validate_document_explanation,
+    validate_event_extraction,
+)
 from medical.models import Subject
 
 
@@ -13,6 +19,17 @@ STRUCTURING_SYSTEM_PROMPT = (
     "You are MedStory's assistant. You organize medical information for a non-medical reader. "
     "Do not diagnose, recommend treatments, or invent values that are not present in the source."
 )
+
+EXPLANATION_SYSTEM_PROMPT = (
+    "You are MedStory's assistant. You explain medical documents in plain language for a "
+    "non-medical reader. Do not diagnose, recommend treatments, prescribe, or invent facts."
+)
+
+EXPLANATION_USER_PROMPT = """Explain this medical document in plain language.
+
+Return a concise summary, key points a patient can understand, and a glossary of medical terms.
+Explain what terms generally mean without giving medical advice or drawing conclusions beyond the
+source text. Write the explanation in {language}."""
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +101,11 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
             len(extraction["events"]),
             extraction["document_date"],
         )
+        explanation = _build_document_explanation(
+            document=document,
+            extracted_text=ocr_result.text,
+            language=_resolve_explanation_language(document=document),
+        )
 
         with transaction.atomic():
             document.extracted_text = ocr_result.text
@@ -130,6 +152,8 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
                     is_confirmed=False,
                 )
 
+            document.explanations.create(**explanation)
+
             if job is not None:
                 job.status = ProcessingJob.Status.SUCCEEDED
                 job.finished_at = timezone.now()
@@ -162,6 +186,65 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
         raise exc
 
 
+def process_document_explanation(*, document, language=None, job=None):
+    from medical.models import ProcessingJob
+
+    job_id = getattr(job, "id", None)
+    now = timezone.now()
+    if job is not None:
+        job.status = ProcessingJob.Status.RUNNING
+        job.attempts += 1
+        job.started_at = now
+        job.finished_at = None
+        job.error_message = ""
+        job.save(update_fields=("status", "attempts", "started_at", "finished_at", "error_message", "updated_at"))
+
+    try:
+        if not document.extracted_text:
+            raise ValueError("Document text is not available for explanation.")
+
+        explanation = _build_document_explanation(
+            document=document,
+            extracted_text=document.extracted_text,
+            language=_resolve_explanation_language(document=document, requested_language=language),
+        )
+        with transaction.atomic():
+            document.explanations.create(**explanation)
+            if job is not None:
+                job.status = ProcessingJob.Status.SUCCEEDED
+                job.finished_at = timezone.now()
+                job.error_message = ""
+                job.save(update_fields=("status", "finished_at", "error_message", "updated_at"))
+    except (SchemaValidationError, ValueError) as exc:
+        _mark_explanation_failed(job=job, message=str(exc) or "Document explanation failed.")
+        raise
+    except Exception as exc:
+        _mark_explanation_failed(job=job, message="Document explanation failed.")
+        raise exc
+
+
+def _build_document_explanation(*, document, extracted_text, language):
+    provider = get_llm_provider()
+    payload = provider.complete_json(
+        system=EXPLANATION_SYSTEM_PROMPT,
+        user=extracted_text,
+        schema=DOCUMENT_EXPLANATION_JSON_SCHEMA,
+        user_prompt=EXPLANATION_USER_PROMPT.format(language=language),
+        schema_name="document_explanation",
+    )
+    explanation = validate_document_explanation(payload)
+    explanation["language"] = language
+    explanation["model_name"] = getattr(provider, "model", settings.AI_LLM_PROVIDER)
+    return explanation
+
+
+def _resolve_explanation_language(*, document, requested_language=None):
+    for value in (requested_language, getattr(document.user, "locale", None), document.language, "en"):
+        if isinstance(value, str) and value.strip():
+            return value.strip()[:10]
+    return "en"
+
+
 def _mark_ingestion_failed(*, document, job, message):
     from medical.models import Document, ProcessingJob
 
@@ -175,3 +258,16 @@ def _mark_ingestion_failed(*, document, job, message):
             job.error_message = sanitized_message
             job.finished_at = timezone.now()
             job.save(update_fields=("status", "error_message", "finished_at", "updated_at"))
+
+
+def _mark_explanation_failed(*, job, message):
+    from medical.models import ProcessingJob
+
+    if job is None:
+        return
+
+    sanitized_message = message[:500]
+    job.status = ProcessingJob.Status.FAILED
+    job.error_message = sanitized_message
+    job.finished_at = timezone.now()
+    job.save(update_fields=("status", "error_message", "finished_at", "updated_at"))

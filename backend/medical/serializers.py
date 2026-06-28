@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 
-from medical.models import Document, MedicalEvent, Subject, Tag
+from medical.models import Document, DocumentExplanation, MedicalEvent, Subject, Tag
 from medical.services import get_or_create_default_subject
 
 
@@ -201,7 +201,9 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.BooleanField())
     def get_explanation_available(self, obj):
-        return False
+        if not obj.pk:
+            return False
+        return obj.explanations.exists()
 
     @extend_schema_field(serializers.IntegerField())
     def get_event_count(self, obj):
@@ -256,3 +258,23 @@ class DocumentSerializer(serializers.ModelSerializer):
             subject=self._resolve_subject(validated_data),
             **validated_data,
         )
+
+
+class DocumentExplanationSerializer(serializers.ModelSerializer):
+    document_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DocumentExplanation
+        fields = (
+            "document_id",
+            "summary_text",
+            "key_points",
+            "glossary",
+            "language",
+            "created_at",
+        )
+        read_only_fields = fields
+
+    @extend_schema_field(serializers.UUIDField())
+    def get_document_id(self, obj):
+        return str(obj.document_id)

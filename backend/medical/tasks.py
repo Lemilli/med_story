@@ -4,7 +4,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from medical.models import Document, ProcessingJob
-from medical.services import process_document_ingestion
+from medical.services import process_document_explanation, process_document_ingestion
 
 
 logger = get_task_logger(__name__)
@@ -47,4 +47,34 @@ def ingest_document_task(document_id, job_id, file_bytes_b64, mime_type):
         }
 
     logger.info("Document ingestion processed document_id=%s job_id=%s", document.id, job_id)
+    return {"status": "processed", "document_id": str(document.id)}
+
+
+@shared_task
+def explain_document_task(document_id, job_id, language=None):
+    document = Document.objects.select_related("user", "subject").get(id=document_id, deleted_at__isnull=True)
+    job = ProcessingJob.objects.filter(id=job_id, document=document).first()
+
+    logger.info(
+        "Starting document explanation document_id=%s job_id=%s language=%s",
+        document.id,
+        job_id,
+        language or "",
+    )
+    try:
+        process_document_explanation(document=document, language=language, job=job)
+    except Exception as exc:
+        logger.exception(
+            "Document explanation failed document_id=%s job_id=%s exception_type=%s",
+            document.id,
+            job_id,
+            exc.__class__.__name__,
+        )
+        return {
+            "status": "failed",
+            "document_id": str(document.id),
+            "error": getattr(job, "error_message", ""),
+        }
+
+    logger.info("Document explanation processed document_id=%s job_id=%s", document.id, job_id)
     return {"status": "processed", "document_id": str(document.id)}

@@ -2,7 +2,30 @@ from ai.providers.base import OCRResult
 
 
 class MockLLMProvider:
-    def complete_json(self, *, system: str, user: str, schema: dict) -> dict:
+    model = "mock"
+
+    def complete_json(
+        self,
+        *,
+        system: str,
+        user: str,
+        schema: dict,
+        user_prompt: str | None = None,
+        schema_name: str = "medical_event_extraction",
+    ) -> dict:
+        if "summary_text" in schema.get("properties", {}):
+            return {
+                "summary_text": "This document contains medical information in plain language.",
+                "key_points": [
+                    "Review the extracted details and confirm anything important.",
+                    "Ask a clinician if anything is unclear or concerning.",
+                ],
+                "glossary": {
+                    "CRP": "C-reactive protein, a blood marker that can be related to inflammation.",
+                    "CBC": "Complete blood count, a common blood test.",
+                },
+            }
+
         normalized = user.casefold()
         if "c-reactive protein" in normalized or "crp" in normalized:
             return {

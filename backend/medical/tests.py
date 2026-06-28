@@ -12,7 +12,7 @@ from rest_framework.test import APITestCase
 
 from ai.providers.base import OCRResult
 from ai.schemas import SchemaValidationError
-from medical.models import Document, MedicalEvent, ProcessingJob, Subject
+from medical.models import Document, DocumentExplanation, MedicalEvent, ProcessingJob, Subject
 
 
 TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
@@ -312,6 +312,8 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(document.language, "en")
         self.assertEqual(document.document_date, date(2026, 5, 12))
         self.assertEqual(document.medical_events.count(), 1)
+        self.assertEqual(document.explanations.count(), 1)
+        self.assertTrue(document.explanations.get().summary_text)
 
         event = document.medical_events.get()
         self.assertEqual(event.event_type, MedicalEvent.EventType.EXAMINATION)
@@ -328,6 +330,124 @@ class MedicalApiTests(APITestCase):
         confirm_response = self.client.post(f"/api/v1/events/{event.id}/confirm")
         self.assertEqual(confirm_response.status_code, status.HTTP_200_OK)
         self.assertTrue(confirm_response.data["is_confirmed"])
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_document_explanation_detail_and_availability(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+
+        ingest_response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("lab.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+        detail_response = self.client.get(f"/api/v1/documents/{document.id}")
+        explanation_response = self.client.get(f"/api/v1/documents/{document.id}/explanation")
+
+        self.assertEqual(ingest_response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertTrue(detail_response.data["explanation_available"])
+        self.assertEqual(explanation_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(explanation_response.data["document_id"], str(document.id))
+        self.assertTrue(explanation_response.data["summary_text"])
+        self.assertIsInstance(explanation_response.data["key_points"], list)
+        self.assertIsInstance(explanation_response.data["glossary"], dict)
+
+    def test_missing_document_explanation_returns_not_ready(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+
+        response = self.client.get(f"/api/v1/documents/{document.id}/explanation")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data["error"]["code"], "not_ready")
+
+    def test_document_explanation_cross_user_is_hidden(self):
+        other_subject = Subject.objects.create(
+            user=self.other_user,
+            display_name="Other User",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+        other_document = Document.objects.create(
+            user=self.other_user,
+            subject=other_subject,
+            title="Other lab",
+            doc_type=Document.DocumentType.LAB_RESULT,
+            mime_type="application/pdf",
+            size_bytes=128,
+            extracted_text="CRP 12 mg/L",
+            status=Document.Status.PROCESSED,
+        )
+        DocumentExplanation.objects.create(
+            document=other_document,
+            summary_text="Other explanation",
+            key_points=["Hidden"],
+            glossary={},
+            language="en",
+            model_name="mock",
+        )
+
+        response = self.client.get(f"/api/v1/documents/{other_document.id}/explanation")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_regenerate_document_explanation_accepts_language_and_returns_latest(self):
+        document = self._create_processed_document(extracted_text="CRP 12 mg/L")
+        older = DocumentExplanation.objects.create(
+            document=document,
+            summary_text="Old explanation",
+            key_points=["Old"],
+            glossary={},
+            language="en",
+            model_name="mock",
+        )
+
+        response = self.client.post(
+            f"/api/v1/documents/{document.id}/explanation/regenerate",
+            {"language": "ru"},
+            format="json",
+        )
+        detail_response = self.client.get(f"/api/v1/documents/{document.id}/explanation")
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(ProcessingJob.objects.get(id=response.data["job_id"]).status, ProcessingJob.Status.SUCCEEDED)
+        self.assertEqual(document.explanations.count(), 2)
+        self.assertEqual(detail_response.data["language"], "ru")
+        self.assertNotEqual(detail_response.data["summary_text"], older.summary_text)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_regenerate_document_explanation_defaults_to_user_locale(self):
+        self.user.locale = "ru"
+        self.user.save(update_fields=("locale",))
+        document = self._create_processed_document(extracted_text="CRP 12 mg/L", language="kk")
+
+        response = self.client.post(f"/api/v1/documents/{document.id}/explanation/regenerate", {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(document.explanations.latest("created_at").language, "ru")
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_regenerate_failure_marks_job_failed_and_preserves_existing_explanation(self):
+        document = self._create_processed_document(extracted_text="CRP 12 mg/L")
+        existing = DocumentExplanation.objects.create(
+            document=document,
+            summary_text="Existing explanation",
+            key_points=["Keep"],
+            glossary={},
+            language="en",
+            model_name="mock",
+        )
+
+        with patch(
+            "medical.services.validate_document_explanation",
+            side_effect=SchemaValidationError("invalid explanation"),
+        ):
+            response = self.client.post(f"/api/v1/documents/{document.id}/explanation/regenerate", {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        job = ProcessingJob.objects.get(id=response.data["job_id"])
+        self.assertEqual(job.status, ProcessingJob.Status.FAILED)
+        self.assertEqual(list(document.explanations.values_list("id", flat=True)), [existing.id])
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_prescription_creates_medication_event(self):
@@ -366,9 +486,18 @@ class MedicalApiTests(APITestCase):
                 )
 
         class AssetLLMProvider:
-            def complete_json(self, *, system, user, schema):
+            model = "asset-llm"
+
+            def complete_json(self, *, system, user, schema, user_prompt=None, schema_name="medical_event_extraction"):
                 captured["llm_user"] = user
                 captured["llm_schema"] = schema
+                if "summary_text" in schema.get("properties", {}):
+                    captured["explanation_prompt"] = user_prompt
+                    return {
+                        "summary_text": "A plain-language explanation of the blood test.",
+                        "key_points": ["Hemoglobin and platelets were listed."],
+                        "glossary": {"Hemoglobin": "A protein in red blood cells."},
+                    }
                 return {
                     "document_date": "2024-05-03",
                     "suggested_title": "Olymp blood test results",
@@ -409,6 +538,7 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(document.language, "ru")
         self.assertEqual(document.document_date, date(2024, 5, 3))
         self.assertEqual(document.title, "Olymp blood test results")
+        self.assertTrue(document.explanations.exists())
 
         event = document.medical_events.get()
         self.assertEqual(event.event_type, MedicalEvent.EventType.EXAMINATION)
@@ -533,6 +663,14 @@ class MedicalApiTests(APITestCase):
             mime_type=mime_type,
             size_bytes=128,
         )
+
+    def _create_processed_document(self, *, extracted_text, language="en"):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        document.extracted_text = extracted_text
+        document.language = language
+        document.status = Document.Status.PROCESSED
+        document.save(update_fields=("extracted_text", "language", "status", "updated_at"))
+        return document
 
     def _upload(self, name, payload, content_type):
         return SimpleUploadedFile(name, payload, content_type=content_type)
@@ -660,6 +798,46 @@ class AIProviderTests(SimpleTestCase):
         self.assertEqual(extraction["events"][0]["event_date"], date(2026, 6, 28))
         self.assertEqual(extraction["events"][0]["confidence"], 0.5)
 
+    def test_document_explanation_validation_normalizes_recoverable_output(self):
+        from ai.schemas import validate_document_explanation
+
+        explanation = validate_document_explanation(
+            {
+                "summary_text": "  Plain explanation  ",
+                "key_points": [" First point ", "", 123, "Second point"],
+                "glossary": {" CRP ": " Inflammation marker ", "bad": 123, "": "missing term"},
+            }
+        )
+
+        self.assertEqual(explanation["summary_text"], "Plain explanation")
+        self.assertEqual(explanation["key_points"], ["First point", "Second point"])
+        self.assertEqual(explanation["glossary"], {"CRP": "Inflammation marker"})
+
+    def test_document_explanation_validation_rejects_unusable_output(self):
+        from ai.schemas import SchemaValidationError, validate_document_explanation
+
+        with self.assertRaises(SchemaValidationError):
+            validate_document_explanation({"summary_text": "", "key_points": [], "glossary": {}})
+
+        with self.assertRaises(SchemaValidationError):
+            validate_document_explanation({"summary_text": "Summary", "key_points": {}, "glossary": {}})
+
+    def test_mock_llm_provider_returns_document_explanation(self):
+        from ai.providers.mock import MockLLMProvider
+        from ai.schemas import DOCUMENT_EXPLANATION_JSON_SCHEMA
+
+        payload = MockLLMProvider().complete_json(
+            system="Explain",
+            user="CRP 12 mg/L",
+            schema=DOCUMENT_EXPLANATION_JSON_SCHEMA,
+            user_prompt="Explain in en",
+            schema_name="document_explanation",
+        )
+
+        self.assertIn("summary_text", payload)
+        self.assertIsInstance(payload["key_points"], list)
+        self.assertIsInstance(payload["glossary"], dict)
+
     @override_settings(
         AI_OPENAI_API_KEY="test-key",
         AI_OPENAI_MODEL="gpt-test-llm",
@@ -689,6 +867,35 @@ class AIProviderTests(SimpleTestCase):
         self.assertNotIn('"minimum"', serialized_schema)
         self.assertNotIn('"maximum"', serialized_schema)
         self.assertEqual(EVENT_EXTRACTION_JSON_SCHEMA["properties"]["document_date"]["format"], "date")
+
+    @override_settings(
+        AI_OPENAI_API_KEY="test-key",
+        AI_OPENAI_MODEL="gpt-test-llm",
+        AI_OPENAI_TIMEOUT_SECONDS=12,
+    )
+    def test_openai_llm_provider_uses_explanation_prompt_and_schema_name(self):
+        from ai.providers.openai import EVENT_EXTRACTION_USER_PROMPT, OpenAILLMProvider
+        from ai.schemas import DOCUMENT_EXPLANATION_JSON_SCHEMA
+
+        fake_client = FakeOpenAIClient(
+            output_text='{"summary_text":"Summary","key_points":["Point"],"glossary":{"CRP":"Definition"}}'
+        )
+
+        with patch("ai.providers.openai._build_client", return_value=fake_client):
+            result = OpenAILLMProvider().complete_json(
+                system="Explanation system",
+                user="OCR text",
+                schema=DOCUMENT_EXPLANATION_JSON_SCHEMA,
+                user_prompt="Explain this document in ru.",
+                schema_name="document_explanation",
+            )
+
+        self.assertEqual(result["summary_text"], "Summary")
+        call = fake_client.responses.calls[0]
+        self.assertEqual(call["text"]["format"]["name"], "document_explanation")
+        user_text = call["input"][1]["content"][0]["text"]
+        self.assertIn("Explain this document in ru.", user_text)
+        self.assertNotIn(EVENT_EXTRACTION_USER_PROMPT, user_text)
 
     @override_settings(AI_OPENAI_API_KEY="test-key", AI_OPENAI_MODEL="gpt-test-llm")
     def test_openai_llm_provider_includes_api_error_body(self):

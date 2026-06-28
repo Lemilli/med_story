@@ -40,7 +40,16 @@ class OpenAILLMProvider:
         self.client = _build_client()
         self.model = settings.AI_OPENAI_MODEL
 
-    def complete_json(self, *, system: str, user: str, schema: dict) -> dict:
+    def complete_json(
+        self,
+        *,
+        system: str,
+        user: str,
+        schema: dict,
+        user_prompt: str | None = None,
+        schema_name: str = "medical_event_extraction",
+    ) -> dict:
+        prompt = user_prompt or EVENT_EXTRACTION_USER_PROMPT
         try:
             response = self.client.responses.create(
                 model=self.model,
@@ -51,13 +60,13 @@ class OpenAILLMProvider:
                     },
                     {
                         "role": "user",
-                        "content": [{"type": "input_text", "text": f"{EVENT_EXTRACTION_USER_PROMPT}\n\n{user}"}],
+                        "content": [{"type": "input_text", "text": f"{prompt}\n\n{user}"}],
                     },
                 ],
                 text={
                     "format": {
                         "type": "json_schema",
-                        "name": "medical_event_extraction",
+                        "name": schema_name,
                         "schema": _openai_structured_output_schema(schema),
                         "strict": True,
                     }

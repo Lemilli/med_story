@@ -9,7 +9,15 @@ class OCRResult:
 
 
 class LLMProvider(Protocol):
-    def complete_json(self, *, system: str, user: str, schema: dict) -> dict:
+    def complete_json(
+        self,
+        *,
+        system: str,
+        user: str,
+        schema: dict,
+        user_prompt: str | None = None,
+        schema_name: str = "medical_event_extraction",
+    ) -> dict:
         """Return schema-constrained JSON from an LLM provider."""
 
 

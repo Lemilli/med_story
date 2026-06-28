@@ -112,6 +112,7 @@ class Document(models.Model):
 class ProcessingJob(models.Model):
     class JobType(models.TextChoices):
         INGESTION = "ingestion", "Ingestion"
+        EXPLANATION = "explanation", "Explanation"
 
     class Status(models.TextChoices):
         QUEUED = "queued", "Queued"
@@ -142,6 +143,27 @@ class ProcessingJob(models.Model):
 
     def __str__(self):
         return f"{self.job_type}:{self.document_id}:{self.status}"
+
+
+class DocumentExplanation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="explanations")
+    summary_text = models.TextField()
+    key_points = models.JSONField(default=list, blank=True)
+    glossary = models.JSONField(default=dict, blank=True)
+    model_name = models.CharField(max_length=255)
+    language = models.CharField(max_length=10)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=("document", "-created_at"), name="expl_doc_created_idx"),
+            models.Index(fields=("language",), name="expl_language_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.document_id}:{self.language}:{self.created_at:%Y-%m-%d}"
 
 
 class MedicalEvent(models.Model):

@@ -116,6 +116,23 @@ EVENT_EXTRACTION_JSON_SCHEMA = {
     },
 }
 
+DOCUMENT_EXPLANATION_JSON_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["summary_text", "key_points", "glossary"],
+    "properties": {
+        "summary_text": {"type": "string", "minLength": 1},
+        "key_points": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+        },
+        "glossary": {
+            "type": "object",
+            "additionalProperties": {"type": "string", "minLength": 1},
+        },
+    },
+}
+
 
 class SchemaValidationError(ValueError):
     pass
@@ -146,6 +163,37 @@ def validate_event_extraction(payload: dict[str, Any], *, default_date: date | N
         "document_date": document_date,
         "suggested_title": _truncate_text(suggested_title.strip(), 255) if isinstance(suggested_title, str) else None,
         "events": events,
+    }
+
+
+def validate_document_explanation(payload: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise SchemaValidationError("Explanation output must be an object.")
+
+    summary_text = payload.get("summary_text")
+    if not isinstance(summary_text, str) or not summary_text.strip():
+        raise SchemaValidationError("summary_text is required.")
+
+    raw_key_points = payload.get("key_points")
+    if not isinstance(raw_key_points, list):
+        raise SchemaValidationError("key_points must be a list.")
+    key_points = []
+    for point in raw_key_points:
+        if isinstance(point, str) and point.strip():
+            key_points.append(point.strip())
+
+    raw_glossary = payload.get("glossary")
+    if not isinstance(raw_glossary, dict):
+        raise SchemaValidationError("glossary must be an object.")
+    glossary = {}
+    for term, definition in raw_glossary.items():
+        if isinstance(term, str) and term.strip() and isinstance(definition, str) and definition.strip():
+            glossary[term.strip()] = definition.strip()
+
+    return {
+        "summary_text": summary_text.strip(),
+        "key_points": key_points,
+        "glossary": glossary,
     }
 
 
