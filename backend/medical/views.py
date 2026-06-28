@@ -1,13 +1,42 @@
+import base64
+
 from django.db.models import Q
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import CursorPagination
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from medical.models import MedicalEvent, Subject
+from medical.models import Document, MedicalEvent, ProcessingJob, Subject
 from medical.pagination import TimelineCursorPagination
-from medical.serializers import MedicalEventSerializer, SubjectSerializer
+from medical.serializers import (
+    MAX_DOCUMENT_SIZE_BYTES,
+    SUPPORTED_DOCUMENT_MIME_PREFIXES,
+    SUPPORTED_DOCUMENT_MIME_TYPES,
+    DocumentSerializer,
+    MedicalEventSerializer,
+    SubjectSerializer,
+)
 from medical.services import get_or_create_default_subject
+from medical.tasks import ingest_document_task
+
+
+class DocumentCursorPagination(CursorPagination):
+    page_size = 20
+    page_size_query_param = "limit"
+    max_page_size = 100
+    ordering = ("-created_at",)
+
+    def get_paginated_response(self, data):
+        return Response(
+            {
+                "results": data,
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+            }
+        )
 
 
 class SubjectListCreateView(generics.ListCreateAPIView):
@@ -122,3 +151,142 @@ class ConfirmEventView(MedicalEventQuerysetMixin, generics.GenericAPIView):
         event.is_confirmed = True
         event.save(update_fields=("is_confirmed", "updated_at"))
         return Response(MedicalEventSerializer(event, context={"request": request}).data, status=status.HTTP_200_OK)
+
+
+class DocumentQuerysetMixin:
+    def get_base_queryset(self):
+        return (
+            Document.objects.filter(user=self.request.user, deleted_at__isnull=True)
+            .select_related("subject")
+        )
+
+    def resolve_subject(self):
+        subject_id = self.request.query_params.get("subject_id")
+        if not subject_id:
+            return get_or_create_default_subject(self.request.user)
+
+        subject = Subject.objects.filter(id=subject_id, user=self.request.user).first()
+        if not subject:
+            raise ValidationError({"subject_id": ["Subject not found."]})
+        return subject
+
+    def apply_document_filters(self, queryset):
+        queryset = queryset.filter(subject=self.resolve_subject())
+
+        doc_type = self.request.query_params.get("doc_type")
+        if doc_type:
+            valid_doc_types = {choice for choice, _ in Document.DocumentType.choices}
+            if doc_type not in valid_doc_types:
+                raise ValidationError({"doc_type": ["Unsupported document type."]})
+            queryset = queryset.filter(doc_type=doc_type)
+
+        status_value = self.request.query_params.get("status")
+        if status_value:
+            valid_statuses = {choice for choice, _ in Document.Status.choices}
+            if status_value not in valid_statuses:
+                raise ValidationError({"status": ["Unsupported document status."]})
+            queryset = queryset.filter(status=status_value)
+
+        return queryset
+
+
+class DocumentListCreateView(DocumentQuerysetMixin, generics.ListCreateAPIView):
+    serializer_class = DocumentSerializer
+    pagination_class = DocumentCursorPagination
+
+    def get_queryset(self):
+        return self.apply_document_filters(self.get_base_queryset())
+
+
+class DocumentDetailView(DocumentQuerysetMixin, generics.RetrieveDestroyAPIView):
+    serializer_class = DocumentSerializer
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return self.get_base_queryset()
+
+    def perform_destroy(self, instance):
+        deleted_at = timezone.now()
+        with transaction.atomic():
+            instance.deleted_at = deleted_at
+            instance.save(update_fields=("deleted_at", "updated_at"))
+            instance.medical_events.filter(deleted_at__isnull=True).update(deleted_at=deleted_at)
+
+
+class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
+    serializer_class = DocumentSerializer
+    lookup_url_kwarg = "id"
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self):
+        return self.get_base_queryset()
+
+    def post(self, request, *args, **kwargs):
+        document = self.get_object()
+        if document.status in (Document.Status.PROCESSING, Document.Status.PROCESSED):
+            return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
+
+        upload = request.FILES.get("file")
+        if upload is None:
+            return self._error_response(
+                code="validation_error",
+                message="file is required.",
+                http_status=status.HTTP_400_BAD_REQUEST,
+                details={"file": ["This field is required."]},
+            )
+
+        if upload.size > MAX_DOCUMENT_SIZE_BYTES:
+            return self._error_response(
+                code="file_too_large",
+                message="File must be 5 MB or smaller.",
+                http_status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            )
+
+        mime_type = self._resolve_mime_type(request, upload, document)
+        if not self._is_supported_mime_type(mime_type):
+            return self._error_response(
+                code="unsupported_mime_type",
+                message="Unsupported MIME type.",
+                http_status=status.HTTP_400_BAD_REQUEST,
+                details={"mime_type": ["Only PDF and image files are supported in Phase 2."]},
+            )
+
+        file_bytes = upload.read()
+        with transaction.atomic():
+            document.status = Document.Status.PROCESSING
+            document.error_message = ""
+            document.mime_type = mime_type
+            document.size_bytes = upload.size
+            document.save(update_fields=("status", "error_message", "mime_type", "size_bytes", "updated_at"))
+            job = ProcessingJob.objects.create(
+                user=document.user,
+                document=document,
+                status=ProcessingJob.Status.QUEUED,
+            )
+
+        result = ingest_document_task.delay(
+            str(document.id),
+            str(job.id),
+            base64.b64encode(file_bytes).decode("ascii"),
+            mime_type,
+        )
+        job.task_id = result.id or ""
+        job.save(update_fields=("task_id", "updated_at"))
+        document.refresh_from_db()
+
+        return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
+
+    def _resolve_mime_type(self, request, upload, document):
+        mime_type = request.data.get("mime_type") or getattr(upload, "content_type", None) or document.mime_type
+        return (mime_type or "").strip().lower()
+
+    def _is_supported_mime_type(self, mime_type):
+        if mime_type in SUPPORTED_DOCUMENT_MIME_TYPES:
+            return True
+        return any(mime_type.startswith(prefix) for prefix in SUPPORTED_DOCUMENT_MIME_PREFIXES)
+
+    def _error_response(self, *, code, message, http_status, details=None):
+        payload = {"error": {"code": code, "message": message}}
+        if details is not None:
+            payload["error"]["details"] = details
+        return Response(payload, status=http_status)

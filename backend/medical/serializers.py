@@ -1,8 +1,13 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 
-from medical.models import MedicalEvent, Subject, Tag
+from medical.models import Document, MedicalEvent, Subject, Tag
 from medical.services import get_or_create_default_subject
+
+
+MAX_DOCUMENT_SIZE_BYTES = 5 * 1024 * 1024
+SUPPORTED_DOCUMENT_MIME_TYPES = {"application/pdf"}
+SUPPORTED_DOCUMENT_MIME_PREFIXES = ("image/",)
 
 
 @extend_schema_field(serializers.ListField(child=serializers.CharField()))
@@ -81,7 +86,9 @@ class MedicalEventSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.UUIDField(allow_null=True))
     def get_source_document_id(self, obj):
-        return None
+        if obj.source_document_id is None:
+            return None
+        return str(obj.source_document_id)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -137,3 +144,115 @@ class MedicalEventSerializer(serializers.ModelSerializer):
         if tag_names is not None:
             self._set_tags(instance, tag_names)
         return instance
+
+
+class DocumentSerializer(serializers.ModelSerializer):
+    subject_id = serializers.UUIDField(required=False, write_only=True)
+    local_only = serializers.SerializerMethodField()
+    extracted_text_available = serializers.SerializerMethodField()
+    explanation_available = serializers.SerializerMethodField()
+    event_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = (
+            "id",
+            "subject_id",
+            "title",
+            "doc_type",
+            "mime_type",
+            "local_uri_hint",
+            "size_bytes",
+            "status",
+            "extracted_text_available",
+            "language",
+            "document_date",
+            "error_message",
+            "local_only",
+            "explanation_available",
+            "event_count",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "extracted_text_available",
+            "language",
+            "error_message",
+            "local_only",
+            "explanation_available",
+            "event_count",
+            "created_at",
+            "updated_at",
+        )
+        extra_kwargs = {
+            "status": {"required": False},
+            "local_uri_hint": {"required": False, "allow_blank": True},
+            "document_date": {"required": False, "allow_null": True},
+        }
+
+    @extend_schema_field(serializers.BooleanField())
+    def get_local_only(self, obj):
+        return True
+
+    @extend_schema_field(serializers.BooleanField())
+    def get_extracted_text_available(self, obj):
+        return bool(obj.extracted_text)
+
+    @extend_schema_field(serializers.BooleanField())
+    def get_explanation_available(self, obj):
+        return False
+
+    @extend_schema_field(serializers.IntegerField())
+    def get_event_count(self, obj):
+        if not obj.pk:
+            return 0
+        return obj.medical_events.filter(deleted_at__isnull=True).count()
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["subject_id"] = str(instance.subject_id)
+        return data
+
+    def validate_subject_id(self, value):
+        user = self.context["request"].user
+        if not Subject.objects.filter(id=value, user=user).exists():
+            raise serializers.ValidationError("Subject not found.")
+        return value
+
+    def validate_mime_type(self, value):
+        mime_type = value.strip().lower()
+        if not mime_type:
+            raise serializers.ValidationError("mime_type is required.")
+        if mime_type in SUPPORTED_DOCUMENT_MIME_TYPES:
+            return mime_type
+        if any(mime_type.startswith(prefix) for prefix in SUPPORTED_DOCUMENT_MIME_PREFIXES):
+            return mime_type
+        raise serializers.ValidationError("Unsupported MIME type.")
+
+    def validate_size_bytes(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("size_bytes must be greater than zero.")
+        if value > MAX_DOCUMENT_SIZE_BYTES:
+            raise serializers.ValidationError("size_bytes must be 5 MB or smaller.")
+        return value
+
+    def validate_status(self, value):
+        if self.instance is None and value != Document.Status.PENDING_INGEST:
+            raise serializers.ValidationError("New documents must start as pending_ingest.")
+        return value
+
+    def _resolve_subject(self, validated_data):
+        subject_id = validated_data.pop("subject_id", None)
+        if subject_id:
+            return Subject.objects.get(id=subject_id, user=self.context["request"].user)
+        return get_or_create_default_subject(self.context["request"].user)
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        validated_data.pop("status", None)
+        return Document.objects.create(
+            user=user,
+            subject=self._resolve_subject(validated_data),
+            **validated_data,
+        )

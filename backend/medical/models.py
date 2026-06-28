@@ -61,6 +61,88 @@ class Tag(models.Model):
         return self.name
 
 
+class Document(models.Model):
+    class DocumentType(models.TextChoices):
+        LAB_RESULT = "lab_result", "Lab result"
+        REPORT = "report", "Report"
+        PRESCRIPTION = "prescription", "Prescription"
+        PROCEDURE_SUMMARY = "procedure_summary", "Procedure summary"
+        NOTE = "note", "Note"
+        IMAGE = "image", "Image"
+        AUDIO = "audio", "Audio"
+        OTHER = "other", "Other"
+
+    class Status(models.TextChoices):
+        PENDING_INGEST = "pending_ingest", "Pending ingest"
+        PROCESSING = "processing", "Processing"
+        PROCESSED = "processed", "Processed"
+        FAILED = "failed", "Failed"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="documents")
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="documents")
+    title = models.CharField(max_length=255)
+    doc_type = models.CharField(max_length=30, choices=DocumentType.choices)
+    mime_type = models.CharField(max_length=255)
+    local_uri_hint = models.CharField(max_length=1024, blank=True)
+    size_bytes = models.BigIntegerField()
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING_INGEST)
+    extracted_text = models.TextField(blank=True)
+    language = models.CharField(max_length=10, blank=True)
+    document_date = models.DateField(null=True, blank=True)
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=("user", "subject", "-created_at"), name="document_user_subject_idx"),
+            models.Index(fields=("doc_type",), name="document_doc_type_idx"),
+            models.Index(fields=("status",), name="document_status_idx"),
+            models.Index(fields=("deleted_at",), name="document_deleted_at_idx"),
+        ]
+
+    def __str__(self):
+        return self.title
+
+
+class ProcessingJob(models.Model):
+    class JobType(models.TextChoices):
+        INGESTION = "ingestion", "Ingestion"
+
+    class Status(models.TextChoices):
+        QUEUED = "queued", "Queued"
+        RUNNING = "running", "Running"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+        RETRYING = "retrying", "Retrying"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="processing_jobs")
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="processing_jobs")
+    job_type = models.CharField(max_length=30, choices=JobType.choices, default=JobType.INGESTION)
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.QUEUED)
+    attempts = models.PositiveIntegerField(default=0)
+    task_id = models.CharField(max_length=255, blank=True)
+    error_message = models.TextField(blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=("user", "status"), name="job_user_status_idx"),
+            models.Index(fields=("document", "job_type", "status"), name="job_document_type_status_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.job_type}:{self.document_id}:{self.status}"
+
+
 class MedicalEvent(models.Model):
     class EventType(models.TextChoices):
         SYMPTOM = "symptom", "Symptom"
@@ -80,6 +162,13 @@ class MedicalEvent(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="medical_events")
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="medical_events")
+    source_document = models.ForeignKey(
+        Document,
+        on_delete=models.SET_NULL,
+        related_name="medical_events",
+        null=True,
+        blank=True,
+    )
     event_type = models.CharField(max_length=30, choices=EventType.choices)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)

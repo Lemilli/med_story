@@ -1,10 +1,18 @@
 from datetime import date
+from pathlib import Path
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.test import override_settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from medical.models import MedicalEvent, Subject
+from ai.schemas import SchemaValidationError
+from medical.models import Document, MedicalEvent, ProcessingJob, Subject
+
+
+FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "phase2"
 
 
 class MedicalApiTests(APITestCase):
@@ -192,3 +200,268 @@ class MedicalApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(create_response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_event_preserves_phase_1_edit_behavior(self):
+        subject = Subject.objects.create(
+            user=self.user,
+            display_name="Jane Doe",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+        event = MedicalEvent.objects.create(
+            user=self.user,
+            subject=subject,
+            event_type=MedicalEvent.EventType.NOTE,
+            title="Original note",
+            event_date=date(2026, 6, 1),
+        )
+
+        response = self.client.patch(
+            f"/api/v1/events/{event.id}",
+            {"title": "Updated note", "tags": ["follow-up"]},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["title"], "Updated note")
+        self.assertEqual(response.data["tags"], ["follow-up"])
+
+    def test_document_crud_defaults_to_subject_and_soft_delete_hides_derived_events(self):
+        create_response = self.client.post(
+            "/api/v1/documents",
+            {
+                "title": "Lab results May",
+                "doc_type": Document.DocumentType.LAB_RESULT,
+                "mime_type": "application/pdf",
+                "size_bytes": 128,
+                "local_uri_hint": "app://documents/local-lab",
+            },
+            format="json",
+        )
+
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+        document = Document.objects.get(id=create_response.data["id"])
+        self.assertEqual(document.subject.display_name, "Jane Doe")
+        self.assertEqual(create_response.data["status"], Document.Status.PENDING_INGEST)
+        self.assertTrue(create_response.data["local_only"])
+        self.assertFalse(create_response.data["extracted_text_available"])
+        self.assertFalse(create_response.data["explanation_available"])
+
+        event = MedicalEvent.objects.create(
+            user=self.user,
+            subject=document.subject,
+            source_document=document,
+            event_type=MedicalEvent.EventType.EXAMINATION,
+            title="Derived lab",
+            event_date=date(2026, 5, 12),
+            source=MedicalEvent.Source.AI_DOCUMENT,
+            is_confirmed=False,
+        )
+
+        list_response = self.client.get("/api/v1/documents")
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(list_response.data["results"][0]["id"], str(document.id))
+
+        delete_response = self.client.delete(f"/api/v1/documents/{document.id}")
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        document.refresh_from_db()
+        event.refresh_from_db()
+        self.assertIsNotNone(document.deleted_at)
+        self.assertIsNotNone(event.deleted_at)
+
+    def test_document_create_rejects_cross_user_subject(self):
+        other_subject = Subject.objects.create(
+            user=self.other_user,
+            display_name="Other User",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+
+        response = self.client.post(
+            "/api/v1/documents",
+            {
+                "title": "Invalid subject doc",
+                "doc_type": Document.DocumentType.LAB_RESULT,
+                "mime_type": "application/pdf",
+                "size_bytes": 128,
+                "subject_id": str(other_subject.id),
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_ingest_lab_result_creates_unconfirmed_ai_event_and_confirm_endpoint(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        payload = (FIXTURE_DIR / "lab_result_basic.txt").read_bytes()
+
+        response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("lab.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.PROCESSED)
+        self.assertTrue(document.extracted_text)
+        self.assertEqual(document.language, "en")
+        self.assertEqual(document.document_date, date(2026, 5, 12))
+        self.assertEqual(document.medical_events.count(), 1)
+
+        event = document.medical_events.get()
+        self.assertEqual(event.event_type, MedicalEvent.EventType.EXAMINATION)
+        self.assertEqual(event.source, MedicalEvent.Source.AI_DOCUMENT)
+        self.assertFalse(event.is_confirmed)
+        self.assertEqual(event.attributes["measurements"][0]["label"], "CRP")
+        self.assertIsNotNone(event.confidence)
+
+        timeline_response = self.client.get("/api/v1/timeline")
+        self.assertEqual(timeline_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(timeline_response.data["results"][0]["source_document_id"], str(document.id))
+        self.assertFalse(timeline_response.data["results"][0]["is_confirmed"])
+
+        confirm_response = self.client.post(f"/api/v1/events/{event.id}/confirm")
+        self.assertEqual(confirm_response.status_code, status.HTTP_200_OK)
+        self.assertTrue(confirm_response.data["is_confirmed"])
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_ingest_prescription_creates_medication_event(self):
+        document = self._create_document(Document.DocumentType.PRESCRIPTION)
+        payload = (FIXTURE_DIR / "prescription_basic.txt").read_bytes()
+
+        response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("prescription.png", payload, "image/png")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        event = Document.objects.get(id=document.id).medical_events.get()
+        self.assertEqual(event.event_type, MedicalEvent.EventType.MEDICATION)
+        self.assertEqual(event.attributes["name"], "Mesalazine")
+        self.assertEqual(event.attributes["dose"], "800 mg")
+        self.assertFalse(event.is_confirmed)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_ingest_is_idempotent_for_processed_document(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        payload = (FIXTURE_DIR / "lab_result_basic.txt").read_bytes()
+
+        first_response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("lab.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+        second_response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("lab.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+
+        self.assertEqual(first_response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(second_response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(Document.objects.get(id=document.id).medical_events.filter(deleted_at__isnull=True).count(), 1)
+        self.assertEqual(ProcessingJob.objects.filter(document=document).count(), 1)
+
+    def test_ingest_rejects_oversized_file_with_coded_error(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+
+        response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("too-large.pdf", b"x" * (5 * 1024 * 1024 + 1), "application/pdf")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+        self.assertEqual(response.data["error"]["code"], "file_too_large")
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.PENDING_INGEST)
+
+    def test_ingest_rejects_unsupported_and_audio_mime_types(self):
+        text_document = self._create_document(Document.DocumentType.OTHER, mime_type="application/pdf")
+        text_response = self.client.post(
+            f"/api/v1/documents/{text_document.id}/ingest",
+            {"file": self._upload("invalid.txt", b"not supported", "text/plain")},
+            format="multipart",
+        )
+
+        audio_document = self._create_document(Document.DocumentType.OTHER, mime_type="application/pdf")
+        audio_response = self.client.post(
+            f"/api/v1/documents/{audio_document.id}/ingest",
+            {"file": self._upload("voice.mp3", b"audio", "audio/mpeg")},
+            format="multipart",
+        )
+
+        self.assertEqual(text_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(text_response.data["error"]["code"], "unsupported_mime_type")
+        self.assertEqual(audio_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(audio_response.data["error"]["code"], "unsupported_mime_type")
+
+    def test_ingest_cross_user_document_is_hidden(self):
+        other_subject = Subject.objects.create(
+            user=self.other_user,
+            display_name="Other User",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+        other_document = Document.objects.create(
+            user=self.other_user,
+            subject=other_subject,
+            title="Other lab",
+            doc_type=Document.DocumentType.LAB_RESULT,
+            mime_type="application/pdf",
+            size_bytes=128,
+        )
+
+        response = self.client.post(
+            f"/api/v1/documents/{other_document.id}/ingest",
+            {"file": self._upload("lab.pdf", b"content", "application/pdf")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_failed_provider_output_marks_document_and_job_failed_without_events(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+
+        with patch(
+            "medical.services.validate_event_extraction",
+            side_effect=SchemaValidationError("invalid structured output"),
+        ):
+            response = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {"file": self._upload("lab.pdf", b"unstructured text", "application/pdf")},
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.FAILED)
+        self.assertEqual(document.medical_events.count(), 0)
+        job = ProcessingJob.objects.get(document=document)
+        self.assertEqual(job.status, ProcessingJob.Status.FAILED)
+        self.assertTrue(job.error_message)
+
+    def _create_document(self, doc_type, mime_type="application/pdf"):
+        subject = Subject.objects.filter(user=self.user, is_default=True).first()
+        if subject is None:
+            subject = Subject.objects.create(
+                user=self.user,
+                display_name="Jane Doe",
+                relationship=Subject.Relationship.SELF,
+                is_default=True,
+            )
+        return Document.objects.create(
+            user=self.user,
+            subject=subject,
+            title="Fixture document",
+            doc_type=doc_type,
+            mime_type=mime_type,
+            size_bytes=128,
+        )
+
+    def _upload(self, name, payload, content_type):
+        return SimpleUploadedFile(name, payload, content_type=content_type)
