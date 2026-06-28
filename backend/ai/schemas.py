@@ -15,6 +15,74 @@ ALLOWED_EVENT_TYPES = {
     "note",
 }
 
+EVENT_ATTRIBUTES_JSON_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "name",
+        "dose",
+        "frequency",
+        "route",
+        "duration",
+        "prescriber",
+        "clinician",
+        "facility",
+        "result",
+        "diagnosis",
+        "body_site",
+        "severity",
+        "outcome",
+        "measurements",
+        "medications",
+        "notes",
+    ],
+    "properties": {
+        "name": {"type": ["string", "null"]},
+        "dose": {"type": ["string", "null"]},
+        "frequency": {"type": ["string", "null"]},
+        "route": {"type": ["string", "null"]},
+        "duration": {"type": ["string", "null"]},
+        "prescriber": {"type": ["string", "null"]},
+        "clinician": {"type": ["string", "null"]},
+        "facility": {"type": ["string", "null"]},
+        "result": {"type": ["string", "null"]},
+        "diagnosis": {"type": ["string", "null"]},
+        "body_site": {"type": ["string", "null"]},
+        "severity": {"type": ["string", "null"]},
+        "outcome": {"type": ["string", "null"]},
+        "measurements": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["label", "value", "unit", "ref"],
+                "properties": {
+                    "label": {"type": ["string", "null"]},
+                    "value": {"type": ["string", "number", "null"]},
+                    "unit": {"type": ["string", "null"]},
+                    "ref": {"type": ["string", "null"]},
+                },
+            },
+        },
+        "medications": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["name", "dose", "frequency", "route", "duration"],
+                "properties": {
+                    "name": {"type": ["string", "null"]},
+                    "dose": {"type": ["string", "null"]},
+                    "frequency": {"type": ["string", "null"]},
+                    "route": {"type": ["string", "null"]},
+                    "duration": {"type": ["string", "null"]},
+                },
+            },
+        },
+        "notes": {"type": ["string", "null"]},
+    },
+}
+
 EVENT_EXTRACTION_JSON_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -40,7 +108,7 @@ EVENT_EXTRACTION_JSON_SCHEMA = {
                     "title": {"type": "string", "minLength": 1, "maxLength": 255},
                     "description": {"type": ["string", "null"]},
                     "event_date": {"type": ["string", "null"], "format": "date"},
-                    "attributes": {"type": "object"},
+                    "attributes": EVENT_ATTRIBUTES_JSON_SCHEMA,
                     "confidence": {"type": "number", "minimum": 0, "maximum": 1},
                 },
             },

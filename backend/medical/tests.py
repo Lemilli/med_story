@@ -1,18 +1,20 @@
+import base64
 from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import override_settings
+from django.test import SimpleTestCase, override_settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from ai.providers.base import OCRResult
 from ai.schemas import SchemaValidationError
 from medical.models import Document, MedicalEvent, ProcessingJob, Subject
 
 
-FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "phase2"
+TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
 
 
 class MedicalApiTests(APITestCase):
@@ -294,7 +296,7 @@ class MedicalApiTests(APITestCase):
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_lab_result_creates_unconfirmed_ai_event_and_confirm_endpoint(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
-        payload = (FIXTURE_DIR / "lab_result_basic.txt").read_bytes()
+        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
 
         response = self.client.post(
             f"/api/v1/documents/{document.id}/ingest",
@@ -329,7 +331,7 @@ class MedicalApiTests(APITestCase):
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_prescription_creates_medication_event(self):
         document = self._create_document(Document.DocumentType.PRESCRIPTION)
-        payload = (FIXTURE_DIR / "prescription_basic.txt").read_bytes()
+        payload = (TEST_ASSET_DIR / "prescription_basic.txt").read_bytes()
 
         response = self.client.post(
             f"/api/v1/documents/{document.id}/ingest",
@@ -345,9 +347,77 @@ class MedicalApiTests(APITestCase):
         self.assertFalse(event.is_confirmed)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_ingest_real_png_asset_runs_ocr_and_structuring(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT, mime_type="image/png")
+        payload = (TEST_ASSET_DIR / "olymp_blood_test.png").read_bytes()
+        captured = {}
+
+        class AssetOCRProvider:
+            def extract_text(self, *, file_bytes, mime):
+                captured["ocr_file_bytes"] = file_bytes
+                captured["ocr_mime"] = mime
+                return OCRResult(
+                    text=(
+                        "Olymp clinical laboratory blood test. "
+                        "Date: 2024-05-03. Hemoglobin 140 g/L. Platelets 458 10^9/L."
+                    ),
+                    language="ru",
+                )
+
+        class AssetLLMProvider:
+            def complete_json(self, *, system, user, schema):
+                captured["llm_user"] = user
+                captured["llm_schema"] = schema
+                return {
+                    "document_date": "2024-05-03",
+                    "suggested_title": "Olymp blood test results",
+                    "events": [
+                        {
+                            "event_type": "examination",
+                            "title": "Olymp blood test results",
+                            "description": "Blood test results from the uploaded lab image.",
+                            "event_date": "2024-05-03",
+                            "attributes": {
+                                "name": "Complete blood count",
+                                "measurements": [
+                                    {"label": "Hemoglobin", "value": 140, "unit": "g/L", "ref": "130-160"},
+                                    {"label": "Platelets", "value": 458, "unit": "10^9/L", "ref": "180-320"},
+                                ],
+                            },
+                            "confidence": 0.88,
+                        }
+                    ],
+                }
+
+        with patch("medical.services.get_ocr_provider", return_value=AssetOCRProvider()), patch(
+            "medical.services.get_llm_provider",
+            return_value=AssetLLMProvider(),
+        ):
+            response = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {"file": self._upload("olymp_blood_test.png", payload, "image/png")},
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(captured["ocr_file_bytes"], payload)
+        self.assertEqual(captured["ocr_mime"], "image/png")
+        self.assertIn("Hemoglobin 140 g/L", captured["llm_user"])
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.PROCESSED)
+        self.assertEqual(document.language, "ru")
+        self.assertEqual(document.document_date, date(2024, 5, 3))
+        self.assertEqual(document.title, "Olymp blood test results")
+
+        event = document.medical_events.get()
+        self.assertEqual(event.event_type, MedicalEvent.EventType.EXAMINATION)
+        self.assertFalse(event.is_confirmed)
+        self.assertEqual(event.attributes["measurements"][1]["label"], "Platelets")
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_is_idempotent_for_processed_document(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
-        payload = (FIXTURE_DIR / "lab_result_basic.txt").read_bytes()
+        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
 
         first_response = self.client.post(
             f"/api/v1/documents/{document.id}/ingest",
@@ -465,3 +535,60 @@ class MedicalApiTests(APITestCase):
 
     def _upload(self, name, payload, content_type):
         return SimpleUploadedFile(name, payload, content_type=content_type)
+
+
+class AIProviderTests(SimpleTestCase):
+    @override_settings(
+        AI_OPENAI_API_KEY="test-key",
+        AI_OPENAI_OCR_MODEL="gpt-test-ocr",
+        AI_OPENAI_TIMEOUT_SECONDS=12,
+    )
+    def test_openai_ocr_provider_sends_png_asset_as_image_input(self):
+        from ai.providers.openai import OpenAIOCRProvider
+
+        payload = (TEST_ASSET_DIR / "olymp_blood_test.png").read_bytes()
+        fake_client = FakeOpenAIClient(output_text=" Extracted blood test text \n")
+
+        with patch("ai.providers.openai._build_client", return_value=fake_client):
+            result = OpenAIOCRProvider().extract_text(file_bytes=payload, mime="image/png")
+
+        self.assertEqual(result.text, "Extracted blood test text")
+        call = fake_client.responses.calls[0]
+        self.assertEqual(call["model"], "gpt-test-ocr")
+        self.assertEqual(call["timeout"], 12)
+
+        user_content = call["input"][1]["content"]
+        image_part = next(part for part in user_content if part["type"] == "input_image")
+        prefix = "data:image/png;base64,"
+        self.assertTrue(image_part["image_url"].startswith(prefix))
+        encoded_payload = image_part["image_url"][len(prefix):]
+        self.assertEqual(base64.b64decode(encoded_payload), payload)
+
+    def test_event_extraction_schema_is_strict_for_openai_structured_outputs(self):
+        from ai.schemas import EVENT_EXTRACTION_JSON_SCHEMA
+
+        event_schema = EVENT_EXTRACTION_JSON_SCHEMA["properties"]["events"]["items"]
+        attributes_schema = event_schema["properties"]["attributes"]
+        measurement_schema = attributes_schema["properties"]["measurements"]["items"]
+        medication_schema = attributes_schema["properties"]["medications"]["items"]
+
+        self.assertFalse(EVENT_EXTRACTION_JSON_SCHEMA["additionalProperties"])
+        self.assertFalse(event_schema["additionalProperties"])
+        self.assertFalse(attributes_schema["additionalProperties"])
+        self.assertFalse(measurement_schema["additionalProperties"])
+        self.assertFalse(medication_schema["additionalProperties"])
+
+
+class FakeOpenAIClient:
+    def __init__(self, *, output_text):
+        self.responses = FakeOpenAIResponses(output_text=output_text)
+
+
+class FakeOpenAIResponses:
+    def __init__(self, *, output_text):
+        self.output_text = output_text
+        self.calls = []
+
+    def create(self, **kwargs):
+        self.calls.append(kwargs)
+        return type("OpenAIResponse", (), {"output_text": self.output_text})()
