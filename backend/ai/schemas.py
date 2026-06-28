@@ -127,8 +127,16 @@ DOCUMENT_EXPLANATION_JSON_SCHEMA = {
             "items": {"type": "string", "minLength": 1},
         },
         "glossary": {
-            "type": "object",
-            "additionalProperties": {"type": "string", "minLength": 1},
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["term", "definition"],
+                "properties": {
+                    "term": {"type": "string", "minLength": 1},
+                    "definition": {"type": "string", "minLength": 1},
+                },
+            },
         },
     },
 }
@@ -183,10 +191,18 @@ def validate_document_explanation(payload: dict[str, Any]) -> dict[str, Any]:
             key_points.append(point.strip())
 
     raw_glossary = payload.get("glossary")
-    if not isinstance(raw_glossary, dict):
-        raise SchemaValidationError("glossary must be an object.")
+    if not isinstance(raw_glossary, (dict, list)):
+        raise SchemaValidationError("glossary must be an object or list.")
     glossary = {}
-    for term, definition in raw_glossary.items():
+    if isinstance(raw_glossary, dict):
+        glossary_items = raw_glossary.items()
+    else:
+        glossary_items = (
+            (item.get("term"), item.get("definition"))
+            for item in raw_glossary
+            if isinstance(item, dict)
+        )
+    for term, definition in glossary_items:
         if isinstance(term, str) and term.strip() and isinstance(definition, str) and definition.strip():
             glossary[term.strip()] = definition.strip()
 

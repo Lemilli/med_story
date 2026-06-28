@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../timeline/presentation/controllers/timeline_controller.dart';
+import '../../data/document_api.dart';
 import '../../data/document_repository.dart';
 import '../../domain/medical_document.dart';
 
@@ -9,10 +10,48 @@ final documentDetailProvider = FutureProvider.autoDispose
       return ref.watch(documentRepositoryProvider).getDocument(id);
     });
 
+final documentExplanationProvider = FutureProvider.autoDispose
+    .family<DocumentExplanationState, String>((ref, id) async {
+      try {
+        final explanation = await ref
+            .watch(documentRepositoryProvider)
+            .getDocumentExplanation(id);
+        return DocumentExplanationState.ready(explanation);
+      } on DocumentExplanationNotReady {
+        return const DocumentExplanationState.notReady();
+      }
+    });
+
+final documentExplanationControllerProvider =
+    AsyncNotifierProvider<DocumentExplanationController, void>(
+      DocumentExplanationController.new,
+    );
+
 final documentUploadControllerProvider =
     AsyncNotifierProvider<DocumentUploadController, DocumentUploadState>(
       DocumentUploadController.new,
     );
+
+class DocumentExplanationController extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<ExplanationRegenerateResult> regenerate(String documentId) async {
+    state = const AsyncValue.loading();
+    try {
+      final result = await ref
+          .read(documentRepositoryProvider)
+          .regenerateDocumentExplanation(documentId);
+      state = const AsyncValue.data(null);
+      ref.invalidate(documentDetailProvider(documentId));
+      ref.invalidate(documentExplanationProvider(documentId));
+      return result;
+    } on Object catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+}
 
 class DocumentUploadController extends AsyncNotifier<DocumentUploadState> {
   @override
@@ -34,15 +73,9 @@ class DocumentUploadController extends AsyncNotifier<DocumentUploadState> {
           documentId: result.documentId,
         ),
       );
-      late final MedicalDocument document;
-      try {
-        document = await repository.pollDocumentUntilTerminal(
-          id: result.documentId,
-        );
-      } on Object {
-        await _deleteFailedDocument(repository, result.documentId);
-        rethrow;
-      }
+      final document = await repository.pollDocumentUntilTerminal(
+        id: result.documentId,
+      );
       state = AsyncValue.data(
         DocumentUploadState(
           stage: DocumentUploadStage.processed,
@@ -63,17 +96,6 @@ class DocumentUploadController extends AsyncNotifier<DocumentUploadState> {
       DocumentUploadState(stage: DocumentUploadStage.idle),
     );
   }
-
-  Future<void> _deleteFailedDocument(
-    DocumentRepository repository,
-    String documentId,
-  ) async {
-    try {
-      await repository.deleteDocument(documentId);
-    } on Object {
-      // Do not hide the processing failure from the capture flow.
-    }
-  }
 }
 
 class DocumentUploadState {
@@ -89,3 +111,16 @@ class DocumentUploadState {
 }
 
 enum DocumentUploadStage { idle, uploading, processing, processed }
+
+class DocumentExplanationState {
+  const DocumentExplanationState._({this.explanation});
+
+  const DocumentExplanationState.ready(DocumentExplanation explanation)
+    : this._(explanation: explanation);
+
+  const DocumentExplanationState.notReady() : this._();
+
+  final DocumentExplanation? explanation;
+
+  bool get isReady => explanation != null;
+}

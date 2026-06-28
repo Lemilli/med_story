@@ -76,6 +76,11 @@ class _DocumentDetailBody extends ConsumerWidget {
                 _StatusBadge(label: document.docType.label(l10n)),
               ],
             ),
+            if (document.status == DocumentStatus.processed &&
+                document.extractedTextAvailable) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _DocumentExplanationPanel(document: document),
+            ],
             const SizedBox(height: AppSpacing.lg),
             _Panel(
               child: Column(
@@ -216,6 +221,382 @@ class _DocumentDetailBody extends ConsumerWidget {
     if (context.mounted) {
       context.go('/timeline');
     }
+  }
+}
+
+class _DocumentExplanationPanel extends ConsumerWidget {
+  const _DocumentExplanationPanel({required this.document});
+
+  final MedicalDocument document;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final explanationState = ref.watch(
+      documentExplanationProvider(document.id),
+    );
+    final controllerState = ref.watch(documentExplanationControllerProvider);
+    final isRegenerating = controllerState.isLoading;
+
+    return explanationState.when(
+      loading: () => _Panel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ExplanationHeader(
+              title: context.l10n.documentExplanationTitle,
+              trailing: const SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(context.l10n.documentExplanationLoading),
+          ],
+        ),
+      ),
+      error: (error, _) => _ExplanationErrorPanel(
+        message: context.l10n.documentExplanationLoadFailed,
+        onRetry: () => ref.invalidate(documentExplanationProvider(document.id)),
+      ),
+      data: (state) {
+        final explanation = state.explanation;
+        if (explanation == null) {
+          return _ExplanationEmptyPanel(
+            isBusy: isRegenerating,
+            onGenerate: () => _regenerate(context, ref),
+          );
+        }
+        return _ExplanationContentPanel(
+          explanation: explanation,
+          isBusy: isRegenerating,
+          onRegenerate: () => _regenerate(context, ref),
+        );
+      },
+    );
+  }
+
+  Future<void> _regenerate(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    try {
+      await ref
+          .read(documentExplanationControllerProvider.notifier)
+          .regenerate(document.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.documentExplanationQueuedMessage),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } on Object {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.documentExplanationRegenerateFailed),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+}
+
+class _ExplanationContentPanel extends StatelessWidget {
+  const _ExplanationContentPanel({
+    required this.explanation,
+    required this.isBusy,
+    required this.onRegenerate,
+  });
+
+  final DocumentExplanation explanation;
+  final bool isBusy;
+  final VoidCallback onRegenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final textTheme = Theme.of(context).textTheme;
+    final createdAt = explanation.createdAt;
+
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ExplanationHeader(title: l10n.documentExplanationTitle),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            l10n.documentExplanationBoundaryNote,
+            style: textTheme.bodySmall?.copyWith(
+              color: AppColors.secondaryInk,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _ExplanationSectionTitle(label: l10n.documentExplanationSummaryTitle),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            explanation.summaryText,
+            style: textTheme.bodyLarge?.copyWith(
+              color: AppColors.patientInk,
+              height: 1.45,
+            ),
+          ),
+          if (explanation.keyPoints.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.lg),
+            _ExplanationSectionTitle(
+              label: l10n.documentExplanationKeyPointsTitle,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final point in explanation.keyPoints)
+              _KeyPointRow(point: point),
+          ],
+          if (explanation.glossary.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.lg),
+            _ExplanationSectionTitle(
+              label: l10n.documentExplanationGlossaryTitle,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final entry in explanation.glossary.entries)
+              _GlossaryRow(term: entry.key, definition: entry.value),
+          ],
+          if (createdAt != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              l10n.documentExplanationGeneratedAt(
+                _formatDateTime(context, createdAt),
+              ),
+              style: textTheme.bodySmall?.copyWith(
+                color: AppColors.secondaryInk,
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.lg),
+          OutlinedButton.icon(
+            onPressed: isBusy ? null : onRegenerate,
+            icon: isBusy
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh_rounded),
+            label: Text(
+              isBusy
+                  ? l10n.documentExplanationQueuedAction
+                  : l10n.documentExplanationRegenerateAction,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExplanationEmptyPanel extends StatelessWidget {
+  const _ExplanationEmptyPanel({
+    required this.isBusy,
+    required this.onGenerate,
+  });
+
+  final bool isBusy;
+  final VoidCallback onGenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ExplanationHeader(title: l10n.documentExplanationTitle),
+          const SizedBox(height: AppSpacing.md),
+          Text(l10n.documentExplanationNotReadyMessage),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            l10n.documentExplanationBoundaryNote,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.secondaryInk,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          FilledButton.icon(
+            onPressed: isBusy ? null : onGenerate,
+            icon: isBusy
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.auto_stories_outlined),
+            label: Text(
+              isBusy
+                  ? l10n.documentExplanationQueuedAction
+                  : l10n.documentExplanationGenerateAction,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExplanationErrorPanel extends StatelessWidget {
+  const _ExplanationErrorPanel({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ExplanationHeader(title: context.l10n.documentExplanationTitle),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.deepClinicalBlue,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(context.l10n.documentExplanationRetryAction),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExplanationHeader extends StatelessWidget {
+  const _ExplanationHeader({required this.title, this.trailing});
+
+  final String title;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(
+          Icons.auto_stories_outlined,
+          color: AppColors.deepClinicalBlue,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            title,
+            style: textTheme.titleLarge?.copyWith(
+              color: AppColors.patientInk,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        if (trailing != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          trailing!,
+        ],
+      ],
+    );
+  }
+}
+
+class _ExplanationSectionTitle extends StatelessWidget {
+  const _ExplanationSectionTitle({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        color: AppColors.patientInk,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+  }
+}
+
+class _KeyPointRow extends StatelessWidget {
+  const _KeyPointRow({required this.point});
+
+  final String point;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 7),
+            child: Icon(
+              Icons.check_circle_outline_rounded,
+              color: AppColors.deepClinicalBlue,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              point,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.patientInk,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GlossaryRow extends StatelessWidget {
+  const _GlossaryRow({required this.term, required this.definition});
+
+  final String term;
+  final String definition;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            term,
+            style: textTheme.bodyMedium?.copyWith(
+              color: AppColors.patientInk,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            definition,
+            style: textTheme.bodyMedium?.copyWith(
+              color: AppColors.patientInk,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

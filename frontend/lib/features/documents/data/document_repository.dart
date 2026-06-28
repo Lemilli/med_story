@@ -80,6 +80,16 @@ class DocumentRepository {
     return api.getDocument(id);
   }
 
+  Future<DocumentExplanation> getDocumentExplanation(String documentId) {
+    return api.getDocumentExplanation(documentId);
+  }
+
+  Future<ExplanationRegenerateResult> regenerateDocumentExplanation(
+    String documentId,
+  ) {
+    return api.regenerateDocumentExplanation(documentId);
+  }
+
   Future<void> deleteDocument(String id) {
     return api.deleteDocument(id);
   }

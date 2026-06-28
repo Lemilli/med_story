@@ -79,7 +79,7 @@
     }
   },
   "documentViewResultAction": "Посмотреть результат",
-  "documentRetryAction": "Выбрать другой файл",
+  "documentRetryAction": "Попробовать снова",
   "documentUploadAction": "Загрузить и обработать",
   "documentUploadIdle": "Выберите файл, чтобы начать обработку.",
   "documentUploadUploading": "Сохраняем локально и отправляем на разовую обработку...",
@@ -113,6 +113,28 @@
   "documentUpdatedAtLabel": "Обновлён",
   "documentDetailProcessingNote": "Обработка ещё идёт. Потяните вниз, чтобы обновить статус.",
   "documentDetailPrivacyNote": "Оригинал документа остаётся в песочнице приложения. Бэкенд обрабатывает загруженные байты временно и возвращает только метаданные и предложенные события.",
+  "documentExplanationTitle": "Объяснение простым языком",
+  "documentExplanationSummaryTitle": "Кратко",
+  "documentExplanationKeyPointsTitle": "Ключевые моменты",
+  "documentExplanationGlossaryTitle": "Словарь",
+  "documentExplanationLoading": "Загружаем объяснение...",
+  "documentExplanationNotReadyMessage": "Объяснение ещё не готово. MedStory может создать версию простым языком из извлечённого текста.",
+  "documentExplanationBoundaryNote": "Это объяснение помогает понять документ. Оно не ставит диагнозы и не рекомендует лечение.",
+  "documentExplanationGenerateAction": "Создать объяснение",
+  "documentExplanationRegenerateAction": "Создать заново",
+  "documentExplanationQueuedAction": "В очереди",
+  "documentExplanationRetryAction": "Попробовать снова",
+  "documentExplanationQueuedMessage": "Создание объяснения началось. Потяните документ вниз для обновления через несколько секунд.",
+  "documentExplanationLoadFailed": "Не удалось загрузить объяснение. Проверьте подключение и попробуйте снова.",
+  "documentExplanationRegenerateFailed": "Не удалось начать создание объяснения. Проверьте подключение и попробуйте снова.",
+  "documentExplanationGeneratedAt": "Создано: {date}",
+  "@documentExplanationGeneratedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "documentDeleteAction": "Удалить документ",
   "documentDeleteConfirmTitle": "Удалить этот документ?",
   "documentDeleteConfirmMessage": "Связанные события также могут исчезнуть из хронологии.",

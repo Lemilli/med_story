@@ -202,7 +202,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get documentViewResultAction => 'Посмотреть результат';
 
   @override
-  String get documentRetryAction => 'Выбрать другой файл';
+  String get documentRetryAction => 'Попробовать снова';
 
   @override
   String get documentUploadAction => 'Загрузить и обработать';
@@ -302,6 +302,58 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get documentDetailPrivacyNote =>
       'Оригинал документа остаётся в песочнице приложения. Бэкенд обрабатывает загруженные байты временно и возвращает только метаданные и предложенные события.';
+
+  @override
+  String get documentExplanationTitle => 'Объяснение простым языком';
+
+  @override
+  String get documentExplanationSummaryTitle => 'Кратко';
+
+  @override
+  String get documentExplanationKeyPointsTitle => 'Ключевые моменты';
+
+  @override
+  String get documentExplanationGlossaryTitle => 'Словарь';
+
+  @override
+  String get documentExplanationLoading => 'Загружаем объяснение...';
+
+  @override
+  String get documentExplanationNotReadyMessage =>
+      'Объяснение ещё не готово. MedStory может создать версию простым языком из извлечённого текста.';
+
+  @override
+  String get documentExplanationBoundaryNote =>
+      'Это объяснение помогает понять документ. Оно не ставит диагнозы и не рекомендует лечение.';
+
+  @override
+  String get documentExplanationGenerateAction => 'Создать объяснение';
+
+  @override
+  String get documentExplanationRegenerateAction => 'Создать заново';
+
+  @override
+  String get documentExplanationQueuedAction => 'В очереди';
+
+  @override
+  String get documentExplanationRetryAction => 'Попробовать снова';
+
+  @override
+  String get documentExplanationQueuedMessage =>
+      'Создание объяснения началось. Потяните документ вниз для обновления через несколько секунд.';
+
+  @override
+  String get documentExplanationLoadFailed =>
+      'Не удалось загрузить объяснение. Проверьте подключение и попробуйте снова.';
+
+  @override
+  String get documentExplanationRegenerateFailed =>
+      'Не удалось начать создание объяснения. Проверьте подключение и попробуйте снова.';
+
+  @override
+  String documentExplanationGeneratedAt(String date) {
+    return 'Создано: $date';
+  }
 
   @override
   String get documentDeleteAction => 'Удалить документ';

@@ -431,7 +431,7 @@ abstract class AppLocalizations {
   /// No description provided for @documentRetryAction.
   ///
   /// In en, this message translates to:
-  /// **'Try another file'**
+  /// **'Try again'**
   String get documentRetryAction;
 
   /// No description provided for @documentUploadAction.
@@ -589,6 +589,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The original document stays in the app sandbox. The backend processes uploaded bytes transiently and returns only metadata and suggested events.'**
   String get documentDetailPrivacyNote;
+
+  /// No description provided for @documentExplanationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plain-language explanation'**
+  String get documentExplanationTitle;
+
+  /// No description provided for @documentExplanationSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get documentExplanationSummaryTitle;
+
+  /// No description provided for @documentExplanationKeyPointsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Key points'**
+  String get documentExplanationKeyPointsTitle;
+
+  /// No description provided for @documentExplanationGlossaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Glossary'**
+  String get documentExplanationGlossaryTitle;
+
+  /// No description provided for @documentExplanationLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading the explanation...'**
+  String get documentExplanationLoading;
+
+  /// No description provided for @documentExplanationNotReadyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No explanation is ready yet. MedStory can generate a plain-language version from the extracted text.'**
+  String get documentExplanationNotReadyMessage;
+
+  /// No description provided for @documentExplanationBoundaryNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This explanation helps you understand the document. It does not diagnose or recommend treatment.'**
+  String get documentExplanationBoundaryNote;
+
+  /// No description provided for @documentExplanationGenerateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate explanation'**
+  String get documentExplanationGenerateAction;
+
+  /// No description provided for @documentExplanationRegenerateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate explanation'**
+  String get documentExplanationRegenerateAction;
+
+  /// No description provided for @documentExplanationQueuedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Queued'**
+  String get documentExplanationQueuedAction;
+
+  /// No description provided for @documentExplanationRetryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get documentExplanationRetryAction;
+
+  /// No description provided for @documentExplanationQueuedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Explanation generation has started. Pull to refresh this document in a moment.'**
+  String get documentExplanationQueuedMessage;
+
+  /// No description provided for @documentExplanationLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load this explanation. Check your connection and try again.'**
+  String get documentExplanationLoadFailed;
+
+  /// No description provided for @documentExplanationRegenerateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not start explanation generation. Check your connection and try again.'**
+  String get documentExplanationRegenerateFailed;
+
+  /// No description provided for @documentExplanationGeneratedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated {date}'**
+  String documentExplanationGeneratedAt(String date);
 
   /// No description provided for @documentDeleteAction.
   ///

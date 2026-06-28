@@ -87,6 +87,42 @@ class DocumentApi {
     }
   }
 
+  Future<DocumentExplanation> getDocumentExplanation(String documentId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/documents/$documentId/explanation',
+      );
+      return DocumentExplanation.fromJson(response.data ?? <String, dynamic>{});
+    } on DioException catch (error) {
+      if (_isExplanationNotReady(error)) {
+        throw const DocumentExplanationNotReady();
+      }
+      throw mapDioException(
+        error,
+        fallback: 'document_explanation_load_failed',
+      );
+    }
+  }
+
+  Future<ExplanationRegenerateResult> regenerateDocumentExplanation(
+    String documentId,
+  ) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/documents/$documentId/explanation/regenerate',
+        data: const <String, dynamic>{},
+      );
+      return ExplanationRegenerateResult.fromJson(
+        response.data ?? <String, dynamic>{},
+      );
+    } on DioException catch (error) {
+      throw mapDioException(
+        error,
+        fallback: 'document_explanation_regenerate_failed',
+      );
+    }
+  }
+
   Future<void> deleteDocument(String id) async {
     try {
       await _dio.delete<void>('/documents/$id');
@@ -94,6 +130,10 @@ class DocumentApi {
       throw mapDioException(error, fallback: 'document_delete_failed');
     }
   }
+}
+
+class DocumentExplanationNotReady implements Exception {
+  const DocumentExplanationNotReady();
 }
 
 class DocumentPage {
@@ -120,6 +160,21 @@ class DocumentPage {
   final List<MedicalDocument> results;
   final String? nextCursor;
   final String? previousCursor;
+}
+
+bool _isExplanationNotReady(DioException error) {
+  if (error.response?.statusCode != 404) {
+    return false;
+  }
+  final data = error.response?.data;
+  if (data is! Map<String, dynamic>) {
+    return false;
+  }
+  final errorData = data['error'];
+  if (errorData is Map<String, dynamic>) {
+    return errorData['code'] == 'not_ready';
+  }
+  return data['code'] == 'not_ready';
 }
 
 String? _cursorFromUrl(Object? value) {

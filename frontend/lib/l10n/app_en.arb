@@ -79,7 +79,7 @@
     }
   },
   "documentViewResultAction": "View result",
-  "documentRetryAction": "Try another file",
+  "documentRetryAction": "Try again",
   "documentUploadAction": "Upload and process",
   "documentUploadIdle": "Choose a file to start processing.",
   "documentUploadUploading": "Saving locally and uploading for one-time processing...",
@@ -113,6 +113,28 @@
   "documentUpdatedAtLabel": "Updated",
   "documentDetailProcessingNote": "Processing is still running. Pull to refresh this status.",
   "documentDetailPrivacyNote": "The original document stays in the app sandbox. The backend processes uploaded bytes transiently and returns only metadata and suggested events.",
+  "documentExplanationTitle": "Plain-language explanation",
+  "documentExplanationSummaryTitle": "Summary",
+  "documentExplanationKeyPointsTitle": "Key points",
+  "documentExplanationGlossaryTitle": "Glossary",
+  "documentExplanationLoading": "Loading the explanation...",
+  "documentExplanationNotReadyMessage": "No explanation is ready yet. MedStory can generate a plain-language version from the extracted text.",
+  "documentExplanationBoundaryNote": "This explanation helps you understand the document. It does not diagnose or recommend treatment.",
+  "documentExplanationGenerateAction": "Generate explanation",
+  "documentExplanationRegenerateAction": "Regenerate explanation",
+  "documentExplanationQueuedAction": "Queued",
+  "documentExplanationRetryAction": "Try again",
+  "documentExplanationQueuedMessage": "Explanation generation has started. Pull to refresh this document in a moment.",
+  "documentExplanationLoadFailed": "We could not load this explanation. Check your connection and try again.",
+  "documentExplanationRegenerateFailed": "We could not start explanation generation. Check your connection and try again.",
+  "documentExplanationGeneratedAt": "Generated {date}",
+  "@documentExplanationGeneratedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "documentDeleteAction": "Delete document",
   "documentDeleteConfirmTitle": "Delete this document?",
   "documentDeleteConfirmMessage": "Its derived events may also be removed from your timeline.",

@@ -204,7 +204,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get documentViewResultAction => 'View result';
 
   @override
-  String get documentRetryAction => 'Try another file';
+  String get documentRetryAction => 'Try again';
 
   @override
   String get documentUploadAction => 'Upload and process';
@@ -303,6 +303,58 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get documentDetailPrivacyNote =>
       'The original document stays in the app sandbox. The backend processes uploaded bytes transiently and returns only metadata and suggested events.';
+
+  @override
+  String get documentExplanationTitle => 'Plain-language explanation';
+
+  @override
+  String get documentExplanationSummaryTitle => 'Summary';
+
+  @override
+  String get documentExplanationKeyPointsTitle => 'Key points';
+
+  @override
+  String get documentExplanationGlossaryTitle => 'Glossary';
+
+  @override
+  String get documentExplanationLoading => 'Loading the explanation...';
+
+  @override
+  String get documentExplanationNotReadyMessage =>
+      'No explanation is ready yet. MedStory can generate a plain-language version from the extracted text.';
+
+  @override
+  String get documentExplanationBoundaryNote =>
+      'This explanation helps you understand the document. It does not diagnose or recommend treatment.';
+
+  @override
+  String get documentExplanationGenerateAction => 'Generate explanation';
+
+  @override
+  String get documentExplanationRegenerateAction => 'Regenerate explanation';
+
+  @override
+  String get documentExplanationQueuedAction => 'Queued';
+
+  @override
+  String get documentExplanationRetryAction => 'Try again';
+
+  @override
+  String get documentExplanationQueuedMessage =>
+      'Explanation generation has started. Pull to refresh this document in a moment.';
+
+  @override
+  String get documentExplanationLoadFailed =>
+      'We could not load this explanation. Check your connection and try again.';
+
+  @override
+  String get documentExplanationRegenerateFailed =>
+      'We could not start explanation generation. Check your connection and try again.';
+
+  @override
+  String documentExplanationGeneratedAt(String date) {
+    return 'Generated $date';
+  }
 
   @override
   String get documentDeleteAction => 'Delete document';

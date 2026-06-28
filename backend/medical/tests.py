@@ -805,12 +805,29 @@ class AIProviderTests(SimpleTestCase):
             {
                 "summary_text": "  Plain explanation  ",
                 "key_points": [" First point ", "", 123, "Second point"],
-                "glossary": {" CRP ": " Inflammation marker ", "bad": 123, "": "missing term"},
+                "glossary": [
+                    {"term": " CRP ", "definition": " Inflammation marker "},
+                    {"term": "bad", "definition": 123},
+                    {"term": "", "definition": "missing term"},
+                ],
             }
         )
 
         self.assertEqual(explanation["summary_text"], "Plain explanation")
         self.assertEqual(explanation["key_points"], ["First point", "Second point"])
+        self.assertEqual(explanation["glossary"], {"CRP": "Inflammation marker"})
+
+    def test_document_explanation_validation_accepts_legacy_glossary_object(self):
+        from ai.schemas import validate_document_explanation
+
+        explanation = validate_document_explanation(
+            {
+                "summary_text": "Plain explanation",
+                "key_points": ["Point"],
+                "glossary": {" CRP ": " Inflammation marker ", "bad": 123},
+            }
+        )
+
         self.assertEqual(explanation["glossary"], {"CRP": "Inflammation marker"})
 
     def test_document_explanation_validation_rejects_unusable_output(self):
@@ -878,7 +895,10 @@ class AIProviderTests(SimpleTestCase):
         from ai.schemas import DOCUMENT_EXPLANATION_JSON_SCHEMA
 
         fake_client = FakeOpenAIClient(
-            output_text='{"summary_text":"Summary","key_points":["Point"],"glossary":{"CRP":"Definition"}}'
+            output_text=(
+                '{"summary_text":"Summary","key_points":["Point"],'
+                '"glossary":[{"term":"CRP","definition":"Definition"}]}'
+            )
         )
 
         with patch("ai.providers.openai._build_client", return_value=fake_client):
@@ -893,6 +913,11 @@ class AIProviderTests(SimpleTestCase):
         self.assertEqual(result["summary_text"], "Summary")
         call = fake_client.responses.calls[0]
         self.assertEqual(call["text"]["format"]["name"], "document_explanation")
+        sent_schema = call["text"]["format"]["schema"]
+        glossary_schema = sent_schema["properties"]["glossary"]
+        self.assertEqual(glossary_schema["type"], "array")
+        self.assertEqual(glossary_schema["items"]["additionalProperties"], False)
+        self.assertEqual(glossary_schema["items"]["required"], ["term", "definition"])
         user_text = call["input"][1]["content"][0]["text"]
         self.assertIn("Explain this document in ru.", user_text)
         self.assertNotIn(EVENT_EXTRACTION_USER_PROMPT, user_text)

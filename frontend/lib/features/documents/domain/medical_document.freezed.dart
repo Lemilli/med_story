@@ -869,4 +869,560 @@ as DocumentStatus,
 
 }
 
+
+/// @nodoc
+mixin _$DocumentExplanation {
+
+@JsonKey(name: 'document_id') String get documentId;@JsonKey(name: 'summary_text') String get summaryText;@JsonKey(name: 'key_points') List<String> get keyPoints; Map<String, String> get glossary; String get language;@JsonKey(name: 'created_at') DateTime? get createdAt;
+/// Create a copy of DocumentExplanation
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DocumentExplanationCopyWith<DocumentExplanation> get copyWith => _$DocumentExplanationCopyWithImpl<DocumentExplanation>(this as DocumentExplanation, _$identity);
+
+  /// Serializes this DocumentExplanation to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentExplanation&&(identical(other.documentId, documentId) || other.documentId == documentId)&&(identical(other.summaryText, summaryText) || other.summaryText == summaryText)&&const DeepCollectionEquality().equals(other.keyPoints, keyPoints)&&const DeepCollectionEquality().equals(other.glossary, glossary)&&(identical(other.language, language) || other.language == language)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,documentId,summaryText,const DeepCollectionEquality().hash(keyPoints),const DeepCollectionEquality().hash(glossary),language,createdAt);
+
+@override
+String toString() {
+  return 'DocumentExplanation(documentId: $documentId, summaryText: $summaryText, keyPoints: $keyPoints, glossary: $glossary, language: $language, createdAt: $createdAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DocumentExplanationCopyWith<$Res>  {
+  factory $DocumentExplanationCopyWith(DocumentExplanation value, $Res Function(DocumentExplanation) _then) = _$DocumentExplanationCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(name: 'document_id') String documentId,@JsonKey(name: 'summary_text') String summaryText,@JsonKey(name: 'key_points') List<String> keyPoints, Map<String, String> glossary, String language,@JsonKey(name: 'created_at') DateTime? createdAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$DocumentExplanationCopyWithImpl<$Res>
+    implements $DocumentExplanationCopyWith<$Res> {
+  _$DocumentExplanationCopyWithImpl(this._self, this._then);
+
+  final DocumentExplanation _self;
+  final $Res Function(DocumentExplanation) _then;
+
+/// Create a copy of DocumentExplanation
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? documentId = null,Object? summaryText = null,Object? keyPoints = null,Object? glossary = null,Object? language = null,Object? createdAt = freezed,}) {
+  return _then(_self.copyWith(
+documentId: null == documentId ? _self.documentId : documentId // ignore: cast_nullable_to_non_nullable
+as String,summaryText: null == summaryText ? _self.summaryText : summaryText // ignore: cast_nullable_to_non_nullable
+as String,keyPoints: null == keyPoints ? _self.keyPoints : keyPoints // ignore: cast_nullable_to_non_nullable
+as List<String>,glossary: null == glossary ? _self.glossary : glossary // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,language: null == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
+as String,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [DocumentExplanation].
+extension DocumentExplanationPatterns on DocumentExplanation {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DocumentExplanation value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DocumentExplanation() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DocumentExplanation value)  $default,){
+final _that = this;
+switch (_that) {
+case _DocumentExplanation():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DocumentExplanation value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DocumentExplanation() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'document_id')  String documentId, @JsonKey(name: 'summary_text')  String summaryText, @JsonKey(name: 'key_points')  List<String> keyPoints,  Map<String, String> glossary,  String language, @JsonKey(name: 'created_at')  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DocumentExplanation() when $default != null:
+return $default(_that.documentId,_that.summaryText,_that.keyPoints,_that.glossary,_that.language,_that.createdAt);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'document_id')  String documentId, @JsonKey(name: 'summary_text')  String summaryText, @JsonKey(name: 'key_points')  List<String> keyPoints,  Map<String, String> glossary,  String language, @JsonKey(name: 'created_at')  DateTime? createdAt)  $default,) {final _that = this;
+switch (_that) {
+case _DocumentExplanation():
+return $default(_that.documentId,_that.summaryText,_that.keyPoints,_that.glossary,_that.language,_that.createdAt);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'document_id')  String documentId, @JsonKey(name: 'summary_text')  String summaryText, @JsonKey(name: 'key_points')  List<String> keyPoints,  Map<String, String> glossary,  String language, @JsonKey(name: 'created_at')  DateTime? createdAt)?  $default,) {final _that = this;
+switch (_that) {
+case _DocumentExplanation() when $default != null:
+return $default(_that.documentId,_that.summaryText,_that.keyPoints,_that.glossary,_that.language,_that.createdAt);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _DocumentExplanation implements DocumentExplanation {
+  const _DocumentExplanation({@JsonKey(name: 'document_id') required this.documentId, @JsonKey(name: 'summary_text') this.summaryText = '', @JsonKey(name: 'key_points') final  List<String> keyPoints = const <String>[], final  Map<String, String> glossary = const <String, String>{}, this.language = '', @JsonKey(name: 'created_at') this.createdAt}): _keyPoints = keyPoints,_glossary = glossary;
+  factory _DocumentExplanation.fromJson(Map<String, dynamic> json) => _$DocumentExplanationFromJson(json);
+
+@override@JsonKey(name: 'document_id') final  String documentId;
+@override@JsonKey(name: 'summary_text') final  String summaryText;
+ final  List<String> _keyPoints;
+@override@JsonKey(name: 'key_points') List<String> get keyPoints {
+  if (_keyPoints is EqualUnmodifiableListView) return _keyPoints;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_keyPoints);
+}
+
+ final  Map<String, String> _glossary;
+@override@JsonKey() Map<String, String> get glossary {
+  if (_glossary is EqualUnmodifiableMapView) return _glossary;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_glossary);
+}
+
+@override@JsonKey() final  String language;
+@override@JsonKey(name: 'created_at') final  DateTime? createdAt;
+
+/// Create a copy of DocumentExplanation
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DocumentExplanationCopyWith<_DocumentExplanation> get copyWith => __$DocumentExplanationCopyWithImpl<_DocumentExplanation>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$DocumentExplanationToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentExplanation&&(identical(other.documentId, documentId) || other.documentId == documentId)&&(identical(other.summaryText, summaryText) || other.summaryText == summaryText)&&const DeepCollectionEquality().equals(other._keyPoints, _keyPoints)&&const DeepCollectionEquality().equals(other._glossary, _glossary)&&(identical(other.language, language) || other.language == language)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,documentId,summaryText,const DeepCollectionEquality().hash(_keyPoints),const DeepCollectionEquality().hash(_glossary),language,createdAt);
+
+@override
+String toString() {
+  return 'DocumentExplanation(documentId: $documentId, summaryText: $summaryText, keyPoints: $keyPoints, glossary: $glossary, language: $language, createdAt: $createdAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DocumentExplanationCopyWith<$Res> implements $DocumentExplanationCopyWith<$Res> {
+  factory _$DocumentExplanationCopyWith(_DocumentExplanation value, $Res Function(_DocumentExplanation) _then) = __$DocumentExplanationCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(name: 'document_id') String documentId,@JsonKey(name: 'summary_text') String summaryText,@JsonKey(name: 'key_points') List<String> keyPoints, Map<String, String> glossary, String language,@JsonKey(name: 'created_at') DateTime? createdAt
+});
+
+
+
+
+}
+/// @nodoc
+class __$DocumentExplanationCopyWithImpl<$Res>
+    implements _$DocumentExplanationCopyWith<$Res> {
+  __$DocumentExplanationCopyWithImpl(this._self, this._then);
+
+  final _DocumentExplanation _self;
+  final $Res Function(_DocumentExplanation) _then;
+
+/// Create a copy of DocumentExplanation
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? documentId = null,Object? summaryText = null,Object? keyPoints = null,Object? glossary = null,Object? language = null,Object? createdAt = freezed,}) {
+  return _then(_DocumentExplanation(
+documentId: null == documentId ? _self.documentId : documentId // ignore: cast_nullable_to_non_nullable
+as String,summaryText: null == summaryText ? _self.summaryText : summaryText // ignore: cast_nullable_to_non_nullable
+as String,keyPoints: null == keyPoints ? _self._keyPoints : keyPoints // ignore: cast_nullable_to_non_nullable
+as List<String>,glossary: null == glossary ? _self._glossary : glossary // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,language: null == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
+as String,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$ExplanationRegenerateResult {
+
+@JsonKey(name: 'job_id') String get jobId; String get status;
+/// Create a copy of ExplanationRegenerateResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ExplanationRegenerateResultCopyWith<ExplanationRegenerateResult> get copyWith => _$ExplanationRegenerateResultCopyWithImpl<ExplanationRegenerateResult>(this as ExplanationRegenerateResult, _$identity);
+
+  /// Serializes this ExplanationRegenerateResult to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExplanationRegenerateResult&&(identical(other.jobId, jobId) || other.jobId == jobId)&&(identical(other.status, status) || other.status == status));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,jobId,status);
+
+@override
+String toString() {
+  return 'ExplanationRegenerateResult(jobId: $jobId, status: $status)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ExplanationRegenerateResultCopyWith<$Res>  {
+  factory $ExplanationRegenerateResultCopyWith(ExplanationRegenerateResult value, $Res Function(ExplanationRegenerateResult) _then) = _$ExplanationRegenerateResultCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(name: 'job_id') String jobId, String status
+});
+
+
+
+
+}
+/// @nodoc
+class _$ExplanationRegenerateResultCopyWithImpl<$Res>
+    implements $ExplanationRegenerateResultCopyWith<$Res> {
+  _$ExplanationRegenerateResultCopyWithImpl(this._self, this._then);
+
+  final ExplanationRegenerateResult _self;
+  final $Res Function(ExplanationRegenerateResult) _then;
+
+/// Create a copy of ExplanationRegenerateResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? jobId = null,Object? status = null,}) {
+  return _then(_self.copyWith(
+jobId: null == jobId ? _self.jobId : jobId // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ExplanationRegenerateResult].
+extension ExplanationRegenerateResultPatterns on ExplanationRegenerateResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ExplanationRegenerateResult value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ExplanationRegenerateResult() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ExplanationRegenerateResult value)  $default,){
+final _that = this;
+switch (_that) {
+case _ExplanationRegenerateResult():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ExplanationRegenerateResult value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ExplanationRegenerateResult() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'job_id')  String jobId,  String status)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ExplanationRegenerateResult() when $default != null:
+return $default(_that.jobId,_that.status);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'job_id')  String jobId,  String status)  $default,) {final _that = this;
+switch (_that) {
+case _ExplanationRegenerateResult():
+return $default(_that.jobId,_that.status);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'job_id')  String jobId,  String status)?  $default,) {final _that = this;
+switch (_that) {
+case _ExplanationRegenerateResult() when $default != null:
+return $default(_that.jobId,_that.status);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _ExplanationRegenerateResult implements ExplanationRegenerateResult {
+  const _ExplanationRegenerateResult({@JsonKey(name: 'job_id') required this.jobId, this.status = ''});
+  factory _ExplanationRegenerateResult.fromJson(Map<String, dynamic> json) => _$ExplanationRegenerateResultFromJson(json);
+
+@override@JsonKey(name: 'job_id') final  String jobId;
+@override@JsonKey() final  String status;
+
+/// Create a copy of ExplanationRegenerateResult
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ExplanationRegenerateResultCopyWith<_ExplanationRegenerateResult> get copyWith => __$ExplanationRegenerateResultCopyWithImpl<_ExplanationRegenerateResult>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$ExplanationRegenerateResultToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExplanationRegenerateResult&&(identical(other.jobId, jobId) || other.jobId == jobId)&&(identical(other.status, status) || other.status == status));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,jobId,status);
+
+@override
+String toString() {
+  return 'ExplanationRegenerateResult(jobId: $jobId, status: $status)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ExplanationRegenerateResultCopyWith<$Res> implements $ExplanationRegenerateResultCopyWith<$Res> {
+  factory _$ExplanationRegenerateResultCopyWith(_ExplanationRegenerateResult value, $Res Function(_ExplanationRegenerateResult) _then) = __$ExplanationRegenerateResultCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(name: 'job_id') String jobId, String status
+});
+
+
+
+
+}
+/// @nodoc
+class __$ExplanationRegenerateResultCopyWithImpl<$Res>
+    implements _$ExplanationRegenerateResultCopyWith<$Res> {
+  __$ExplanationRegenerateResultCopyWithImpl(this._self, this._then);
+
+  final _ExplanationRegenerateResult _self;
+  final $Res Function(_ExplanationRegenerateResult) _then;
+
+/// Create a copy of ExplanationRegenerateResult
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? jobId = null,Object? status = null,}) {
+  return _then(_ExplanationRegenerateResult(
+jobId: null == jobId ? _self.jobId : jobId // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
 // dart format on

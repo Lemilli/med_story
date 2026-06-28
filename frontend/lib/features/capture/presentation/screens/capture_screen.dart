@@ -129,7 +129,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             ),
             error: (error, _) => _UploadErrorPanel(
               message: _documentErrorMessage(context, error),
-              onRetry: _clearSelection,
+              onRetry: _retrySelectedFile,
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -290,15 +290,12 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             ),
           );
     } on Object {
-      if (mounted) {
-        setState(() => _selectedFile = null);
-      }
+      // Keep the selected source available so retry can re-upload it.
     }
   }
 
-  void _clearSelection() {
-    setState(() => _selectedFile = null);
-    ref.read(documentUploadControllerProvider.notifier).reset();
+  void _retrySelectedFile() {
+    _uploadSelectedFile();
   }
 
   void _viewProcessedDocument(DocumentUploadState state) {
@@ -641,12 +638,19 @@ String _formatBytes(int bytes) {
 String _documentErrorMessage(BuildContext context, Object error) {
   final l10n = context.l10n;
   final message = error is AppFailure ? error.message : error.toString();
-  return switch (message) {
+  final mapped = switch (message) {
     'document_file_too_large' => l10n.documentFileTooLargeMessage,
     'document_unsupported_mime_type' => l10n.documentUnsupportedFileMessage,
     'document_processing_failed' => l10n.documentProcessingFailedMessage,
     'document_processing_timeout' => l10n.documentProcessingTimeoutMessage,
     'document_source_file_missing' => l10n.documentSourceMissingMessage,
-    _ => l10n.documentUploadFailedMessage,
+    _ => null,
   };
+  if (mapped != null) {
+    return mapped;
+  }
+  if (message.trim().isNotEmpty && !message.contains('_')) {
+    return message;
+  }
+  return l10n.documentUploadFailedMessage;
 }

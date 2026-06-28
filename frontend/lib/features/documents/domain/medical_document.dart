@@ -62,6 +62,32 @@ abstract class DocumentStatusUpdate with _$DocumentStatusUpdate {
       _$DocumentStatusUpdateFromJson(json);
 }
 
+@freezed
+abstract class DocumentExplanation with _$DocumentExplanation {
+  const factory DocumentExplanation({
+    @JsonKey(name: 'document_id') required String documentId,
+    @JsonKey(name: 'summary_text') @Default('') String summaryText,
+    @JsonKey(name: 'key_points') @Default(<String>[]) List<String> keyPoints,
+    @Default(<String, String>{}) Map<String, String> glossary,
+    @Default('') String language,
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+  }) = _DocumentExplanation;
+
+  factory DocumentExplanation.fromJson(Map<String, dynamic> json) =>
+      _$DocumentExplanationFromJson(json);
+}
+
+@freezed
+abstract class ExplanationRegenerateResult with _$ExplanationRegenerateResult {
+  const factory ExplanationRegenerateResult({
+    @JsonKey(name: 'job_id') required String jobId,
+    @Default('') String status,
+  }) = _ExplanationRegenerateResult;
+
+  factory ExplanationRegenerateResult.fromJson(Map<String, dynamic> json) =>
+      _$ExplanationRegenerateResultFromJson(json);
+}
+
 enum DocumentType {
   @JsonValue('medical_record')
   medicalRecord,

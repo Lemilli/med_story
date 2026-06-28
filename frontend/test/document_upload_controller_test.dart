@@ -85,6 +85,7 @@ void main() {
 
     await expectLater(notifier.upload(_draft()), throwsA(isA<AppFailure>()));
     expect(container.read(documentUploadControllerProvider).hasError, isTrue);
+    verifyNever(() => repository.deleteDocument('document-1'));
   });
 }
 
