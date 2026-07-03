@@ -98,4 +98,4 @@ class MockOCRProvider:
 
 class MockSTTProvider:
     def transcribe(self, *, audio_bytes: bytes, mime: str, lang: str | None = None) -> str:
-        return ""
+        return audio_bytes.decode("utf-8", errors="ignore")

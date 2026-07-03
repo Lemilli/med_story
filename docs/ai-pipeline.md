@@ -85,6 +85,9 @@ Triggered by `POST /documents/{id}/ingest` (transient multipart upload, max 5 MB
 ```
 [Audio bytes received transiently] → (1) STT transcribe → (2) LLM structuring → events → (3) summary refresh
 ```
+Implemented in the backend through `POST /documents/upload-audio` and `doc_type=audio`
+ingestion. Voice-derived events use `source=ai_voice`, remain unconfirmed until user review,
+and store only the transcript/extracted text, not the raw audio.
 
 ### 3.3 On-Demand Explanation
 `POST /documents/{id}/explanation/regenerate` re-runs step (4), e.g. in another language.

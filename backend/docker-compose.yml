@@ -20,6 +20,7 @@ services:
       AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
       AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-5.4-nano}
       AI_OPENAI_OCR_MODEL: ${AI_OPENAI_OCR_MODEL:-gpt-5.4-nano}
+      AI_OPENAI_STT_MODEL: ${AI_OPENAI_STT_MODEL:-gpt-4o-mini-transcribe}
       AI_OPENAI_TIMEOUT_SECONDS: ${AI_OPENAI_TIMEOUT_SECONDS:-60}
     depends_on:
       - db
@@ -44,6 +45,7 @@ services:
       AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
       AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-5.4-nano}
       AI_OPENAI_OCR_MODEL: ${AI_OPENAI_OCR_MODEL:-gpt-5.4-nano}
+      AI_OPENAI_STT_MODEL: ${AI_OPENAI_STT_MODEL:-gpt-4o-mini-transcribe}
       AI_OPENAI_TIMEOUT_SECONDS: ${AI_OPENAI_TIMEOUT_SECONDS:-60}
     depends_on:
       - db

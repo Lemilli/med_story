@@ -8,6 +8,15 @@ from medical.services import get_or_create_default_subject
 MAX_DOCUMENT_SIZE_BYTES = 5 * 1024 * 1024
 SUPPORTED_DOCUMENT_MIME_TYPES = {"application/pdf"}
 SUPPORTED_DOCUMENT_MIME_PREFIXES = ("image/",)
+SUPPORTED_AUDIO_MIME_TYPES = {
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/mp4",
+    "audio/mpga",
+    "audio/m4a",
+    "audio/wav",
+    "audio/webm",
+}
 
 
 @extend_schema_field(serializers.ListField(child=serializers.CharField()))
@@ -226,6 +235,10 @@ class DocumentSerializer(serializers.ModelSerializer):
         mime_type = value.strip().lower()
         if not mime_type:
             raise serializers.ValidationError("mime_type is required.")
+        if self.initial_data.get("doc_type") == Document.DocumentType.AUDIO:
+            if mime_type in SUPPORTED_AUDIO_MIME_TYPES:
+                return mime_type
+            raise serializers.ValidationError("Unsupported audio MIME type.")
         if mime_type in SUPPORTED_DOCUMENT_MIME_TYPES:
             return mime_type
         if any(mime_type.startswith(prefix) for prefix in SUPPORTED_DOCUMENT_MIME_PREFIXES):

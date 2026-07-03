@@ -26,4 +26,8 @@ def get_ocr_provider():
 def get_stt_provider():
     if settings.AI_STT_PROVIDER == "mock":
         return MockSTTProvider()
+    if settings.AI_STT_PROVIDER == "openai":
+        from ai.providers.openai import OpenAISTTProvider
+
+        return OpenAISTTProvider()
     raise ValueError(f"Unsupported STT provider: {settings.AI_STT_PROVIDER}")

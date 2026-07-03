@@ -75,8 +75,8 @@ remain for deterministic local tests.
   "confirm AI event" UX.
 - **Exit:** upload a document → see extracted, confirmable events on the timeline (Scenario A).
 - **Provider notes:** set `AI_LLM_PROVIDER=openai`, `AI_OCR_PROVIDER=openai`, and
-  `AI_OPENAI_API_KEY` for real document extraction. `AI_STT_PROVIDER` remains mock until Phase 5
-  voice capture is implemented.
+  `AI_OPENAI_API_KEY` for real document extraction. Set `AI_STT_PROVIDER=openai` and
+  `AI_OPENAI_STT_MODEL` for real Phase 5 voice transcription.
 
 ### Phase 3 — Understanding (Explanations)
 **Status:** Implemented.
@@ -96,10 +96,11 @@ remain for deterministic local tests.
 
 ### Phase 5 — Voice-First Capture
 **Goal:** low-friction voice input (BRD §9 NFR).
-- Backend: audio document type, **STT** provider, STT→structuring task.
+- Backend: audio document type, **STT** provider, STT→structuring task. **Implemented.**
 - Frontend: voice recording + local audio persistence + transient ingest reusing the same state
   machine.
-- **Exit:** user records a note and gets structured, confirmable events.
+- **Exit:** backend supports recording upload to structured, confirmable events; frontend voice
+  recording remains the user-facing completion step.
 
 ### Phase 6 — Privacy, Hardening & Launch Prep
 **Goal:** GDPR flows, security checklist, store readiness.

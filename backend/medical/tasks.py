@@ -11,17 +11,18 @@ logger = get_task_logger(__name__)
 
 
 @shared_task
-def ingest_document_task(document_id, job_id, file_bytes_b64, mime_type):
+def ingest_document_task(document_id, job_id, file_bytes_b64, mime_type, language=None):
     document = Document.objects.select_related("user", "subject").get(id=document_id, deleted_at__isnull=True)
     job = ProcessingJob.objects.filter(id=job_id, document=document).first()
     file_bytes = base64.b64decode(file_bytes_b64.encode("ascii"))
 
     logger.info(
-        "Starting document ingestion document_id=%s job_id=%s mime_type=%s size_bytes=%s",
+        "Starting document ingestion document_id=%s job_id=%s mime_type=%s size_bytes=%s language=%s",
         document.id,
         job_id,
         mime_type,
         len(file_bytes),
+        language or "",
     )
     try:
         process_document_ingestion(
@@ -29,6 +30,7 @@ def ingest_document_task(document_id, job_id, file_bytes_b64, mime_type):
             file_bytes=file_bytes,
             mime_type=mime_type,
             job=job,
+            language=language,
         )
     except Exception as exc:
         document.refresh_from_db(fields=("status", "error_message"))

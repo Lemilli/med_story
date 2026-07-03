@@ -39,19 +39,20 @@ Optional local environment overrides can go in `.env`. The Compose file already 
 development defaults, so `.env` is not required to start.
 
 To use real OpenAI-backed document processing locally, set these values in `backend/.env` before
-starting Compose:
+starting Compose. Add the STT values when testing voice capture:
 
 ```bash
 AI_LLM_PROVIDER=openai
 AI_OCR_PROVIDER=openai
+AI_STT_PROVIDER=openai
 AI_OPENAI_API_KEY=<your-openai-api-key>
 AI_OPENAI_MODEL=<your-model>
 AI_OPENAI_OCR_MODEL=<your-model>
+AI_OPENAI_STT_MODEL=gpt-4o-mini-transcribe
 ```
 
-`AI_STT_PROVIDER` still defaults to `mock`; voice capture is planned for Phase 5. The API and
-Celery worker both need the same AI settings because ingestion is queued from the API and processed
-by the worker.
+`AI_STT_PROVIDER` defaults to `mock` for deterministic local tests. The API and Celery worker both
+need the same AI settings because ingestion is queued from the API and processed by the worker.
 
 ## Production Flow: VPS
 
@@ -94,10 +95,11 @@ CELERY_RESULT_BACKEND=redis://redis:6379/0
 
 AI_LLM_PROVIDER=openai
 AI_OCR_PROVIDER=openai
-AI_STT_PROVIDER=mock
+AI_STT_PROVIDER=openai
 AI_OPENAI_API_KEY=<your-openai-api-key>
 AI_OPENAI_MODEL=<your-model>
 AI_OPENAI_OCR_MODEL=<your-model>
+AI_OPENAI_STT_MODEL=gpt-4o-mini-transcribe
 AI_OPENAI_TIMEOUT_SECONDS=60
 ```
 

@@ -1,4 +1,5 @@
 import base64
+from pathlib import Path
 
 from django.http import HttpResponse
 from django.db.models import Q
@@ -14,6 +15,7 @@ from medical.models import Document, MedicalEvent, MedicalSummary, ProcessingJob
 from medical.pagination import TimelineCursorPagination
 from medical.serializers import (
     MAX_DOCUMENT_SIZE_BYTES,
+    SUPPORTED_AUDIO_MIME_TYPES,
     SUPPORTED_DOCUMENT_MIME_PREFIXES,
     SUPPORTED_DOCUMENT_MIME_TYPES,
     DocumentSerializer,
@@ -30,6 +32,16 @@ from medical.services import (
     summary_export_json,
 )
 from medical.tasks import explain_document_task, ingest_document_task
+
+AUDIO_MIME_BY_EXTENSION = {
+    ".mp3": "audio/mpeg",
+    ".mp4": "audio/mp4",
+    ".mpeg": "audio/mpeg",
+    ".mpga": "audio/mpga",
+    ".m4a": "audio/m4a",
+    ".wav": "audio/wav",
+    ".webm": "audio/webm",
+}
 
 
 class DocumentCursorPagination(CursorPagination):
@@ -270,53 +282,150 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
             )
 
         mime_type = self._resolve_mime_type(request, upload, document)
-        if not self._is_supported_mime_type(mime_type):
+        if not self._is_supported_mime_type(document, mime_type):
             return self._error_response(
                 code="unsupported_mime_type",
                 message="Unsupported MIME type.",
                 http_status=status.HTTP_400_BAD_REQUEST,
-                details={"mime_type": ["Only PDF and image files are supported in Phase 2."]},
+                details={"mime_type": [self._unsupported_mime_type_message(document)]},
             )
 
         file_bytes = upload.read()
+        job = self._mark_processing_and_create_job(document=document, upload=upload, mime_type=mime_type)
+        self._dispatch_ingestion(
+            document=document,
+            job=job,
+            file_bytes=file_bytes,
+            mime_type=mime_type,
+            language=self._resolve_language(request),
+        )
+        document.refresh_from_db()
+
+        return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
+
+    def _mark_processing_and_create_job(self, *, document, upload, mime_type):
         with transaction.atomic():
             document.status = Document.Status.PROCESSING
             document.error_message = ""
             document.mime_type = mime_type
             document.size_bytes = upload.size
             document.save(update_fields=("status", "error_message", "mime_type", "size_bytes", "updated_at"))
-            job = ProcessingJob.objects.create(
+            return ProcessingJob.objects.create(
                 user=document.user,
                 document=document,
                 status=ProcessingJob.Status.QUEUED,
             )
 
+    def _dispatch_ingestion(self, *, document, job, file_bytes, mime_type, language=None):
         result = ingest_document_task.delay(
             str(document.id),
             str(job.id),
             base64.b64encode(file_bytes).decode("ascii"),
             mime_type,
+            language,
         )
         job.task_id = result.id or ""
         job.save(update_fields=("task_id", "updated_at"))
-        document.refresh_from_db()
-
-        return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
 
     def _resolve_mime_type(self, request, upload, document):
         mime_type = request.data.get("mime_type") or getattr(upload, "content_type", None) or document.mime_type
-        return (mime_type or "").strip().lower()
+        return self._normalize_mime_type(mime_type, upload)
 
-    def _is_supported_mime_type(self, mime_type):
+    def _normalize_mime_type(self, mime_type, upload):
+        normalized = (mime_type or "").strip().lower()
+        if normalized in SUPPORTED_AUDIO_MIME_TYPES:
+            return normalized
+        if normalized.startswith("audio/"):
+            return AUDIO_MIME_BY_EXTENSION.get(Path(getattr(upload, "name", "")).suffix.lower(), normalized)
+        return normalized
+
+    def _is_supported_mime_type(self, document, mime_type):
+        if document.doc_type == Document.DocumentType.AUDIO:
+            return mime_type in SUPPORTED_AUDIO_MIME_TYPES
+        if mime_type in SUPPORTED_AUDIO_MIME_TYPES:
+            return False
         if mime_type in SUPPORTED_DOCUMENT_MIME_TYPES:
             return True
         return any(mime_type.startswith(prefix) for prefix in SUPPORTED_DOCUMENT_MIME_PREFIXES)
+
+    def _unsupported_mime_type_message(self, document):
+        if document.doc_type == Document.DocumentType.AUDIO:
+            return "Only supported audio files are allowed: mp3, mp4, mpeg, mpga, m4a, wav, or webm."
+        return "Only PDF and image files are supported for non-audio documents."
+
+    def _resolve_language(self, request):
+        language = request.data.get("language") if hasattr(request.data, "get") else None
+        if language is None:
+            return None
+        if not isinstance(language, str) or not language.strip():
+            raise ValidationError({"language": ["language must be a non-empty string."]})
+        return language.strip()[:10]
 
     def _error_response(self, *, code, message, http_status, details=None):
         payload = {"error": {"code": code, "message": message}}
         if details is not None:
             payload["error"]["details"] = details
         return Response(payload, status=http_status)
+
+
+class DocumentAudioUploadView(DocumentIngestView):
+    lookup_url_kwarg = None
+
+    def post(self, request, *args, **kwargs):
+        upload = request.FILES.get("file")
+        if upload is None:
+            return self._error_response(
+                code="validation_error",
+                message="file is required.",
+                http_status=status.HTTP_400_BAD_REQUEST,
+                details={"file": ["This field is required."]},
+            )
+
+        if upload.size > MAX_DOCUMENT_SIZE_BYTES:
+            return self._error_response(
+                code="file_too_large",
+                message="File must be 5 MB or smaller.",
+                http_status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            )
+
+        mime_type = self._normalize_mime_type(request.data.get("mime_type") or getattr(upload, "content_type", None), upload)
+        if mime_type not in SUPPORTED_AUDIO_MIME_TYPES:
+            return self._error_response(
+                code="unsupported_mime_type",
+                message="Unsupported MIME type.",
+                http_status=status.HTTP_400_BAD_REQUEST,
+                details={"mime_type": ["Only supported audio files are allowed: mp3, mp4, mpeg, mpga, m4a, wav, or webm."]},
+            )
+
+        language = self._resolve_language(request)
+        document_data = {
+            "title": request.data.get("title") or "Voice note",
+            "doc_type": Document.DocumentType.AUDIO,
+            "mime_type": mime_type,
+            "local_uri_hint": request.data.get("local_uri_hint", ""),
+            "size_bytes": upload.size,
+        }
+        if request.data.get("document_date"):
+            document_data["document_date"] = request.data.get("document_date")
+        if request.data.get("subject_id"):
+            document_data["subject_id"] = request.data.get("subject_id")
+
+        serializer = DocumentSerializer(data=document_data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        document = serializer.save()
+
+        file_bytes = upload.read()
+        job = self._mark_processing_and_create_job(document=document, upload=upload, mime_type=mime_type)
+        self._dispatch_ingestion(
+            document=document,
+            job=job,
+            file_bytes=file_bytes,
+            mime_type=mime_type,
+            language=language,
+        )
+        document.refresh_from_db()
+
+        return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
 
 
 class DocumentExplanationView(DocumentQuerysetMixin, generics.GenericAPIView):

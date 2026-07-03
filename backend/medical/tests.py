@@ -472,6 +472,85 @@ class MedicalApiTests(APITestCase):
         self.assertFalse(event.is_confirmed)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_upload_audio_creates_document_and_unconfirmed_voice_event(self):
+        payload = b"Voice note: CRP was 12 mg/L on 2026-05-12."
+
+        response = self.client.post(
+            "/api/v1/documents/upload-audio",
+            {
+                "file": self._upload("voice-note.mp3", payload, "audio/mpeg"),
+                "language": "en",
+                "title": "Morning voice note",
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document = Document.objects.get(id=response.data["id"])
+        self.assertEqual(document.doc_type, Document.DocumentType.AUDIO)
+        self.assertEqual(document.status, Document.Status.PROCESSED)
+        self.assertEqual(document.mime_type, "audio/mpeg")
+        self.assertEqual(document.title, "CBC and CRP lab results")
+        self.assertEqual(document.extracted_text, payload.decode("utf-8"))
+        self.assertEqual(document.language, "en")
+        self.assertEqual(document.explanations.count(), 0)
+
+        event = document.medical_events.get()
+        self.assertEqual(event.source, MedicalEvent.Source.AI_VOICE)
+        self.assertEqual(event.event_type, MedicalEvent.EventType.EXAMINATION)
+        self.assertFalse(event.is_confirmed)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_existing_audio_document_ingest_accepts_supported_audio(self):
+        document = self._create_document(Document.DocumentType.AUDIO, mime_type="audio/m4a")
+        payload = b"Voice note: started Mesalazine 800 mg three times daily."
+
+        response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("voice.m4a", payload, "audio/x-m4a")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.PROCESSED)
+        self.assertEqual(document.mime_type, "audio/m4a")
+        event = document.medical_events.get()
+        self.assertEqual(event.source, MedicalEvent.Source.AI_VOICE)
+        self.assertEqual(event.event_type, MedicalEvent.EventType.MEDICATION)
+
+    def test_upload_audio_rejects_oversized_file(self):
+        response = self.client.post(
+            "/api/v1/documents/upload-audio",
+            {"file": self._upload("too-large.mp3", b"x" * (5 * 1024 * 1024 + 1), "audio/mpeg")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+        self.assertEqual(response.data["error"]["code"], "file_too_large")
+        self.assertEqual(Document.objects.count(), 0)
+
+    def test_upload_audio_rejects_cross_user_subject(self):
+        other_subject = Subject.objects.create(
+            user=self.other_user,
+            display_name="Other User",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+
+        response = self.client.post(
+            "/api/v1/documents/upload-audio",
+            {
+                "file": self._upload("voice.mp3", b"audio", "audio/mpeg"),
+                "subject_id": str(other_subject.id),
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Document.objects.count(), 0)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_real_png_asset_runs_ocr_and_structuring(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT, mime_type="image/png")
         payload = (TEST_ASSET_DIR / "olymp_blood_test.png").read_bytes()
@@ -579,6 +658,27 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(Document.objects.get(id=document.id).medical_events.filter(deleted_at__isnull=True).count(), 1)
         self.assertEqual(ProcessingJob.objects.filter(document=document).count(), 1)
 
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_audio_ingest_is_idempotent_for_processed_document(self):
+        document = self._create_document(Document.DocumentType.AUDIO, mime_type="audio/mpeg")
+        payload = b"Voice note: CRP was 12 mg/L."
+
+        first_response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("voice.mp3", payload, "audio/mpeg")},
+            format="multipart",
+        )
+        second_response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("voice.mp3", payload, "audio/mpeg")},
+            format="multipart",
+        )
+
+        self.assertEqual(first_response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(second_response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(document.medical_events.filter(deleted_at__isnull=True).count(), 1)
+        self.assertEqual(ProcessingJob.objects.filter(document=document).count(), 1)
+
     def test_ingest_rejects_oversized_file_with_coded_error(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
 
@@ -648,6 +748,29 @@ class MedicalApiTests(APITestCase):
             response = self.client.post(
                 f"/api/v1/documents/{document.id}/ingest",
                 {"file": self._upload("lab.pdf", b"unstructured text", "application/pdf")},
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.FAILED)
+        self.assertEqual(document.medical_events.count(), 0)
+        job = ProcessingJob.objects.get(document=document)
+        self.assertEqual(job.status, ProcessingJob.Status.FAILED)
+        self.assertTrue(job.error_message)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_failed_stt_marks_audio_document_and_job_failed_without_events(self):
+        document = self._create_document(Document.DocumentType.AUDIO, mime_type="audio/mpeg")
+
+        class FailingSTTProvider:
+            def transcribe(self, *, audio_bytes, mime, lang=None):
+                raise ValueError("transcription failed")
+
+        with patch("medical.services.get_stt_provider", return_value=FailingSTTProvider()):
+            response = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {"file": self._upload("voice.mp3", b"audio", "audio/mpeg")},
                 format="multipart",
             )
 
@@ -903,6 +1026,30 @@ class AIProviderTests(SimpleTestCase):
         encoded_payload = image_part["image_url"][len(prefix):]
         self.assertEqual(base64.b64decode(encoded_payload), payload)
 
+    @override_settings(
+        AI_OPENAI_API_KEY="test-key",
+        AI_OPENAI_STT_MODEL="gpt-test-stt",
+        AI_OPENAI_TIMEOUT_SECONDS=12,
+    )
+    def test_openai_stt_provider_sends_audio_with_model_and_response_format(self):
+        from ai.providers.openai import OpenAISTTProvider
+
+        payload = b"fake audio bytes"
+        fake_client = FakeOpenAIClient(output_text="")
+        fake_client.audio.transcriptions.text = " Transcribed voice note \n"
+
+        with patch("ai.providers.openai._build_client", return_value=fake_client):
+            transcript = OpenAISTTProvider().transcribe(audio_bytes=payload, mime="audio/m4a", lang="en")
+
+        self.assertEqual(transcript, "Transcribed voice note")
+        call = fake_client.audio.transcriptions.calls[0]
+        self.assertEqual(call["model"], "gpt-test-stt")
+        self.assertEqual(call["response_format"], "json")
+        self.assertEqual(call["language"], "en")
+        self.assertEqual(call["timeout"], 12)
+        self.assertEqual(call["file"].name, "voice-note.m4a")
+        self.assertEqual(call["file"].getvalue(), payload)
+
     def test_event_extraction_schema_is_strict_for_openai_structured_outputs(self):
         from ai.schemas import EVENT_EXTRACTION_JSON_SCHEMA
 
@@ -1149,6 +1296,7 @@ class AIProviderTests(SimpleTestCase):
 class FakeOpenAIClient:
     def __init__(self, *, output_text):
         self.responses = FakeOpenAIResponses(output_text=output_text)
+        self.audio = FakeOpenAIAudio()
 
 
 class FakeOpenAIResponses:
@@ -1162,6 +1310,24 @@ class FakeOpenAIResponses:
         if self.error is not None:
             raise self.error
         return type("OpenAIResponse", (), {"output_text": self.output_text})()
+
+
+class FakeOpenAIAudio:
+    def __init__(self):
+        self.transcriptions = FakeOpenAITranscriptions()
+
+
+class FakeOpenAITranscriptions:
+    def __init__(self):
+        self.calls = []
+        self.text = ""
+        self.error = None
+
+    def create(self, **kwargs):
+        self.calls.append(kwargs)
+        if self.error is not None:
+            raise self.error
+        return type("OpenAITranscription", (), {"text": self.text})()
 
 
 class FakeOpenAIAPIError(Exception):

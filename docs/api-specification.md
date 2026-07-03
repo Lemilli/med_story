@@ -105,12 +105,14 @@ The backend does not persist the raw file.
 
 `Content-Type: multipart/form-data`
 ```
-file=<binary>; mime_type=application/pdf
+file=<binary>; mime_type=application/pdf|image/png|audio/mpeg
 ```
 
 Constraints:
 - Max file size: **5 MB** (`413 file_too_large` beyond this limit).
-- Allowed for images, PDFs, and audio types supported by the pipeline.
+- Non-audio documents allow PDFs and image files.
+- Audio documents (`doc_type=audio`) allow `audio/mpeg`, `audio/mp3`, `audio/mp4`,
+  `audio/mpga`, `audio/m4a`, `audio/wav`, and `audio/webm`.
 
 → `202 { "id": "uuid", "status": "processing" }`
 
@@ -134,7 +136,20 @@ Soft-deletes the document and its derived events (configurable). → `204`.
 
 ### POST /documents/upload-audio
 Convenience endpoint for voice-first capture (`doc_type=audio`) with transient ingestion.
-`multipart/form-data`, max file size **5 MB**.
+`multipart/form-data`, max file size **5 MB**. Creates the audio document and enqueues
+STT → LLM structuring in one request. Raw audio is discarded after dispatch.
+
+Fields:
+- `file` required.
+- `title`, `subject_id`, `mime_type`, `language`, `local_uri_hint`, and `document_date`
+  optional.
+- `title` defaults to `"Voice note"`; subject defaults to the user's default self-subject.
+
+Allowed audio types: `audio/mpeg`, `audio/mp3`, `audio/mp4`, `audio/mpga`, `audio/m4a`,
+`audio/wav`, and `audio/webm`. Generic `audio/*` uploads are accepted only when the filename
+extension maps safely to one of those types.
+
+→ `202 { "id": "uuid", "doc_type": "audio", "status": "processing" }`
 
 ## 5. Document Explanations (Scenario B)
 

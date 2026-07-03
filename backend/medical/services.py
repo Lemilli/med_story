@@ -7,7 +7,7 @@ from django.db.models import Max
 from django.db import transaction
 from django.utils import timezone
 
-from ai.providers.factory import get_llm_provider, get_ocr_provider
+from ai.providers.factory import get_llm_provider, get_ocr_provider, get_stt_provider
 from ai.schemas import (
     DOCUMENT_EXPLANATION_JSON_SCHEMA,
     EVENT_EXTRACTION_JSON_SCHEMA,
@@ -83,19 +83,22 @@ def get_or_create_default_subject(user):
     )
 
 
-def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
+def process_document_ingestion(*, document, file_bytes, mime_type, job=None, language=None):
     from medical.models import Document, MedicalEvent, ProcessingJob
 
     job_id = getattr(job, "id", None)
+    is_audio = document.doc_type == Document.DocumentType.AUDIO
     logger.info(
-        "Document ingestion phase=start document_id=%s job_id=%s mime_type=%s size_bytes=%s ocr_provider=%s llm_provider=%s ocr_model=%s llm_model=%s",
+        "Document ingestion phase=start document_id=%s job_id=%s mime_type=%s size_bytes=%s ocr_provider=%s stt_provider=%s llm_provider=%s ocr_model=%s stt_model=%s llm_model=%s",
         document.id,
         job_id,
         mime_type,
         len(file_bytes),
         settings.AI_OCR_PROVIDER,
+        settings.AI_STT_PROVIDER,
         settings.AI_LLM_PROVIDER,
         settings.AI_OPENAI_OCR_MODEL,
+        settings.AI_OPENAI_STT_MODEL,
         settings.AI_OPENAI_MODEL,
     )
 
@@ -109,17 +112,37 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
         job.save(update_fields=("status", "attempts", "started_at", "finished_at", "error_message", "updated_at"))
 
     try:
-        ocr_result = get_ocr_provider().extract_text(file_bytes=file_bytes, mime=mime_type)
-        logger.info(
-            "Document ingestion phase=ocr_complete document_id=%s job_id=%s extracted_text_length=%s language=%s",
-            document.id,
-            job_id,
-            len(ocr_result.text or ""),
-            ocr_result.language or "",
-        )
+        if is_audio:
+            source_language = _resolve_audio_language(document=document, requested_language=language)
+            extracted_text = get_stt_provider().transcribe(
+                audio_bytes=file_bytes,
+                mime=mime_type,
+                lang=source_language,
+            )
+            extracted_language = source_language
+            event_source = MedicalEvent.Source.AI_VOICE
+            logger.info(
+                "Document ingestion phase=stt_complete document_id=%s job_id=%s extracted_text_length=%s language=%s",
+                document.id,
+                job_id,
+                len(extracted_text or ""),
+                extracted_language or "",
+            )
+        else:
+            ocr_result = get_ocr_provider().extract_text(file_bytes=file_bytes, mime=mime_type)
+            extracted_text = ocr_result.text
+            extracted_language = ocr_result.language or ""
+            event_source = MedicalEvent.Source.AI_DOCUMENT
+            logger.info(
+                "Document ingestion phase=ocr_complete document_id=%s job_id=%s extracted_text_length=%s language=%s",
+                document.id,
+                job_id,
+                len(extracted_text or ""),
+                extracted_language,
+            )
         structured_payload = get_llm_provider().complete_json(
             system=STRUCTURING_SYSTEM_PROMPT,
-            user=ocr_result.text,
+            user=extracted_text,
             schema=EVENT_EXTRACTION_JSON_SCHEMA,
         )
         logger.info(
@@ -136,15 +159,17 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
             len(extraction["events"]),
             extraction["document_date"],
         )
-        explanation = _build_document_explanation(
-            document=document,
-            extracted_text=ocr_result.text,
-            language=_resolve_explanation_language(document=document),
-        )
+        explanation = None
+        if not is_audio:
+            explanation = _build_document_explanation(
+                document=document,
+                extracted_text=extracted_text,
+                language=_resolve_explanation_language(document=document),
+            )
 
         with transaction.atomic():
-            document.extracted_text = ocr_result.text
-            document.language = ocr_result.language or ""
+            document.extracted_text = extracted_text
+            document.language = extracted_language
             if extraction["document_date"] is not None:
                 document.document_date = extraction["document_date"]
             if extraction["suggested_title"]:
@@ -164,7 +189,7 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
             )
 
             document.medical_events.filter(
-                source=MedicalEvent.Source.AI_DOCUMENT,
+                source=event_source,
                 is_confirmed=False,
                 deleted_at__isnull=True,
             ).update(deleted_at=timezone.now())
@@ -182,12 +207,13 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None):
                     description=event_data["description"],
                     event_date=event_date,
                     attributes=event_data["attributes"],
-                    source=MedicalEvent.Source.AI_DOCUMENT,
+                    source=event_source,
                     confidence=event_data["confidence"],
                     is_confirmed=False,
                 )
 
-            document.explanations.create(**explanation)
+            if explanation is not None:
+                document.explanations.create(**explanation)
 
             if job is not None:
                 job.status = ProcessingJob.Status.SUCCEEDED
@@ -469,6 +495,13 @@ def _serialize_events_for_summary(events):
 
 
 def _resolve_explanation_language(*, document, requested_language=None):
+    for value in (requested_language, getattr(document.user, "locale", None), document.language, "en"):
+        if isinstance(value, str) and value.strip():
+            return value.strip()[:10]
+    return "en"
+
+
+def _resolve_audio_language(*, document, requested_language=None):
     for value in (requested_language, getattr(document.user, "locale", None), document.language, "en"):
         if isinstance(value, str) and value.strip():
             return value.strip()[:10]

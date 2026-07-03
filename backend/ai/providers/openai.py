@@ -2,6 +2,7 @@ import base64
 import copy
 import json
 import logging
+from io import BytesIO
 
 from django.conf import settings
 
@@ -123,6 +124,49 @@ class OpenAIOCRProvider:
             raise _provider_error("OCR request", exc) from exc
 
         return OCRResult(text=response.output_text.strip(), language=None)
+
+
+class OpenAISTTProvider:
+    _AUDIO_EXTENSIONS_BY_MIME = {
+        "audio/mpeg": "mp3",
+        "audio/mp3": "mp3",
+        "audio/mp4": "mp4",
+        "audio/mpga": "mpga",
+        "audio/m4a": "m4a",
+        "audio/wav": "wav",
+        "audio/webm": "webm",
+    }
+
+    def __init__(self):
+        self.client = _build_client()
+        self.model = settings.AI_OPENAI_STT_MODEL
+
+    def transcribe(self, *, audio_bytes: bytes, mime: str, lang: str | None = None) -> str:
+        extension = self._AUDIO_EXTENSIONS_BY_MIME.get(mime)
+        if extension is None:
+            raise OpenAIProviderError(f"Unsupported STT MIME type: {mime}")
+
+        audio_file = BytesIO(audio_bytes)
+        audio_file.name = f"voice-note.{extension}"
+
+        kwargs = {
+            "model": self.model,
+            "file": audio_file,
+            "response_format": "json",
+            "timeout": settings.AI_OPENAI_TIMEOUT_SECONDS,
+        }
+        if lang:
+            kwargs["language"] = lang
+
+        try:
+            response = self.client.audio.transcriptions.create(**kwargs)
+        except Exception as exc:
+            raise _provider_error("STT request", exc) from exc
+
+        text = response.get("text") if isinstance(response, dict) else getattr(response, "text", None)
+        if not isinstance(text, str):
+            raise OpenAIProviderError("OpenAI returned an invalid transcription response.")
+        return text.strip()
 
 
 def _build_client():
