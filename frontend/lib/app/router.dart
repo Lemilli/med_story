@@ -11,9 +11,8 @@ import '../features/events/presentation/screens/event_detail_screen.dart';
 import '../features/events/presentation/screens/event_form_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
 import '../features/shell/presentation/screens/app_shell.dart';
-import '../features/shell/presentation/screens/placeholder_tab_screen.dart';
+import '../features/summary/presentation/screens/summary_screen.dart';
 import '../features/timeline/presentation/screens/timeline_screen.dart';
-import '../l10n/l10n.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _RouterRefreshNotifier();
@@ -103,16 +102,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/summary',
-                pageBuilder: (context, state) {
-                  final l10n = context.l10n;
-                  return NoTransitionPage(
-                    child: PlaceholderTabScreen(
-                      icon: Icons.assignment_outlined,
-                      title: l10n.summaryTitle,
-                      message: l10n.summaryMessage,
-                    ),
-                  );
-                },
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: SummaryScreen()),
               ),
             ],
           ),

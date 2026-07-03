@@ -9,6 +9,82 @@
   "timelineMessage": "Здесь появится ваша подтверждённая медицинская история.",
   "summaryTitle": "Сводка",
   "summaryMessage": "Здесь будут сводки для врача и экспорт данных.",
+  "summaryHeadline": "Сводка для врача",
+  "summarySubjectLabel": "Для {name}",
+  "@summarySubjectLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "summaryNoSubjectMessage": "MedStory не удалось загрузить профиль для этой сводки.",
+  "summaryBoundaryNote": "MedStory упорядочивает вашу информацию; он не ставит диагнозы и не рекомендует лечение.",
+  "summaryOfflineNotice": "Показана сохраненная сводка. Обновите, когда снова будете онлайн.",
+  "summaryRefreshAction": "Обновить сводку",
+  "summaryRegenerateAction": "Пересоздать сводку",
+  "summaryGenerateAction": "Создать сводку",
+  "summaryPrepareVisitAction": "Подготовить к визиту",
+  "summaryNotReadyTitle": "Сводки пока нет",
+  "summaryNotReadyMessage": "Создайте сводку для врача из подтвержденных событий, когда нужно подготовиться к визиту.",
+  "summaryNarrativeTitle": "Краткий текст для врача",
+  "summaryNoNarrativeMessage": "Для этой сводки не вернулся краткий текст.",
+  "summaryGeneratedAt": "Создано {date}",
+  "@summaryGeneratedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "summaryVersionLabel": "Версия {version}",
+  "@summaryVersionLabel": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "summaryEventCountLabel": "{count, plural, =0{Нет подтвержденных событий} =1{1 подтвержденное событие} other{{count} подтвержденных событий}}",
+  "@summaryEventCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "summaryReturnToCurrentAction": "Вернуться к текущей сводке",
+  "summaryVersionHistoryAction": "История версий",
+  "summaryCurrentVersionLabel": "Текущая",
+  "summaryHistorySearchTitle": "Поиск по истории",
+  "summaryHistorySearchLabel": "Искать события в таймлайне",
+  "summaryHistorySearchEmptyHint": "Ищите сохраненные события, чтобы быстро проверить детали перед визитом.",
+  "summaryHistorySearchNoResults": "Подходящих событий не найдено.",
+  "summaryHistorySearchFailedMessage": "Не удалось обновить подходящие события. Сохраненные результаты могут остаться доступными.",
+  "summaryRegenerateQueuedMessage": "Создание сводки началось. Потяните вниз для обновления через несколько минут.",
+  "summaryExportSharedMessage": "Экспорт сводки готов к отправке.",
+  "summaryRegenerateFailedMessage": "Не удалось запустить создание сводки. Проверьте подключение и попробуйте снова.",
+  "summaryExportFailedMessage": "Не удалось подготовить экспорт сводки. Проверьте подключение и попробуйте снова.",
+  "summaryActionFailedMessage": "Не удалось выполнить действие. Попробуйте снова.",
+  "summaryLoadFailedMessage": "Не удалось загрузить эту сводку.",
+  "summarySectionKeySymptoms": "Ключевые симптомы",
+  "summarySectionMajorDiagnoses": "Основные диагнозы",
+  "summarySectionMedications": "Лекарства",
+  "summarySectionProcedures": "Процедуры",
+  "summarySectionHospitalizations": "Госпитализации",
+  "summarySectionAllergies": "Аллергии",
+  "summarySectionTestResults": "Результаты анализов",
+  "summarySectionTreatmentOutcomes": "Результаты лечения",
+  "summarySectionOpenQuestions": "Открытые вопросы",
+  "summarySectionCareTeam": "Команда врачей",
+  "summaryUnknownSectionTitle": "{name}",
+  "@summaryUnknownSectionTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "settingsTitle": "Настройки",
   "settingsMessage": "Конфиденциальность, аккаунт, профили и язык.",
   "captureHeadline": "Добавить в историю",

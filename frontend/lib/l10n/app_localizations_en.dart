@@ -38,6 +38,157 @@ class AppLocalizationsEn extends AppLocalizations {
       'Doctor-ready summaries and exports will live here.';
 
   @override
+  String get summaryHeadline => 'Doctor summary';
+
+  @override
+  String summarySubjectLabel(String name) {
+    return 'For $name';
+  }
+
+  @override
+  String get summaryNoSubjectMessage =>
+      'MedStory could not load a profile for this summary.';
+
+  @override
+  String get summaryBoundaryNote =>
+      'MedStory organizes your information; it does not diagnose or recommend treatment.';
+
+  @override
+  String get summaryOfflineNotice =>
+      'Showing the saved summary. Refresh when you are back online.';
+
+  @override
+  String get summaryRefreshAction => 'Refresh summary';
+
+  @override
+  String get summaryRegenerateAction => 'Regenerate summary';
+
+  @override
+  String get summaryGenerateAction => 'Generate summary';
+
+  @override
+  String get summaryPrepareVisitAction => 'Prepare for visit';
+
+  @override
+  String get summaryNotReadyTitle => 'No summary yet';
+
+  @override
+  String get summaryNotReadyMessage =>
+      'Generate a doctor-ready summary from your confirmed timeline events when you need to prepare for a visit.';
+
+  @override
+  String get summaryNarrativeTitle => 'Doctor-ready narrative';
+
+  @override
+  String get summaryNoNarrativeMessage =>
+      'No narrative text was returned for this summary.';
+
+  @override
+  String summaryGeneratedAt(String date) {
+    return 'Generated $date';
+  }
+
+  @override
+  String summaryVersionLabel(int version) {
+    return 'Version $version';
+  }
+
+  @override
+  String summaryEventCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count confirmed events',
+      one: '1 confirmed event',
+      zero: 'No confirmed events',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get summaryReturnToCurrentAction => 'Return to current summary';
+
+  @override
+  String get summaryVersionHistoryAction => 'Version history';
+
+  @override
+  String get summaryCurrentVersionLabel => 'Current';
+
+  @override
+  String get summaryHistorySearchTitle => 'Search history';
+
+  @override
+  String get summaryHistorySearchLabel => 'Search timeline events';
+
+  @override
+  String get summaryHistorySearchEmptyHint =>
+      'Search your saved timeline to review details while preparing for a visit.';
+
+  @override
+  String get summaryHistorySearchNoResults => 'No matching events found.';
+
+  @override
+  String get summaryHistorySearchFailedMessage =>
+      'We could not refresh matching events. Saved results may still appear.';
+
+  @override
+  String get summaryRegenerateQueuedMessage =>
+      'Summary generation has started. Pull to refresh in a moment.';
+
+  @override
+  String get summaryExportSharedMessage => 'Summary export is ready to share.';
+
+  @override
+  String get summaryRegenerateFailedMessage =>
+      'We could not start summary generation. Check your connection and try again.';
+
+  @override
+  String get summaryExportFailedMessage =>
+      'We could not prepare the summary export. Check your connection and try again.';
+
+  @override
+  String get summaryActionFailedMessage =>
+      'We could not complete that action. Try again.';
+
+  @override
+  String get summaryLoadFailedMessage => 'We could not load this summary.';
+
+  @override
+  String get summarySectionKeySymptoms => 'Key symptoms';
+
+  @override
+  String get summarySectionMajorDiagnoses => 'Major diagnoses';
+
+  @override
+  String get summarySectionMedications => 'Medications';
+
+  @override
+  String get summarySectionProcedures => 'Procedures';
+
+  @override
+  String get summarySectionHospitalizations => 'Hospitalizations';
+
+  @override
+  String get summarySectionAllergies => 'Allergies';
+
+  @override
+  String get summarySectionTestResults => 'Test results';
+
+  @override
+  String get summarySectionTreatmentOutcomes => 'Treatment outcomes';
+
+  @override
+  String get summarySectionOpenQuestions => 'Open questions';
+
+  @override
+  String get summarySectionCareTeam => 'Care team';
+
+  @override
+  String summaryUnknownSectionTitle(String name) {
+    return '$name';
+  }
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

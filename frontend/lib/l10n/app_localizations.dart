@@ -152,6 +152,252 @@ abstract class AppLocalizations {
   /// **'Doctor-ready summaries and exports will live here.'**
   String get summaryMessage;
 
+  /// No description provided for @summaryHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctor summary'**
+  String get summaryHeadline;
+
+  /// No description provided for @summarySubjectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'For {name}'**
+  String summarySubjectLabel(String name);
+
+  /// No description provided for @summaryNoSubjectMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'MedStory could not load a profile for this summary.'**
+  String get summaryNoSubjectMessage;
+
+  /// No description provided for @summaryBoundaryNote.
+  ///
+  /// In en, this message translates to:
+  /// **'MedStory organizes your information; it does not diagnose or recommend treatment.'**
+  String get summaryBoundaryNote;
+
+  /// No description provided for @summaryOfflineNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the saved summary. Refresh when you are back online.'**
+  String get summaryOfflineNotice;
+
+  /// No description provided for @summaryRefreshAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh summary'**
+  String get summaryRefreshAction;
+
+  /// No description provided for @summaryRegenerateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate summary'**
+  String get summaryRegenerateAction;
+
+  /// No description provided for @summaryGenerateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate summary'**
+  String get summaryGenerateAction;
+
+  /// No description provided for @summaryPrepareVisitAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare for visit'**
+  String get summaryPrepareVisitAction;
+
+  /// No description provided for @summaryNotReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No summary yet'**
+  String get summaryNotReadyTitle;
+
+  /// No description provided for @summaryNotReadyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate a doctor-ready summary from your confirmed timeline events when you need to prepare for a visit.'**
+  String get summaryNotReadyMessage;
+
+  /// No description provided for @summaryNarrativeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctor-ready narrative'**
+  String get summaryNarrativeTitle;
+
+  /// No description provided for @summaryNoNarrativeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No narrative text was returned for this summary.'**
+  String get summaryNoNarrativeMessage;
+
+  /// No description provided for @summaryGeneratedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated {date}'**
+  String summaryGeneratedAt(String date);
+
+  /// No description provided for @summaryVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String summaryVersionLabel(int version);
+
+  /// No description provided for @summaryEventCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No confirmed events} =1{1 confirmed event} other{{count} confirmed events}}'**
+  String summaryEventCountLabel(int count);
+
+  /// No description provided for @summaryReturnToCurrentAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to current summary'**
+  String get summaryReturnToCurrentAction;
+
+  /// No description provided for @summaryVersionHistoryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Version history'**
+  String get summaryVersionHistoryAction;
+
+  /// No description provided for @summaryCurrentVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get summaryCurrentVersionLabel;
+
+  /// No description provided for @summaryHistorySearchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search history'**
+  String get summaryHistorySearchTitle;
+
+  /// No description provided for @summaryHistorySearchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Search timeline events'**
+  String get summaryHistorySearchLabel;
+
+  /// No description provided for @summaryHistorySearchEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search your saved timeline to review details while preparing for a visit.'**
+  String get summaryHistorySearchEmptyHint;
+
+  /// No description provided for @summaryHistorySearchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching events found.'**
+  String get summaryHistorySearchNoResults;
+
+  /// No description provided for @summaryHistorySearchFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not refresh matching events. Saved results may still appear.'**
+  String get summaryHistorySearchFailedMessage;
+
+  /// No description provided for @summaryRegenerateQueuedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary generation has started. Pull to refresh in a moment.'**
+  String get summaryRegenerateQueuedMessage;
+
+  /// No description provided for @summaryExportSharedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary export is ready to share.'**
+  String get summaryExportSharedMessage;
+
+  /// No description provided for @summaryRegenerateFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not start summary generation. Check your connection and try again.'**
+  String get summaryRegenerateFailedMessage;
+
+  /// No description provided for @summaryExportFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not prepare the summary export. Check your connection and try again.'**
+  String get summaryExportFailedMessage;
+
+  /// No description provided for @summaryActionFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not complete that action. Try again.'**
+  String get summaryActionFailedMessage;
+
+  /// No description provided for @summaryLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load this summary.'**
+  String get summaryLoadFailedMessage;
+
+  /// No description provided for @summarySectionKeySymptoms.
+  ///
+  /// In en, this message translates to:
+  /// **'Key symptoms'**
+  String get summarySectionKeySymptoms;
+
+  /// No description provided for @summarySectionMajorDiagnoses.
+  ///
+  /// In en, this message translates to:
+  /// **'Major diagnoses'**
+  String get summarySectionMajorDiagnoses;
+
+  /// No description provided for @summarySectionMedications.
+  ///
+  /// In en, this message translates to:
+  /// **'Medications'**
+  String get summarySectionMedications;
+
+  /// No description provided for @summarySectionProcedures.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedures'**
+  String get summarySectionProcedures;
+
+  /// No description provided for @summarySectionHospitalizations.
+  ///
+  /// In en, this message translates to:
+  /// **'Hospitalizations'**
+  String get summarySectionHospitalizations;
+
+  /// No description provided for @summarySectionAllergies.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergies'**
+  String get summarySectionAllergies;
+
+  /// No description provided for @summarySectionTestResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Test results'**
+  String get summarySectionTestResults;
+
+  /// No description provided for @summarySectionTreatmentOutcomes.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment outcomes'**
+  String get summarySectionTreatmentOutcomes;
+
+  /// No description provided for @summarySectionOpenQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Open questions'**
+  String get summarySectionOpenQuestions;
+
+  /// No description provided for @summarySectionCareTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Care team'**
+  String get summarySectionCareTeam;
+
+  /// No description provided for @summaryUnknownSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}'**
+  String summaryUnknownSectionTitle(String name);
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

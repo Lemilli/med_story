@@ -1517,12 +1517,652 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
   }
 }
 
+class $CachedMedicalSummariesTable extends CachedMedicalSummaries
+    with TableInfo<$CachedMedicalSummariesTable, CachedMedicalSummary> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedMedicalSummariesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isCurrentMeta = const VerificationMeta(
+    'isCurrent',
+  );
+  @override
+  late final GeneratedColumn<bool> isCurrent = GeneratedColumn<bool>(
+    'is_current',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_current" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _contentJsonMeta = const VerificationMeta(
+    'contentJson',
+  );
+  @override
+  late final GeneratedColumn<String> contentJson = GeneratedColumn<String>(
+    'content_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _narrativeTextMeta = const VerificationMeta(
+    'narrativeText',
+  );
+  @override
+  late final GeneratedColumn<String> narrativeText = GeneratedColumn<String>(
+    'narrative_text',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _languageMeta = const VerificationMeta(
+    'language',
+  );
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+    'language',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _generatedFromEventCountMeta =
+      const VerificationMeta('generatedFromEventCount');
+  @override
+  late final GeneratedColumn<int> generatedFromEventCount =
+      GeneratedColumn<int>(
+        'generated_from_event_count',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _syncedAtMeta = const VerificationMeta(
+    'syncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
+    'synced_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    subjectId,
+    version,
+    isCurrent,
+    contentJson,
+    narrativeText,
+    language,
+    generatedFromEventCount,
+    createdAt,
+    syncedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_medical_summaries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedMedicalSummary> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_subjectIdMeta);
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_versionMeta);
+    }
+    if (data.containsKey('is_current')) {
+      context.handle(
+        _isCurrentMeta,
+        isCurrent.isAcceptableOrUnknown(data['is_current']!, _isCurrentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_isCurrentMeta);
+    }
+    if (data.containsKey('content_json')) {
+      context.handle(
+        _contentJsonMeta,
+        contentJson.isAcceptableOrUnknown(
+          data['content_json']!,
+          _contentJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contentJsonMeta);
+    }
+    if (data.containsKey('narrative_text')) {
+      context.handle(
+        _narrativeTextMeta,
+        narrativeText.isAcceptableOrUnknown(
+          data['narrative_text']!,
+          _narrativeTextMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_narrativeTextMeta);
+    }
+    if (data.containsKey('language')) {
+      context.handle(
+        _languageMeta,
+        language.isAcceptableOrUnknown(data['language']!, _languageMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_languageMeta);
+    }
+    if (data.containsKey('generated_from_event_count')) {
+      context.handle(
+        _generatedFromEventCountMeta,
+        generatedFromEventCount.isAcceptableOrUnknown(
+          data['generated_from_event_count']!,
+          _generatedFromEventCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_generatedFromEventCountMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('synced_at')) {
+      context.handle(
+        _syncedAtMeta,
+        syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_syncedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CachedMedicalSummary map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedMedicalSummary(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+      isCurrent: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_current'],
+      )!,
+      contentJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_json'],
+      )!,
+      narrativeText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}narrative_text'],
+      )!,
+      language: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}language'],
+      )!,
+      generatedFromEventCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}generated_from_event_count'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      syncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}synced_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedMedicalSummariesTable createAlias(String alias) {
+    return $CachedMedicalSummariesTable(attachedDatabase, alias);
+  }
+}
+
+class CachedMedicalSummary extends DataClass
+    implements Insertable<CachedMedicalSummary> {
+  final String id;
+  final String subjectId;
+  final int version;
+  final bool isCurrent;
+  final String contentJson;
+  final String narrativeText;
+  final String language;
+  final int generatedFromEventCount;
+  final DateTime? createdAt;
+  final DateTime syncedAt;
+  const CachedMedicalSummary({
+    required this.id,
+    required this.subjectId,
+    required this.version,
+    required this.isCurrent,
+    required this.contentJson,
+    required this.narrativeText,
+    required this.language,
+    required this.generatedFromEventCount,
+    this.createdAt,
+    required this.syncedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['subject_id'] = Variable<String>(subjectId);
+    map['version'] = Variable<int>(version);
+    map['is_current'] = Variable<bool>(isCurrent);
+    map['content_json'] = Variable<String>(contentJson);
+    map['narrative_text'] = Variable<String>(narrativeText);
+    map['language'] = Variable<String>(language);
+    map['generated_from_event_count'] = Variable<int>(generatedFromEventCount);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    map['synced_at'] = Variable<DateTime>(syncedAt);
+    return map;
+  }
+
+  CachedMedicalSummariesCompanion toCompanion(bool nullToAbsent) {
+    return CachedMedicalSummariesCompanion(
+      id: Value(id),
+      subjectId: Value(subjectId),
+      version: Value(version),
+      isCurrent: Value(isCurrent),
+      contentJson: Value(contentJson),
+      narrativeText: Value(narrativeText),
+      language: Value(language),
+      generatedFromEventCount: Value(generatedFromEventCount),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      syncedAt: Value(syncedAt),
+    );
+  }
+
+  factory CachedMedicalSummary.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedMedicalSummary(
+      id: serializer.fromJson<String>(json['id']),
+      subjectId: serializer.fromJson<String>(json['subjectId']),
+      version: serializer.fromJson<int>(json['version']),
+      isCurrent: serializer.fromJson<bool>(json['isCurrent']),
+      contentJson: serializer.fromJson<String>(json['contentJson']),
+      narrativeText: serializer.fromJson<String>(json['narrativeText']),
+      language: serializer.fromJson<String>(json['language']),
+      generatedFromEventCount: serializer.fromJson<int>(
+        json['generatedFromEventCount'],
+      ),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'subjectId': serializer.toJson<String>(subjectId),
+      'version': serializer.toJson<int>(version),
+      'isCurrent': serializer.toJson<bool>(isCurrent),
+      'contentJson': serializer.toJson<String>(contentJson),
+      'narrativeText': serializer.toJson<String>(narrativeText),
+      'language': serializer.toJson<String>(language),
+      'generatedFromEventCount': serializer.toJson<int>(
+        generatedFromEventCount,
+      ),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'syncedAt': serializer.toJson<DateTime>(syncedAt),
+    };
+  }
+
+  CachedMedicalSummary copyWith({
+    String? id,
+    String? subjectId,
+    int? version,
+    bool? isCurrent,
+    String? contentJson,
+    String? narrativeText,
+    String? language,
+    int? generatedFromEventCount,
+    Value<DateTime?> createdAt = const Value.absent(),
+    DateTime? syncedAt,
+  }) => CachedMedicalSummary(
+    id: id ?? this.id,
+    subjectId: subjectId ?? this.subjectId,
+    version: version ?? this.version,
+    isCurrent: isCurrent ?? this.isCurrent,
+    contentJson: contentJson ?? this.contentJson,
+    narrativeText: narrativeText ?? this.narrativeText,
+    language: language ?? this.language,
+    generatedFromEventCount:
+        generatedFromEventCount ?? this.generatedFromEventCount,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    syncedAt: syncedAt ?? this.syncedAt,
+  );
+  CachedMedicalSummary copyWithCompanion(CachedMedicalSummariesCompanion data) {
+    return CachedMedicalSummary(
+      id: data.id.present ? data.id.value : this.id,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      version: data.version.present ? data.version.value : this.version,
+      isCurrent: data.isCurrent.present ? data.isCurrent.value : this.isCurrent,
+      contentJson: data.contentJson.present
+          ? data.contentJson.value
+          : this.contentJson,
+      narrativeText: data.narrativeText.present
+          ? data.narrativeText.value
+          : this.narrativeText,
+      language: data.language.present ? data.language.value : this.language,
+      generatedFromEventCount: data.generatedFromEventCount.present
+          ? data.generatedFromEventCount.value
+          : this.generatedFromEventCount,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedMedicalSummary(')
+          ..write('id: $id, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('version: $version, ')
+          ..write('isCurrent: $isCurrent, ')
+          ..write('contentJson: $contentJson, ')
+          ..write('narrativeText: $narrativeText, ')
+          ..write('language: $language, ')
+          ..write('generatedFromEventCount: $generatedFromEventCount, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('syncedAt: $syncedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    subjectId,
+    version,
+    isCurrent,
+    contentJson,
+    narrativeText,
+    language,
+    generatedFromEventCount,
+    createdAt,
+    syncedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedMedicalSummary &&
+          other.id == this.id &&
+          other.subjectId == this.subjectId &&
+          other.version == this.version &&
+          other.isCurrent == this.isCurrent &&
+          other.contentJson == this.contentJson &&
+          other.narrativeText == this.narrativeText &&
+          other.language == this.language &&
+          other.generatedFromEventCount == this.generatedFromEventCount &&
+          other.createdAt == this.createdAt &&
+          other.syncedAt == this.syncedAt);
+}
+
+class CachedMedicalSummariesCompanion
+    extends UpdateCompanion<CachedMedicalSummary> {
+  final Value<String> id;
+  final Value<String> subjectId;
+  final Value<int> version;
+  final Value<bool> isCurrent;
+  final Value<String> contentJson;
+  final Value<String> narrativeText;
+  final Value<String> language;
+  final Value<int> generatedFromEventCount;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime> syncedAt;
+  final Value<int> rowid;
+  const CachedMedicalSummariesCompanion({
+    this.id = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.isCurrent = const Value.absent(),
+    this.contentJson = const Value.absent(),
+    this.narrativeText = const Value.absent(),
+    this.language = const Value.absent(),
+    this.generatedFromEventCount = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedMedicalSummariesCompanion.insert({
+    required String id,
+    required String subjectId,
+    required int version,
+    required bool isCurrent,
+    required String contentJson,
+    required String narrativeText,
+    required String language,
+    required int generatedFromEventCount,
+    this.createdAt = const Value.absent(),
+    required DateTime syncedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       subjectId = Value(subjectId),
+       version = Value(version),
+       isCurrent = Value(isCurrent),
+       contentJson = Value(contentJson),
+       narrativeText = Value(narrativeText),
+       language = Value(language),
+       generatedFromEventCount = Value(generatedFromEventCount),
+       syncedAt = Value(syncedAt);
+  static Insertable<CachedMedicalSummary> custom({
+    Expression<String>? id,
+    Expression<String>? subjectId,
+    Expression<int>? version,
+    Expression<bool>? isCurrent,
+    Expression<String>? contentJson,
+    Expression<String>? narrativeText,
+    Expression<String>? language,
+    Expression<int>? generatedFromEventCount,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? syncedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (version != null) 'version': version,
+      if (isCurrent != null) 'is_current': isCurrent,
+      if (contentJson != null) 'content_json': contentJson,
+      if (narrativeText != null) 'narrative_text': narrativeText,
+      if (language != null) 'language': language,
+      if (generatedFromEventCount != null)
+        'generated_from_event_count': generatedFromEventCount,
+      if (createdAt != null) 'created_at': createdAt,
+      if (syncedAt != null) 'synced_at': syncedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedMedicalSummariesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? subjectId,
+    Value<int>? version,
+    Value<bool>? isCurrent,
+    Value<String>? contentJson,
+    Value<String>? narrativeText,
+    Value<String>? language,
+    Value<int>? generatedFromEventCount,
+    Value<DateTime?>? createdAt,
+    Value<DateTime>? syncedAt,
+    Value<int>? rowid,
+  }) {
+    return CachedMedicalSummariesCompanion(
+      id: id ?? this.id,
+      subjectId: subjectId ?? this.subjectId,
+      version: version ?? this.version,
+      isCurrent: isCurrent ?? this.isCurrent,
+      contentJson: contentJson ?? this.contentJson,
+      narrativeText: narrativeText ?? this.narrativeText,
+      language: language ?? this.language,
+      generatedFromEventCount:
+          generatedFromEventCount ?? this.generatedFromEventCount,
+      createdAt: createdAt ?? this.createdAt,
+      syncedAt: syncedAt ?? this.syncedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (isCurrent.present) {
+      map['is_current'] = Variable<bool>(isCurrent.value);
+    }
+    if (contentJson.present) {
+      map['content_json'] = Variable<String>(contentJson.value);
+    }
+    if (narrativeText.present) {
+      map['narrative_text'] = Variable<String>(narrativeText.value);
+    }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
+    }
+    if (generatedFromEventCount.present) {
+      map['generated_from_event_count'] = Variable<int>(
+        generatedFromEventCount.value,
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<DateTime>(syncedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedMedicalSummariesCompanion(')
+          ..write('id: $id, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('version: $version, ')
+          ..write('isCurrent: $isCurrent, ')
+          ..write('contentJson: $contentJson, ')
+          ..write('narrativeText: $narrativeText, ')
+          ..write('language: $language, ')
+          ..write('generatedFromEventCount: $generatedFromEventCount, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$LocalDatabase extends GeneratedDatabase {
   _$LocalDatabase(QueryExecutor e) : super(e);
   $LocalDatabaseManager get managers => $LocalDatabaseManager(this);
   late final $SubjectsTable subjects = $SubjectsTable(this);
   late final $CachedMedicalEventsTable cachedMedicalEvents =
       $CachedMedicalEventsTable(this);
+  late final $CachedMedicalSummariesTable cachedMedicalSummaries =
+      $CachedMedicalSummariesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1530,6 +2170,7 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     subjects,
     cachedMedicalEvents,
+    cachedMedicalSummaries,
   ];
 }
 
@@ -2248,6 +2889,326 @@ typedef $$CachedMedicalEventsTableProcessedTableManager =
       CachedMedicalEvent,
       PrefetchHooks Function()
     >;
+typedef $$CachedMedicalSummariesTableCreateCompanionBuilder =
+    CachedMedicalSummariesCompanion Function({
+      required String id,
+      required String subjectId,
+      required int version,
+      required bool isCurrent,
+      required String contentJson,
+      required String narrativeText,
+      required String language,
+      required int generatedFromEventCount,
+      Value<DateTime?> createdAt,
+      required DateTime syncedAt,
+      Value<int> rowid,
+    });
+typedef $$CachedMedicalSummariesTableUpdateCompanionBuilder =
+    CachedMedicalSummariesCompanion Function({
+      Value<String> id,
+      Value<String> subjectId,
+      Value<int> version,
+      Value<bool> isCurrent,
+      Value<String> contentJson,
+      Value<String> narrativeText,
+      Value<String> language,
+      Value<int> generatedFromEventCount,
+      Value<DateTime?> createdAt,
+      Value<DateTime> syncedAt,
+      Value<int> rowid,
+    });
+
+class $$CachedMedicalSummariesTableFilterComposer
+    extends Composer<_$LocalDatabase, $CachedMedicalSummariesTable> {
+  $$CachedMedicalSummariesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isCurrent => $composableBuilder(
+    column: $table.isCurrent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contentJson => $composableBuilder(
+    column: $table.contentJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get narrativeText => $composableBuilder(
+    column: $table.narrativeText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get language => $composableBuilder(
+    column: $table.language,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get generatedFromEventCount => $composableBuilder(
+    column: $table.generatedFromEventCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedMedicalSummariesTableOrderingComposer
+    extends Composer<_$LocalDatabase, $CachedMedicalSummariesTable> {
+  $$CachedMedicalSummariesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isCurrent => $composableBuilder(
+    column: $table.isCurrent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contentJson => $composableBuilder(
+    column: $table.contentJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get narrativeText => $composableBuilder(
+    column: $table.narrativeText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get language => $composableBuilder(
+    column: $table.language,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get generatedFromEventCount => $composableBuilder(
+    column: $table.generatedFromEventCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedMedicalSummariesTableAnnotationComposer
+    extends Composer<_$LocalDatabase, $CachedMedicalSummariesTable> {
+  $$CachedMedicalSummariesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<bool> get isCurrent =>
+      $composableBuilder(column: $table.isCurrent, builder: (column) => column);
+
+  GeneratedColumn<String> get contentJson => $composableBuilder(
+    column: $table.contentJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get narrativeText => $composableBuilder(
+    column: $table.narrativeText,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
+
+  GeneratedColumn<int> get generatedFromEventCount => $composableBuilder(
+    column: $table.generatedFromEventCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+}
+
+class $$CachedMedicalSummariesTableTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          $CachedMedicalSummariesTable,
+          CachedMedicalSummary,
+          $$CachedMedicalSummariesTableFilterComposer,
+          $$CachedMedicalSummariesTableOrderingComposer,
+          $$CachedMedicalSummariesTableAnnotationComposer,
+          $$CachedMedicalSummariesTableCreateCompanionBuilder,
+          $$CachedMedicalSummariesTableUpdateCompanionBuilder,
+          (
+            CachedMedicalSummary,
+            BaseReferences<
+              _$LocalDatabase,
+              $CachedMedicalSummariesTable,
+              CachedMedicalSummary
+            >,
+          ),
+          CachedMedicalSummary,
+          PrefetchHooks Function()
+        > {
+  $$CachedMedicalSummariesTableTableManager(
+    _$LocalDatabase db,
+    $CachedMedicalSummariesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedMedicalSummariesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$CachedMedicalSummariesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CachedMedicalSummariesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> subjectId = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<bool> isCurrent = const Value.absent(),
+                Value<String> contentJson = const Value.absent(),
+                Value<String> narrativeText = const Value.absent(),
+                Value<String> language = const Value.absent(),
+                Value<int> generatedFromEventCount = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime> syncedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CachedMedicalSummariesCompanion(
+                id: id,
+                subjectId: subjectId,
+                version: version,
+                isCurrent: isCurrent,
+                contentJson: contentJson,
+                narrativeText: narrativeText,
+                language: language,
+                generatedFromEventCount: generatedFromEventCount,
+                createdAt: createdAt,
+                syncedAt: syncedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String subjectId,
+                required int version,
+                required bool isCurrent,
+                required String contentJson,
+                required String narrativeText,
+                required String language,
+                required int generatedFromEventCount,
+                Value<DateTime?> createdAt = const Value.absent(),
+                required DateTime syncedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CachedMedicalSummariesCompanion.insert(
+                id: id,
+                subjectId: subjectId,
+                version: version,
+                isCurrent: isCurrent,
+                contentJson: contentJson,
+                narrativeText: narrativeText,
+                language: language,
+                generatedFromEventCount: generatedFromEventCount,
+                createdAt: createdAt,
+                syncedAt: syncedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedMedicalSummariesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      $CachedMedicalSummariesTable,
+      CachedMedicalSummary,
+      $$CachedMedicalSummariesTableFilterComposer,
+      $$CachedMedicalSummariesTableOrderingComposer,
+      $$CachedMedicalSummariesTableAnnotationComposer,
+      $$CachedMedicalSummariesTableCreateCompanionBuilder,
+      $$CachedMedicalSummariesTableUpdateCompanionBuilder,
+      (
+        CachedMedicalSummary,
+        BaseReferences<
+          _$LocalDatabase,
+          $CachedMedicalSummariesTable,
+          CachedMedicalSummary
+        >,
+      ),
+      CachedMedicalSummary,
+      PrefetchHooks Function()
+    >;
 
 class $LocalDatabaseManager {
   final _$LocalDatabase _db;
@@ -2256,4 +3217,9 @@ class $LocalDatabaseManager {
       $$SubjectsTableTableManager(_db, _db.subjects);
   $$CachedMedicalEventsTableTableManager get cachedMedicalEvents =>
       $$CachedMedicalEventsTableTableManager(_db, _db.cachedMedicalEvents);
+  $$CachedMedicalSummariesTableTableManager get cachedMedicalSummaries =>
+      $$CachedMedicalSummariesTableTableManager(
+        _db,
+        _db.cachedMedicalSummaries,
+      );
 }

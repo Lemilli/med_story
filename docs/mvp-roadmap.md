@@ -86,12 +86,12 @@ remain for deterministic local tests.
 - **Exit:** user opens a document and reads a clear explanation (Scenario B).
 
 ### Phase 4 — Medical Memory & Doctor Summary
-**Status:** Backend implemented; frontend still planned.
+**Status:** Backend and frontend implemented.
 **Goal:** continuously-updated summary + doctor-ready export (Scenarios C & D).
 - Backend: `MedicalSummary` (versioned), summary task, immediate regen on confirmed event changes,
-  `/summary`, `/summary/regenerate`, `/summary/versions`, `/summary/export` (PDF/JSON);
-  `/events/search` for treatment-history queries.
-- Frontend: summary screen, version history, "Prepare for visit" export/share, history search.
+  `/summary`, `/summary/regenerate`, `/summary/versions`, `/summary/export` (PDF/JSON).
+- Frontend: subject-aware summary screen, version history, "Prepare for visit" PDF share,
+  cached current summary, and timeline-backed history search.
 - **Exit:** user generates a concise doctor summary and reviews treatment history (C & D).
 
 ### Phase 5 — Voice-First Capture

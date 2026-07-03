@@ -37,6 +37,157 @@ class AppLocalizationsRu extends AppLocalizations {
   String get summaryMessage => 'Здесь будут сводки для врача и экспорт данных.';
 
   @override
+  String get summaryHeadline => 'Сводка для врача';
+
+  @override
+  String summarySubjectLabel(String name) {
+    return 'Для $name';
+  }
+
+  @override
+  String get summaryNoSubjectMessage =>
+      'MedStory не удалось загрузить профиль для этой сводки.';
+
+  @override
+  String get summaryBoundaryNote =>
+      'MedStory упорядочивает вашу информацию; он не ставит диагнозы и не рекомендует лечение.';
+
+  @override
+  String get summaryOfflineNotice =>
+      'Показана сохраненная сводка. Обновите, когда снова будете онлайн.';
+
+  @override
+  String get summaryRefreshAction => 'Обновить сводку';
+
+  @override
+  String get summaryRegenerateAction => 'Пересоздать сводку';
+
+  @override
+  String get summaryGenerateAction => 'Создать сводку';
+
+  @override
+  String get summaryPrepareVisitAction => 'Подготовить к визиту';
+
+  @override
+  String get summaryNotReadyTitle => 'Сводки пока нет';
+
+  @override
+  String get summaryNotReadyMessage =>
+      'Создайте сводку для врача из подтвержденных событий, когда нужно подготовиться к визиту.';
+
+  @override
+  String get summaryNarrativeTitle => 'Краткий текст для врача';
+
+  @override
+  String get summaryNoNarrativeMessage =>
+      'Для этой сводки не вернулся краткий текст.';
+
+  @override
+  String summaryGeneratedAt(String date) {
+    return 'Создано $date';
+  }
+
+  @override
+  String summaryVersionLabel(int version) {
+    return 'Версия $version';
+  }
+
+  @override
+  String summaryEventCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count подтвержденных событий',
+      one: '1 подтвержденное событие',
+      zero: 'Нет подтвержденных событий',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get summaryReturnToCurrentAction => 'Вернуться к текущей сводке';
+
+  @override
+  String get summaryVersionHistoryAction => 'История версий';
+
+  @override
+  String get summaryCurrentVersionLabel => 'Текущая';
+
+  @override
+  String get summaryHistorySearchTitle => 'Поиск по истории';
+
+  @override
+  String get summaryHistorySearchLabel => 'Искать события в таймлайне';
+
+  @override
+  String get summaryHistorySearchEmptyHint =>
+      'Ищите сохраненные события, чтобы быстро проверить детали перед визитом.';
+
+  @override
+  String get summaryHistorySearchNoResults => 'Подходящих событий не найдено.';
+
+  @override
+  String get summaryHistorySearchFailedMessage =>
+      'Не удалось обновить подходящие события. Сохраненные результаты могут остаться доступными.';
+
+  @override
+  String get summaryRegenerateQueuedMessage =>
+      'Создание сводки началось. Потяните вниз для обновления через несколько минут.';
+
+  @override
+  String get summaryExportSharedMessage => 'Экспорт сводки готов к отправке.';
+
+  @override
+  String get summaryRegenerateFailedMessage =>
+      'Не удалось запустить создание сводки. Проверьте подключение и попробуйте снова.';
+
+  @override
+  String get summaryExportFailedMessage =>
+      'Не удалось подготовить экспорт сводки. Проверьте подключение и попробуйте снова.';
+
+  @override
+  String get summaryActionFailedMessage =>
+      'Не удалось выполнить действие. Попробуйте снова.';
+
+  @override
+  String get summaryLoadFailedMessage => 'Не удалось загрузить эту сводку.';
+
+  @override
+  String get summarySectionKeySymptoms => 'Ключевые симптомы';
+
+  @override
+  String get summarySectionMajorDiagnoses => 'Основные диагнозы';
+
+  @override
+  String get summarySectionMedications => 'Лекарства';
+
+  @override
+  String get summarySectionProcedures => 'Процедуры';
+
+  @override
+  String get summarySectionHospitalizations => 'Госпитализации';
+
+  @override
+  String get summarySectionAllergies => 'Аллергии';
+
+  @override
+  String get summarySectionTestResults => 'Результаты анализов';
+
+  @override
+  String get summarySectionTreatmentOutcomes => 'Результаты лечения';
+
+  @override
+  String get summarySectionOpenQuestions => 'Открытые вопросы';
+
+  @override
+  String get summarySectionCareTeam => 'Команда врачей';
+
+  @override
+  String summaryUnknownSectionTitle(String name) {
+    return '$name';
+  }
+
+  @override
   String get settingsTitle => 'Настройки';
 
   @override

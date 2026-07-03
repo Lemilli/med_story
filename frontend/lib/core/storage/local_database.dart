@@ -52,7 +52,23 @@ class CachedMedicalEvents extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Subjects, CachedMedicalEvents])
+class CachedMedicalSummaries extends Table {
+  TextColumn get id => text()();
+  TextColumn get subjectId => text()();
+  IntColumn get version => integer()();
+  BoolColumn get isCurrent => boolean()();
+  TextColumn get contentJson => text()();
+  TextColumn get narrativeText => text()();
+  TextColumn get language => text()();
+  IntColumn get generatedFromEventCount => integer()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get syncedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [Subjects, CachedMedicalEvents, CachedMedicalSummaries])
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase() : super(_openConnection());
 
@@ -60,10 +76,23 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (migrator) => migrator.createAll(),
+      onUpgrade: (migrator, from, to) async {
+        if (from < 2) {
+          await migrator.createTable(cachedMedicalSummaries);
+        }
+      },
+    );
+  }
 
   Future<void> clearAll() async {
     await transaction(() async {
+      await delete(cachedMedicalSummaries).go();
       await delete(cachedMedicalEvents).go();
       await delete(subjects).go();
     });
@@ -81,6 +110,14 @@ class LocalDatabase extends _$LocalDatabase {
     });
   }
 
+  Future<void> upsertSummaries(
+    Iterable<CachedMedicalSummariesCompanion> rows,
+  ) async {
+    await batch((batch) {
+      batch.insertAllOnConflictUpdate(cachedMedicalSummaries, rows.toList());
+    });
+  }
+
   Future<void> removeEvent(String id) {
     return (delete(
       cachedMedicalEvents,
@@ -89,6 +126,9 @@ class LocalDatabase extends _$LocalDatabase {
 
   Future<void> removeSubject(String id) async {
     await transaction(() async {
+      await (delete(
+        cachedMedicalSummaries,
+      )..where((summary) => summary.subjectId.equals(id))).go();
       await (delete(
         cachedMedicalEvents,
       )..where((event) => event.subjectId.equals(id))).go();
@@ -104,6 +144,35 @@ class LocalDatabase extends _$LocalDatabase {
           ),
           (subject) => OrderingTerm(expression: subject.displayName),
         ]))
+        .get();
+  }
+
+  Future<CachedMedicalSummary?> getCurrentSummary(String subjectId) {
+    return (select(cachedMedicalSummaries)
+          ..where(
+            (summary) =>
+                summary.subjectId.equals(subjectId) &
+                summary.isCurrent.equals(true),
+          )
+          ..orderBy([
+            (summary) => OrderingTerm(
+              expression: summary.version,
+              mode: OrderingMode.desc,
+            ),
+          ])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
+  Future<List<CachedMedicalSummary>> getSummaryVersions(String subjectId) {
+    return (select(cachedMedicalSummaries)
+          ..where((summary) => summary.subjectId.equals(subjectId))
+          ..orderBy([
+            (summary) => OrderingTerm(
+              expression: summary.version,
+              mode: OrderingMode.desc,
+            ),
+          ]))
         .get();
   }
 

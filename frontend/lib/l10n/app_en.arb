@@ -9,6 +9,82 @@
   "timelineMessage": "Your confirmed medical story will appear here.",
   "summaryTitle": "Summary",
   "summaryMessage": "Doctor-ready summaries and exports will live here.",
+  "summaryHeadline": "Doctor summary",
+  "summarySubjectLabel": "For {name}",
+  "@summarySubjectLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "summaryNoSubjectMessage": "MedStory could not load a profile for this summary.",
+  "summaryBoundaryNote": "MedStory organizes your information; it does not diagnose or recommend treatment.",
+  "summaryOfflineNotice": "Showing the saved summary. Refresh when you are back online.",
+  "summaryRefreshAction": "Refresh summary",
+  "summaryRegenerateAction": "Regenerate summary",
+  "summaryGenerateAction": "Generate summary",
+  "summaryPrepareVisitAction": "Prepare for visit",
+  "summaryNotReadyTitle": "No summary yet",
+  "summaryNotReadyMessage": "Generate a doctor-ready summary from your confirmed timeline events when you need to prepare for a visit.",
+  "summaryNarrativeTitle": "Doctor-ready narrative",
+  "summaryNoNarrativeMessage": "No narrative text was returned for this summary.",
+  "summaryGeneratedAt": "Generated {date}",
+  "@summaryGeneratedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "summaryVersionLabel": "Version {version}",
+  "@summaryVersionLabel": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "summaryEventCountLabel": "{count, plural, =0{No confirmed events} =1{1 confirmed event} other{{count} confirmed events}}",
+  "@summaryEventCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "summaryReturnToCurrentAction": "Return to current summary",
+  "summaryVersionHistoryAction": "Version history",
+  "summaryCurrentVersionLabel": "Current",
+  "summaryHistorySearchTitle": "Search history",
+  "summaryHistorySearchLabel": "Search timeline events",
+  "summaryHistorySearchEmptyHint": "Search your saved timeline to review details while preparing for a visit.",
+  "summaryHistorySearchNoResults": "No matching events found.",
+  "summaryHistorySearchFailedMessage": "We could not refresh matching events. Saved results may still appear.",
+  "summaryRegenerateQueuedMessage": "Summary generation has started. Pull to refresh in a moment.",
+  "summaryExportSharedMessage": "Summary export is ready to share.",
+  "summaryRegenerateFailedMessage": "We could not start summary generation. Check your connection and try again.",
+  "summaryExportFailedMessage": "We could not prepare the summary export. Check your connection and try again.",
+  "summaryActionFailedMessage": "We could not complete that action. Try again.",
+  "summaryLoadFailedMessage": "We could not load this summary.",
+  "summarySectionKeySymptoms": "Key symptoms",
+  "summarySectionMajorDiagnoses": "Major diagnoses",
+  "summarySectionMedications": "Medications",
+  "summarySectionProcedures": "Procedures",
+  "summarySectionHospitalizations": "Hospitalizations",
+  "summarySectionAllergies": "Allergies",
+  "summarySectionTestResults": "Test results",
+  "summarySectionTreatmentOutcomes": "Treatment outcomes",
+  "summarySectionOpenQuestions": "Open questions",
+  "summarySectionCareTeam": "Care team",
+  "summaryUnknownSectionTitle": "{name}",
+  "@summaryUnknownSectionTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "settingsTitle": "Settings",
   "settingsMessage": "Privacy, account, subjects, and locale settings.",
   "captureHeadline": "Add to your story",

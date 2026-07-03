@@ -57,4 +57,33 @@ void main() {
     expect(events.single.id, 'event-1');
     expect(events.single.subjectId, 'subject-1');
   });
+
+  test('caches current summaries and removes them with subject data', () async {
+    final now = DateTime.utc(2026, 6);
+    await database.upsertSummaries([
+      CachedMedicalSummariesCompanion(
+        id: const Value('summary-1'),
+        subjectId: const Value('subject-1'),
+        version: const Value(1),
+        isCurrent: const Value(true),
+        contentJson: Value(
+          encodeJson(<String, dynamic>{
+            'key_symptoms': ['Pain flare'],
+          }),
+        ),
+        narrativeText: const Value('Patient has recurring pain flares.'),
+        language: const Value('en'),
+        generatedFromEventCount: const Value(3),
+        createdAt: Value(now),
+        syncedAt: Value(now),
+      ),
+    ]);
+
+    final summary = await database.getCurrentSummary('subject-1');
+    expect(summary?.id, 'summary-1');
+
+    await database.removeSubject('subject-1');
+    final removed = await database.getCurrentSummary('subject-1');
+    expect(removed, null);
+  });
 }
