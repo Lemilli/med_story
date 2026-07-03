@@ -113,6 +113,7 @@ class ProcessingJob(models.Model):
     class JobType(models.TextChoices):
         INGESTION = "ingestion", "Ingestion"
         EXPLANATION = "explanation", "Explanation"
+        SUMMARY = "summary", "Summary"
 
     class Status(models.TextChoices):
         QUEUED = "queued", "Queued"
@@ -123,7 +124,20 @@ class ProcessingJob(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="processing_jobs")
-    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="processing_jobs")
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="processing_jobs",
+        null=True,
+        blank=True,
+    )
+    summary = models.ForeignKey(
+        "MedicalSummary",
+        on_delete=models.SET_NULL,
+        related_name="processing_jobs",
+        null=True,
+        blank=True,
+    )
     job_type = models.CharField(max_length=30, choices=JobType.choices, default=JobType.INGESTION)
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.QUEUED)
     attempts = models.PositiveIntegerField(default=0)
@@ -142,7 +156,8 @@ class ProcessingJob(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.job_type}:{self.document_id}:{self.status}"
+        target_id = self.document_id or self.summary_id or self.user_id
+        return f"{self.job_type}:{target_id}:{self.status}"
 
 
 class DocumentExplanation(models.Model):
@@ -164,6 +179,38 @@ class DocumentExplanation(models.Model):
 
     def __str__(self):
         return f"{self.document_id}:{self.language}:{self.created_at:%Y-%m-%d}"
+
+
+class MedicalSummary(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="medical_summaries")
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="medical_summaries")
+    version = models.PositiveIntegerField()
+    is_current = models.BooleanField(default=True)
+    content = models.JSONField(default=dict)
+    narrative_text = models.TextField()
+    generated_from_event_count = models.PositiveIntegerField(default=0)
+    model_name = models.CharField(max_length=255)
+    language = models.CharField(max_length=10)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(fields=("subject", "version"), name="unique_summary_version_per_subject"),
+            models.UniqueConstraint(
+                fields=("subject",),
+                condition=Q(is_current=True),
+                name="unique_current_summary_per_subject",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("user", "subject", "-created_at"), name="summary_user_subject_idx"),
+            models.Index(fields=("is_current",), name="summary_is_current_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.subject_id}:v{self.version}"
 
 
 class MedicalEvent(models.Model):

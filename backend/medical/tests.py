@@ -12,7 +12,7 @@ from rest_framework.test import APITestCase
 
 from ai.providers.base import OCRResult
 from ai.schemas import SchemaValidationError
-from medical.models import Document, DocumentExplanation, MedicalEvent, ProcessingJob, Subject
+from medical.models import Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject
 
 
 TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
@@ -148,6 +148,10 @@ class MedicalApiTests(APITestCase):
         subject_response = self.client.get(f"/api/v1/timeline?subject_id={child_subject.id}")
         self.assertEqual(subject_response.status_code, status.HTTP_200_OK)
         self.assertEqual(subject_response.data["results"][0]["id"], str(child_event.id))
+
+        search_response = self.client.get("/api/v1/events/search?q=Mesalazine&types=medication")
+        self.assertEqual(search_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(search_response.data["results"][0]["id"], str(older.id))
 
     def test_soft_delete_hides_event_from_detail_and_timeline(self):
         subject = Subject.objects.create(
@@ -655,15 +659,191 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(job.status, ProcessingJob.Status.FAILED)
         self.assertTrue(job.error_message)
 
+    def test_get_missing_summary_returns_not_ready(self):
+        response = self.client.get("/api/v1/summary")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data["error"]["code"], "not_ready")
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_regenerate_summary_creates_current_version_from_confirmed_events(self):
+        subject = self._default_subject()
+        MedicalEvent.objects.create(
+            user=self.user,
+            subject=subject,
+            event_type=MedicalEvent.EventType.SYMPTOM,
+            title="Abdominal pain",
+            description="Moderate pain after meals",
+            event_date=date(2026, 6, 1),
+            is_confirmed=True,
+        )
+        MedicalEvent.objects.create(
+            user=self.user,
+            subject=subject,
+            event_type=MedicalEvent.EventType.EXAMINATION,
+            title="Unreviewed lab",
+            event_date=date(2026, 6, 2),
+            is_confirmed=False,
+            source=MedicalEvent.Source.AI_DOCUMENT,
+        )
+
+        response = self.client.post("/api/v1/summary/regenerate", {}, format="json")
+        summary_response = self.client.get("/api/v1/summary")
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        job = ProcessingJob.objects.get(id=response.data["job_id"])
+        self.assertEqual(job.status, ProcessingJob.Status.SUCCEEDED)
+        self.assertIsNotNone(job.summary_id)
+        self.assertEqual(summary_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(summary_response.data["version"], 1)
+        self.assertTrue(summary_response.data["is_current"])
+        self.assertEqual(summary_response.data["generated_from_event_count"], 1)
+        self.assertIn("key_symptoms", summary_response.data["content"])
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_summary_versions_replace_current_summary(self):
+        subject = self._default_subject()
+        MedicalEvent.objects.create(
+            user=self.user,
+            subject=subject,
+            event_type=MedicalEvent.EventType.MEDICATION,
+            title="Started Mesalazine",
+            event_date=date(2026, 5, 13),
+        )
+
+        first_response = self.client.post("/api/v1/summary/regenerate", {}, format="json")
+        second_response = self.client.post("/api/v1/summary/regenerate", {}, format="json")
+        versions_response = self.client.get("/api/v1/summary/versions")
+
+        self.assertEqual(first_response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(second_response.status_code, status.HTTP_202_ACCEPTED)
+        summaries = MedicalSummary.objects.filter(subject=subject).order_by("version")
+        self.assertEqual([summary.version for summary in summaries], [1, 2])
+        self.assertFalse(summaries[0].is_current)
+        self.assertTrue(summaries[1].is_current)
+        self.assertEqual(versions_response.status_code, status.HTTP_200_OK)
+        self.assertEqual([item["version"] for item in versions_response.data], [2, 1])
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_summary_export_json_and_pdf(self):
+        subject = self._default_subject()
+        MedicalEvent.objects.create(
+            user=self.user,
+            subject=subject,
+            event_type=MedicalEvent.EventType.NOTE,
+            title="Visit note",
+            event_date=date(2026, 6, 1),
+        )
+        self.client.post("/api/v1/summary/regenerate", {}, format="json")
+
+        json_response = self.client.get("/api/v1/summary/export?format=json")
+        pdf_response = self.client.get("/api/v1/summary/export?format=pdf")
+
+        self.assertEqual(json_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json_response.data["version"], 1)
+        self.assertEqual(pdf_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(pdf_response["Content-Type"], "application/pdf")
+        self.assertTrue(pdf_response.content.startswith(b"%PDF-"))
+        self.assertGreater(len(pdf_response.content), 100)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_summary_job_detail_and_cross_user_isolation(self):
+        subject = self._default_subject()
+        other_subject = Subject.objects.create(
+            user=self.other_user,
+            display_name="Other User",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+        other_job = ProcessingJob.objects.create(
+            user=self.other_user,
+            job_type=ProcessingJob.JobType.SUMMARY,
+            status=ProcessingJob.Status.QUEUED,
+        )
+        MedicalEvent.objects.create(
+            user=self.user,
+            subject=subject,
+            event_type=MedicalEvent.EventType.NOTE,
+            title="Visit note",
+            event_date=date(2026, 6, 1),
+        )
+
+        response = self.client.post("/api/v1/summary/regenerate", {}, format="json")
+        detail_response = self.client.get(f"/api/v1/jobs/{response.data['job_id']}")
+        hidden_response = self.client.get(f"/api/v1/jobs/{other_job.id}")
+        other_summary_response = self.client.get(f"/api/v1/summary?subject_id={other_subject.id}")
+
+        self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail_response.data["job_type"], ProcessingJob.JobType.SUMMARY)
+        self.assertEqual(detail_response.data["status"], ProcessingJob.Status.SUCCEEDED)
+        self.assertEqual(hidden_response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(other_summary_response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_summary_generation_failure_preserves_existing_current_summary(self):
+        subject = self._default_subject()
+        existing = MedicalSummary.objects.create(
+            user=self.user,
+            subject=subject,
+            version=1,
+            is_current=True,
+            content={
+                "key_symptoms": [],
+                "major_diagnoses": [],
+                "treatment_history": [],
+                "important_examinations": [],
+                "relevant_medications": [],
+            },
+            narrative_text="Existing summary",
+            generated_from_event_count=0,
+            model_name="mock",
+            language="en",
+        )
+        MedicalEvent.objects.create(
+            user=self.user,
+            subject=subject,
+            event_type=MedicalEvent.EventType.NOTE,
+            title="Visit note",
+            event_date=date(2026, 6, 1),
+        )
+
+        with patch(
+            "medical.services.validate_medical_summary",
+            side_effect=SchemaValidationError("invalid summary"),
+        ):
+            response = self.client.post("/api/v1/summary/regenerate", {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        job = ProcessingJob.objects.get(id=response.data["job_id"])
+        self.assertEqual(job.status, ProcessingJob.Status.FAILED)
+        self.assertEqual(MedicalSummary.objects.filter(subject=subject).count(), 1)
+        existing.refresh_from_db()
+        self.assertTrue(existing.is_current)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_confirmed_event_changes_enqueue_summary_refresh(self):
+        create_response = self.client.post(
+            "/api/v1/events",
+            {
+                "event_type": MedicalEvent.EventType.NOTE,
+                "title": "Manual note",
+                "event_date": "2026-06-01",
+            },
+            format="json",
+        )
+        event_id = create_response.data["id"]
+        update_response = self.client.patch(f"/api/v1/events/{event_id}", {"title": "Updated note"}, format="json")
+        delete_response = self.client.delete(f"/api/v1/events/{event_id}")
+
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(update_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(ProcessingJob.objects.filter(job_type=ProcessingJob.JobType.SUMMARY).count(), 3)
+        self.assertEqual(MedicalSummary.objects.filter(is_current=True).count(), 1)
+        self.assertEqual(MedicalSummary.objects.get(is_current=True).generated_from_event_count, 0)
+
     def _create_document(self, doc_type, mime_type="application/pdf"):
-        subject = Subject.objects.filter(user=self.user, is_default=True).first()
-        if subject is None:
-            subject = Subject.objects.create(
-                user=self.user,
-                display_name="Jane Doe",
-                relationship=Subject.Relationship.SELF,
-                is_default=True,
-            )
+        subject = self._default_subject()
         return Document.objects.create(
             user=self.user,
             subject=subject,
@@ -680,6 +860,17 @@ class MedicalApiTests(APITestCase):
         document.status = Document.Status.PROCESSED
         document.save(update_fields=("extracted_text", "language", "status", "updated_at"))
         return document
+
+    def _default_subject(self):
+        subject = Subject.objects.filter(user=self.user, is_default=True).first()
+        if subject is not None:
+            return subject
+        return Subject.objects.create(
+            user=self.user,
+            display_name="Jane Doe",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
 
     def _upload(self, name, payload, content_type):
         return SimpleUploadedFile(name, payload, content_type=content_type)

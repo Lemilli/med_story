@@ -1,5 +1,6 @@
 import base64
 
+from django.http import HttpResponse
 from django.db.models import Q
 from django.db import transaction
 from django.utils import timezone
@@ -9,7 +10,7 @@ from rest_framework.pagination import CursorPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from medical.models import Document, MedicalEvent, ProcessingJob, Subject
+from medical.models import Document, MedicalEvent, MedicalSummary, ProcessingJob, Subject
 from medical.pagination import TimelineCursorPagination
 from medical.serializers import (
     MAX_DOCUMENT_SIZE_BYTES,
@@ -18,9 +19,16 @@ from medical.serializers import (
     DocumentSerializer,
     DocumentExplanationSerializer,
     MedicalEventSerializer,
+    MedicalSummarySerializer,
+    ProcessingJobSerializer,
     SubjectSerializer,
 )
-from medical.services import get_or_create_default_subject
+from medical.services import (
+    build_summary_export_pdf,
+    enqueue_summary_regeneration,
+    get_or_create_default_subject,
+    summary_export_json,
+)
 from medical.tasks import explain_document_task, ingest_document_task
 
 
@@ -119,6 +127,11 @@ class EventListCreateView(MedicalEventQuerysetMixin, generics.ListCreateAPIView)
     def get_queryset(self):
         return self.get_base_queryset()
 
+    def perform_create(self, serializer):
+        event = serializer.save()
+        if event.is_confirmed:
+            enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_created")
+
 
 class EventDetailView(MedicalEventQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = MedicalEventSerializer
@@ -127,9 +140,17 @@ class EventDetailView(MedicalEventQuerysetMixin, generics.RetrieveUpdateDestroyA
     def get_queryset(self):
         return self.get_base_queryset()
 
+    def perform_update(self, serializer):
+        event = serializer.save()
+        if event.is_confirmed:
+            enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_updated")
+
     def perform_destroy(self, instance):
+        should_refresh_summary = instance.is_confirmed
         instance.deleted_at = timezone.now()
         instance.save(update_fields=("deleted_at", "updated_at"))
+        if should_refresh_summary:
+            enqueue_summary_regeneration(user=instance.user, subject=instance.subject, reason="event_deleted")
 
 
 class TimelineView(MedicalEventQuerysetMixin, generics.ListAPIView):
@@ -138,6 +159,10 @@ class TimelineView(MedicalEventQuerysetMixin, generics.ListAPIView):
 
     def get_queryset(self):
         return self.apply_timeline_filters(self.get_base_queryset())
+
+
+class EventSearchView(TimelineView):
+    pass
 
 
 class ConfirmEventView(MedicalEventQuerysetMixin, generics.GenericAPIView):
@@ -151,6 +176,7 @@ class ConfirmEventView(MedicalEventQuerysetMixin, generics.GenericAPIView):
         event = self.get_object()
         event.is_confirmed = True
         event.save(update_fields=("is_confirmed", "updated_at"))
+        enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_confirmed")
         return Response(MedicalEventSerializer(event, context={"request": request}).data, status=status.HTTP_200_OK)
 
 
@@ -353,3 +379,98 @@ class DocumentExplanationRegenerateView(DocumentQuerysetMixin, generics.GenericA
         job.save(update_fields=("task_id", "updated_at"))
 
         return Response({"job_id": str(job.id), "status": ProcessingJob.Status.QUEUED}, status=status.HTTP_202_ACCEPTED)
+
+
+class SummaryQuerysetMixin:
+    def resolve_subject(self):
+        subject_id = self.request.query_params.get("subject_id")
+        if not subject_id and self.request.method not in ("GET", "HEAD", "OPTIONS"):
+            subject_id = self.request.data.get("subject_id")
+        if not subject_id:
+            return get_or_create_default_subject(self.request.user)
+
+        subject = Subject.objects.filter(id=subject_id, user=self.request.user).first()
+        if not subject:
+            raise ValidationError({"subject_id": ["Subject not found."]})
+        return subject
+
+    def get_current_summary(self):
+        subject = self.resolve_subject()
+        return (
+            MedicalSummary.objects.select_related("subject")
+            .filter(user=self.request.user, subject=subject, is_current=True)
+            .first()
+        )
+
+    def not_ready_response(self):
+        return Response(
+            {
+                "error": {
+                    "code": "not_ready",
+                    "message": "Medical summary is not ready yet.",
+                }
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+
+class SummaryCurrentView(SummaryQuerysetMixin, generics.GenericAPIView):
+    serializer_class = MedicalSummarySerializer
+
+    def get(self, request, *args, **kwargs):
+        summary = self.get_current_summary()
+        if summary is None:
+            return self.not_ready_response()
+        return Response(self.get_serializer(summary).data, status=status.HTTP_200_OK)
+
+
+class SummaryRegenerateView(SummaryQuerysetMixin, generics.GenericAPIView):
+    serializer_class = MedicalSummarySerializer
+
+    def post(self, request, *args, **kwargs):
+        subject = self.resolve_subject()
+        language = request.data.get("language") if isinstance(request.data, dict) else None
+        if language is not None and (not isinstance(language, str) or not language.strip()):
+            raise ValidationError({"language": ["language must be a non-empty string."]})
+        job = enqueue_summary_regeneration(
+            user=request.user,
+            subject=subject,
+            reason="manual",
+            language=language.strip() if isinstance(language, str) else None,
+        )
+        return Response({"job_id": str(job.id), "status": ProcessingJob.Status.QUEUED}, status=status.HTTP_202_ACCEPTED)
+
+
+class SummaryVersionsView(SummaryQuerysetMixin, generics.ListAPIView):
+    serializer_class = MedicalSummarySerializer
+
+    def get_queryset(self):
+        subject = self.resolve_subject()
+        return MedicalSummary.objects.filter(user=self.request.user, subject=subject).order_by("-version")
+
+
+class SummaryExportView(SummaryQuerysetMixin, generics.GenericAPIView):
+    serializer_class = MedicalSummarySerializer
+
+    def get(self, request, *args, **kwargs):
+        summary = self.get_current_summary()
+        if summary is None:
+            return self.not_ready_response()
+
+        export_format = request.query_params.get("format", "json").strip().lower()
+        if export_format == "json":
+            return Response(summary_export_json(summary), status=status.HTTP_200_OK)
+        if export_format == "pdf":
+            payload = build_summary_export_pdf(summary)
+            response = HttpResponse(payload, content_type="application/pdf")
+            response["Content-Disposition"] = 'attachment; filename="medstory-summary.pdf"'
+            return response
+        raise ValidationError({"format": ["Unsupported export format. Use json or pdf."]})
+
+
+class JobDetailView(generics.RetrieveAPIView):
+    serializer_class = ProcessingJobSerializer
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return ProcessingJob.objects.filter(user=self.request.user).select_related("document", "summary")

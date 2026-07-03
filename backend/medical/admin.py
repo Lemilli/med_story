@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from medical.models import Document, DocumentExplanation, MedicalEvent, ProcessingJob, Subject, Tag
+from medical.models import Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, Tag
 
 
 @admin.register(Subject)
@@ -35,9 +35,17 @@ class DocumentExplanationAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
 
+@admin.register(MedicalSummary)
+class MedicalSummaryAdmin(admin.ModelAdmin):
+    list_display = ("subject", "user", "version", "is_current", "language", "generated_from_event_count", "created_at")
+    list_filter = ("is_current", "language", "model_name")
+    search_fields = ("subject__display_name", "narrative_text", "user__email")
+    readonly_fields = ("created_at",)
+
+
 @admin.register(ProcessingJob)
 class ProcessingJobAdmin(admin.ModelAdmin):
-    list_display = ("document", "job_type", "status", "user", "attempts", "created_at", "finished_at")
+    list_display = ("document", "summary", "job_type", "status", "user", "attempts", "created_at", "finished_at")
     list_filter = ("job_type", "status")
     search_fields = ("document__title", "task_id", "user__email")
     readonly_fields = ("created_at", "updated_at", "started_at", "finished_at")

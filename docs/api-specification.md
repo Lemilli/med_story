@@ -189,7 +189,8 @@ Full-text + attribute search across history. Params: `q`, `types`, `subject_id`.
 ## 7. Medical Summary (Medical Memory — Scenario D)
 
 ### GET /summary
-Returns the current consolidated summary for the subject.
+Returns the current consolidated summary for the subject. If no summary exists yet,
+returns `404 { "error": { "code": "not_ready", ... } }`.
 ```jsonc
 { "id": "uuid", "version": 7, "is_current": true,
   "content": {
@@ -200,14 +201,15 @@ Returns the current consolidated summary for the subject.
 ```
 
 ### POST /summary/regenerate
-Enqueues a fresh summary build from current events. → `202 { "job_id": "uuid" }`.
+Enqueues a fresh summary build from confirmed current events.
+→ `202 { "job_id": "uuid", "status": "queued" }`.
 
 ### GET /summary/versions
 Lists historical summary versions (the story as it evolved over time).
 
 ### GET /summary/export
 Doctor-ready export of the current summary. Param `format=pdf|json`.
-Returns a short-lived download URL (PDF) or inline JSON.
+Returns `application/pdf` bytes for PDF or inline JSON.
 
 ## 8. Jobs & Status
 
@@ -215,7 +217,8 @@ Returns a short-lived download URL (PDF) or inline JSON.
 Poll an async job (used after regenerate / ingestions when a job_id is returned).
 ```jsonc
 { "id": "uuid", "job_type": "summary", "status": "running",
-  "attempts": 1, "created_at": "...", "finished_at": null }
+  "attempts": 1, "document_id": null, "summary_id": "uuid",
+  "created_at": "...", "finished_at": null }
 ```
 
 ## 9. Data Export & Privacy (GDPR)

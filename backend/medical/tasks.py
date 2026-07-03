@@ -3,8 +3,8 @@ import base64
 from celery import shared_task
 from celery.utils.log import get_task_logger
 
-from medical.models import Document, ProcessingJob
-from medical.services import process_document_explanation, process_document_ingestion
+from medical.models import Document, ProcessingJob, Subject
+from medical.services import process_document_explanation, process_document_ingestion, process_medical_summary
 
 
 logger = get_task_logger(__name__)
@@ -78,3 +78,33 @@ def explain_document_task(document_id, job_id, language=None):
 
     logger.info("Document explanation processed document_id=%s job_id=%s", document.id, job_id)
     return {"status": "processed", "document_id": str(document.id)}
+
+
+@shared_task
+def generate_summary_task(subject_id, job_id, language=None):
+    subject = Subject.objects.select_related("user").get(id=subject_id)
+    job = ProcessingJob.objects.filter(id=job_id, user=subject.user).first()
+
+    logger.info(
+        "Starting summary generation subject_id=%s job_id=%s language=%s",
+        subject.id,
+        job_id,
+        language or "",
+    )
+    try:
+        summary = process_medical_summary(subject=subject, job=job, language=language)
+    except Exception as exc:
+        logger.exception(
+            "Summary generation failed subject_id=%s job_id=%s exception_type=%s",
+            subject.id,
+            job_id,
+            exc.__class__.__name__,
+        )
+        return {
+            "status": "failed",
+            "subject_id": str(subject.id),
+            "error": getattr(job, "error_message", ""),
+        }
+
+    logger.info("Summary generation processed subject_id=%s job_id=%s", subject.id, job_id)
+    return {"status": "processed", "summary_id": str(summary.id)}

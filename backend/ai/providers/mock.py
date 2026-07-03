@@ -21,6 +21,20 @@ class MockLLMProvider:
                 ],
                 "glossary": {},
             }
+        if "narrative_text" in schema.get("properties", {}):
+            return {
+                "content": {
+                    "key_symptoms": ["Abdominal pain was recorded on the timeline."],
+                    "major_diagnoses": ["Ulcerative colitis appears in confirmed history."],
+                    "treatment_history": ["Mesalazine treatment was recorded."],
+                    "important_examinations": ["CRP result of 12 mg/L was recorded."],
+                    "relevant_medications": ["Mesalazine 800 mg was recorded."],
+                },
+                "narrative_text": (
+                    "This summary organizes confirmed MedStory timeline events for a healthcare visit. "
+                    "It does not diagnose or recommend treatment."
+                ),
+            }
 
         normalized = user.casefold()
         if "c-reactive protein" in normalized or "crp" in normalized:

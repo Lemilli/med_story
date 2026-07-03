@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 
-from medical.models import Document, DocumentExplanation, MedicalEvent, Subject, Tag
+from medical.models import Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, Tag
 from medical.services import get_or_create_default_subject
 
 
@@ -278,3 +278,59 @@ class DocumentExplanationSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.UUIDField())
     def get_document_id(self, obj):
         return str(obj.document_id)
+
+
+class MedicalSummarySerializer(serializers.ModelSerializer):
+    subject_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MedicalSummary
+        fields = (
+            "id",
+            "subject_id",
+            "version",
+            "is_current",
+            "content",
+            "narrative_text",
+            "language",
+            "generated_from_event_count",
+            "created_at",
+        )
+        read_only_fields = fields
+
+    @extend_schema_field(serializers.UUIDField())
+    def get_subject_id(self, obj):
+        return str(obj.subject_id)
+
+
+class ProcessingJobSerializer(serializers.ModelSerializer):
+    document_id = serializers.SerializerMethodField()
+    summary_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProcessingJob
+        fields = (
+            "id",
+            "job_type",
+            "status",
+            "attempts",
+            "document_id",
+            "summary_id",
+            "error_message",
+            "created_at",
+            "started_at",
+            "finished_at",
+        )
+        read_only_fields = fields
+
+    @extend_schema_field(serializers.UUIDField(allow_null=True))
+    def get_document_id(self, obj):
+        if obj.document_id is None:
+            return None
+        return str(obj.document_id)
+
+    @extend_schema_field(serializers.UUIDField(allow_null=True))
+    def get_summary_id(self, obj):
+        if obj.summary_id is None:
+            return None
+        return str(obj.summary_id)

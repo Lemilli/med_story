@@ -182,13 +182,12 @@ Tracks async pipeline work for observability and retries.
 |-------|------|-------|
 | id | UUID (PK) | |
 | user_id | FK → User | |
-| job_type | enum | ocr, stt, structuring, explanation, summary |
-| target_type | enum | document, summary |
-| target_id | UUID | Polymorphic reference |
+| job_type | enum | ingestion, explanation, summary |
+| document_id | FK → Document (nullable) | Set for document ingestion/explanation jobs |
+| summary_id | FK → MedicalSummary (nullable) | Set after a summary job succeeds |
 | status | enum | queued, running, succeeded, failed, retrying |
 | attempts | int | |
 | error_message | text (nullable) | |
-| cost_estimate | numeric (nullable) | AI cost tracking |
 | started_at / finished_at | timestamptz (nullable) | |
 | created_at / updated_at | timestamptz | |
 

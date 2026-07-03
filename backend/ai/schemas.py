@@ -141,6 +141,49 @@ DOCUMENT_EXPLANATION_JSON_SCHEMA = {
     },
 }
 
+SUMMARY_SECTION_JSON_SCHEMA = {
+    "type": "array",
+    "items": {"type": "string", "minLength": 1},
+}
+
+MEDICAL_SUMMARY_JSON_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "content",
+        "narrative_text",
+    ],
+    "properties": {
+        "content": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": [
+                "key_symptoms",
+                "major_diagnoses",
+                "treatment_history",
+                "important_examinations",
+                "relevant_medications",
+            ],
+            "properties": {
+                "key_symptoms": SUMMARY_SECTION_JSON_SCHEMA,
+                "major_diagnoses": SUMMARY_SECTION_JSON_SCHEMA,
+                "treatment_history": SUMMARY_SECTION_JSON_SCHEMA,
+                "important_examinations": SUMMARY_SECTION_JSON_SCHEMA,
+                "relevant_medications": SUMMARY_SECTION_JSON_SCHEMA,
+            },
+        },
+        "narrative_text": {"type": "string", "minLength": 1},
+    },
+}
+
+SUMMARY_CONTENT_SECTIONS = (
+    "key_symptoms",
+    "major_diagnoses",
+    "treatment_history",
+    "important_examinations",
+    "relevant_medications",
+)
+
 
 class SchemaValidationError(ValueError):
     pass
@@ -210,6 +253,35 @@ def validate_document_explanation(payload: dict[str, Any]) -> dict[str, Any]:
         "summary_text": summary_text.strip(),
         "key_points": key_points,
         "glossary": glossary,
+    }
+
+
+def validate_medical_summary(payload: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise SchemaValidationError("Summary output must be an object.")
+
+    raw_content = payload.get("content")
+    if not isinstance(raw_content, dict):
+        raise SchemaValidationError("content is required.")
+
+    content = {}
+    for section in SUMMARY_CONTENT_SECTIONS:
+        raw_items = raw_content.get(section)
+        if not isinstance(raw_items, list):
+            raise SchemaValidationError(f"content.{section} must be a list.")
+        content[section] = [
+            item.strip()
+            for item in raw_items
+            if isinstance(item, str) and item.strip()
+        ]
+
+    narrative_text = payload.get("narrative_text")
+    if not isinstance(narrative_text, str) or not narrative_text.strip():
+        raise SchemaValidationError("narrative_text is required.")
+
+    return {
+        "content": content,
+        "narrative_text": narrative_text.strip(),
     }
 
 
