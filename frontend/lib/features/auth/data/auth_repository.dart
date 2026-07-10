@@ -88,4 +88,15 @@ class AuthRepository {
     await tokenStorage.clearTokens();
     await localDatabase.clearAll();
   }
+
+  Future<AppUser> updateLocale(String locale) {
+    return api.updateMe(locale: locale);
+  }
+
+  Future<void> deleteAccount() async {
+    final refreshToken = await tokenStorage.readRefreshToken();
+    await api.deleteMe(refreshToken: refreshToken);
+    await tokenStorage.clearTokens();
+    await localDatabase.clearAll();
+  }
 }

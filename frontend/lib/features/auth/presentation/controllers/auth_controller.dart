@@ -46,4 +46,19 @@ class AuthController extends AsyncNotifier<AuthState> {
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(AuthState.unauthenticated());
   }
+
+  Future<void> updateLocale(String locale) async {
+    final current = state.asData?.value;
+    if (current?.user == null) {
+      return;
+    }
+    final user = await ref.read(authRepositoryProvider).updateLocale(locale);
+    state = AsyncValue.data(AuthState.authenticated(user));
+  }
+
+  Future<void> deleteAccount() async {
+    state = const AsyncValue.loading();
+    await ref.read(authRepositoryProvider).deleteAccount();
+    state = const AsyncValue.data(AuthState.unauthenticated());
+  }
 }

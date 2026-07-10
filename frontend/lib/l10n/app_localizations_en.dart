@@ -196,6 +196,103 @@ class AppLocalizationsEn extends AppLocalizations {
       'Privacy, account, subjects, and locale settings.';
 
   @override
+  String get settingsAccountSectionTitle => 'Account';
+
+  @override
+  String get settingsPrivacySectionTitle => 'Privacy';
+
+  @override
+  String get settingsLanguageSectionTitle => 'Language';
+
+  @override
+  String get settingsActionsSectionTitle => 'Account actions';
+
+  @override
+  String get settingsDataExportTitle => 'Export my data';
+
+  @override
+  String get settingsDataExportDescription =>
+      'Share a JSON copy of your profile, timeline, documents, summaries, and audit history.';
+
+  @override
+  String get settingsDataExportAction => 'Export data';
+
+  @override
+  String get settingsDataExportInProgress => 'Preparing export';
+
+  @override
+  String get settingsDataExportSharedMessage =>
+      'Privacy export is ready to share.';
+
+  @override
+  String get settingsDataExportFailedMessage =>
+      'We could not prepare your privacy export. Check your connection and try again.';
+
+  @override
+  String get settingsPrivacyNoteTitle => 'What stays here';
+
+  @override
+  String get settingsPrivacyNoteDescription =>
+      'Original uploads are not stored on the server. Local timeline and summary caches are cleared when you log out or delete your account.';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageRussian => 'Russian';
+
+  @override
+  String get settingsLocaleUpdatedMessage => 'Language updated.';
+
+  @override
+  String get settingsLocaleUpdateFailedMessage =>
+      'We could not update the language. Check your connection and try again.';
+
+  @override
+  String get settingsDeleteAccountTitle => 'Delete account';
+
+  @override
+  String get settingsDeleteAccountDescription =>
+      'Permanently delete your MedStory account and backend records.';
+
+  @override
+  String get settingsDeleteAccountAction => 'Delete account';
+
+  @override
+  String get settingsDeleteAccountDialogTitle => 'Delete your account?';
+
+  @override
+  String get settingsDeleteAccountDialogMessage =>
+      'This permanently deletes your account and backend records. Export your data first if you need a copy.';
+
+  @override
+  String get settingsDeleteAccountConfirmLabel => 'Type DELETE to confirm';
+
+  @override
+  String get settingsDeleteAccountConfirmValue => 'DELETE';
+
+  @override
+  String get settingsDeleteAccountCancelAction => 'Cancel';
+
+  @override
+  String get settingsDeleteAccountConfirmAction => 'Delete permanently';
+
+  @override
+  String get settingsDeleteAccountFailedMessage =>
+      'We could not delete your account. Check your connection and try again.';
+
+  @override
+  String get settingsLogoutDescription =>
+      'Sign out on this device and clear local cached medical data.';
+
+  @override
+  String get settingsOrganizerNoticeTitle => 'Organizer, not a doctor';
+
+  @override
+  String get settingsOrganizerNoticeDescription =>
+      'MedStory helps organize and explain your records. It does not diagnose, recommend treatment, or replace care from a clinician.';
+
+  @override
   String get captureHeadline => 'Add to your story';
 
   @override

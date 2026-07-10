@@ -410,6 +410,180 @@ abstract class AppLocalizations {
   /// **'Privacy, account, subjects, and locale settings.'**
   String get settingsMessage;
 
+  /// No description provided for @settingsAccountSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsAccountSectionTitle;
+
+  /// No description provided for @settingsPrivacySectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get settingsPrivacySectionTitle;
+
+  /// No description provided for @settingsLanguageSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguageSectionTitle;
+
+  /// No description provided for @settingsActionsSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account actions'**
+  String get settingsActionsSectionTitle;
+
+  /// No description provided for @settingsDataExportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export my data'**
+  String get settingsDataExportTitle;
+
+  /// No description provided for @settingsDataExportDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a JSON copy of your profile, timeline, documents, summaries, and audit history.'**
+  String get settingsDataExportDescription;
+
+  /// No description provided for @settingsDataExportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Export data'**
+  String get settingsDataExportAction;
+
+  /// No description provided for @settingsDataExportInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing export'**
+  String get settingsDataExportInProgress;
+
+  /// No description provided for @settingsDataExportSharedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy export is ready to share.'**
+  String get settingsDataExportSharedMessage;
+
+  /// No description provided for @settingsDataExportFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not prepare your privacy export. Check your connection and try again.'**
+  String get settingsDataExportFailedMessage;
+
+  /// No description provided for @settingsPrivacyNoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What stays here'**
+  String get settingsPrivacyNoteTitle;
+
+  /// No description provided for @settingsPrivacyNoteDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Original uploads are not stored on the server. Local timeline and summary caches are cleared when you log out or delete your account.'**
+  String get settingsPrivacyNoteDescription;
+
+  /// No description provided for @settingsLanguageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get settingsLanguageEnglish;
+
+  /// No description provided for @settingsLanguageRussian.
+  ///
+  /// In en, this message translates to:
+  /// **'Russian'**
+  String get settingsLanguageRussian;
+
+  /// No description provided for @settingsLocaleUpdatedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language updated.'**
+  String get settingsLocaleUpdatedMessage;
+
+  /// No description provided for @settingsLocaleUpdateFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not update the language. Check your connection and try again.'**
+  String get settingsLocaleUpdateFailedMessage;
+
+  /// No description provided for @settingsDeleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get settingsDeleteAccountTitle;
+
+  /// No description provided for @settingsDeleteAccountDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete your MedStory account and backend records.'**
+  String get settingsDeleteAccountDescription;
+
+  /// No description provided for @settingsDeleteAccountAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get settingsDeleteAccountAction;
+
+  /// No description provided for @settingsDeleteAccountDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get settingsDeleteAccountDialogTitle;
+
+  /// No description provided for @settingsDeleteAccountDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes your account and backend records. Export your data first if you need a copy.'**
+  String get settingsDeleteAccountDialogMessage;
+
+  /// No description provided for @settingsDeleteAccountConfirmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type DELETE to confirm'**
+  String get settingsDeleteAccountConfirmLabel;
+
+  /// No description provided for @settingsDeleteAccountConfirmValue.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get settingsDeleteAccountConfirmValue;
+
+  /// No description provided for @settingsDeleteAccountCancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get settingsDeleteAccountCancelAction;
+
+  /// No description provided for @settingsDeleteAccountConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get settingsDeleteAccountConfirmAction;
+
+  /// No description provided for @settingsDeleteAccountFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not delete your account. Check your connection and try again.'**
+  String get settingsDeleteAccountFailedMessage;
+
+  /// No description provided for @settingsLogoutDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out on this device and clear local cached medical data.'**
+  String get settingsLogoutDescription;
+
+  /// No description provided for @settingsOrganizerNoticeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Organizer, not a doctor'**
+  String get settingsOrganizerNoticeTitle;
+
+  /// No description provided for @settingsOrganizerNoticeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'MedStory helps organize and explain your records. It does not diagnose, recommend treatment, or replace care from a clinician.'**
+  String get settingsOrganizerNoticeDescription;
+
   /// No description provided for @captureHeadline.
   ///
   /// In en, this message translates to:

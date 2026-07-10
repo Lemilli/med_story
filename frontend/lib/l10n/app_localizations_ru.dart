@@ -194,6 +194,104 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsMessage => 'Конфиденциальность, аккаунт, профили и язык.';
 
   @override
+  String get settingsAccountSectionTitle => 'Аккаунт';
+
+  @override
+  String get settingsPrivacySectionTitle => 'Конфиденциальность';
+
+  @override
+  String get settingsLanguageSectionTitle => 'Язык';
+
+  @override
+  String get settingsActionsSectionTitle => 'Действия с аккаунтом';
+
+  @override
+  String get settingsDataExportTitle => 'Экспортировать мои данные';
+
+  @override
+  String get settingsDataExportDescription =>
+      'Поделиться JSON-копией профиля, хронологии, документов, сводок и истории аудита.';
+
+  @override
+  String get settingsDataExportAction => 'Экспортировать данные';
+
+  @override
+  String get settingsDataExportInProgress => 'Готовим экспорт';
+
+  @override
+  String get settingsDataExportSharedMessage =>
+      'Экспорт данных готов к отправке.';
+
+  @override
+  String get settingsDataExportFailedMessage =>
+      'Не удалось подготовить экспорт. Проверьте соединение и попробуйте снова.';
+
+  @override
+  String get settingsPrivacyNoteTitle => 'Что остаётся здесь';
+
+  @override
+  String get settingsPrivacyNoteDescription =>
+      'Исходные файлы не хранятся на сервере. Локальные кэши хронологии и сводок очищаются при выходе или удалении аккаунта.';
+
+  @override
+  String get settingsLanguageEnglish => 'Английский';
+
+  @override
+  String get settingsLanguageRussian => 'Русский';
+
+  @override
+  String get settingsLocaleUpdatedMessage => 'Язык обновлён.';
+
+  @override
+  String get settingsLocaleUpdateFailedMessage =>
+      'Не удалось обновить язык. Проверьте соединение и попробуйте снова.';
+
+  @override
+  String get settingsDeleteAccountTitle => 'Удалить аккаунт';
+
+  @override
+  String get settingsDeleteAccountDescription =>
+      'Навсегда удалить аккаунт MedStory и записи на сервере.';
+
+  @override
+  String get settingsDeleteAccountAction => 'Удалить аккаунт';
+
+  @override
+  String get settingsDeleteAccountDialogTitle => 'Удалить аккаунт?';
+
+  @override
+  String get settingsDeleteAccountDialogMessage =>
+      'Это навсегда удалит аккаунт и записи на сервере. Если нужна копия, сначала экспортируйте данные.';
+
+  @override
+  String get settingsDeleteAccountConfirmLabel =>
+      'Введите DELETE для подтверждения';
+
+  @override
+  String get settingsDeleteAccountConfirmValue => 'DELETE';
+
+  @override
+  String get settingsDeleteAccountCancelAction => 'Отмена';
+
+  @override
+  String get settingsDeleteAccountConfirmAction => 'Удалить навсегда';
+
+  @override
+  String get settingsDeleteAccountFailedMessage =>
+      'Не удалось удалить аккаунт. Проверьте соединение и попробуйте снова.';
+
+  @override
+  String get settingsLogoutDescription =>
+      'Выйти на этом устройстве и очистить локальный кэш медицинских данных.';
+
+  @override
+  String get settingsOrganizerNoticeTitle => 'Органайзер, не врач';
+
+  @override
+  String get settingsOrganizerNoticeDescription =>
+      'MedStory помогает упорядочивать и объяснять записи. Он не ставит диагнозы, не рекомендует лечение и не заменяет врача.';
+
+  @override
   String get captureHeadline => 'Добавить в историю';
 
   @override

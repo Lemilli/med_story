@@ -104,11 +104,12 @@ remain for deterministic local tests.
   capture records locally, reviews before upload, and sends audio through the transient ingest flow.
 
 ### Phase 6 — Privacy, Hardening & Launch Prep
+**Status:** Frontend GDPR/settings flows implemented; launch hardening still in progress.
 **Goal:** GDPR flows, security checklist, store readiness.
 - Backend: `/privacy/export`, `DELETE /me` (hard delete of backend records), `AuditLog`,
   backend tests implemented; throttling, dependency/secret scanning, and DPAs remain planned.
 - Frontend: settings (export, delete account, locale), onboarding disclaimer ("organizer, not
-  a doctor"), accessibility pass.
+  a doctor"), accessibility pass. **Implemented.**
 - Ops: backend metadata backups, monitoring/error tracking, cost alerts; complete the security checklist
   (`security-privacy.md` §14).
 - **Exit:** GDPR export/erasure work; security checklist green; app store builds ready.

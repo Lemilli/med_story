@@ -54,6 +54,25 @@ class AuthApi {
     return AppUser.fromJson(response.data ?? <String, dynamic>{});
   }
 
+  Future<AppUser> updateMe({String? fullName, String? locale}) async {
+    final data = <String, String>{};
+    if (fullName != null) {
+      data['full_name'] = fullName;
+    }
+    if (locale != null) {
+      data['locale'] = locale;
+    }
+    final response = await _patch<Map<String, dynamic>>('/me', data: data);
+    return AppUser.fromJson(response.data ?? <String, dynamic>{});
+  }
+
+  Future<void> deleteMe({String? refreshToken}) async {
+    final data = refreshToken != null && refreshToken.isNotEmpty
+        ? {'refresh': refreshToken}
+        : <String, String>{};
+    await _delete<void>('/me', data: data);
+  }
+
   Future<void> logout({required String refreshToken}) async {
     await _post<void>('/auth/logout', data: {'refresh': refreshToken});
   }
@@ -69,6 +88,22 @@ class AuthApi {
   Future<Response<T>> _post<T>(String path, {Object? data}) async {
     try {
       return await _dio.post<T>(path, data: data);
+    } on DioException catch (error) {
+      throw _mapDioException(error, path: path);
+    }
+  }
+
+  Future<Response<T>> _patch<T>(String path, {Object? data}) async {
+    try {
+      return await _dio.patch<T>(path, data: data);
+    } on DioException catch (error) {
+      throw _mapDioException(error, path: path);
+    }
+  }
+
+  Future<Response<T>> _delete<T>(String path, {Object? data}) async {
+    try {
+      return await _dio.delete<T>(path, data: data);
     } on DioException catch (error) {
       throw _mapDioException(error, path: path);
     }
