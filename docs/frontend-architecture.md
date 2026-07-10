@@ -185,7 +185,7 @@ Phase 0 has added: `flutter_riverpod`, `go_router`, `dio`, `flutter_secure_stora
 `freezed_annotation`, `json_annotation`, `intl`, plus dev deps `build_runner`, `freezed`, and
 `json_serializable`.
 
-Still planned for later phases: `drift`, `sqlite3_flutter_libs`, `path_provider`,
+Implemented beyond Phase 0: `drift`, `sqlite3_flutter_libs`, `path_provider`,
 `image_picker`, `file_picker`, `record`, and test helpers such as `mocktail`.
 
 > Versions intentionally omitted here; pin them via the package manager during implementation.

@@ -30,6 +30,24 @@ class DocumentRepository {
     DocumentUploadDraft draft,
   ) async {
     final localFile = await localFileStore.save(draft.source);
+    if (draft.docType == DocumentType.audio) {
+      final uploaded = await api.uploadAudio(
+        filePath: localFile.path,
+        fileName: localFile.fileName,
+        mimeType: localFile.mimeType,
+        title: draft.title,
+        subjectId: draft.subjectId,
+        language: draft.language,
+        localUriHint: localFile.localUriHint,
+        documentDate: draft.documentDate,
+      );
+      return DocumentIngestionResult(
+        documentId: uploaded.id,
+        localFile: localFile,
+        status: uploaded.status,
+      );
+    }
+
     final created = await api.createDocument(
       DocumentCreateRequest(
         title: draft.title,
@@ -39,6 +57,7 @@ class DocumentRepository {
         subjectId: draft.subjectId,
         documentDate: draft.documentDate,
         localUriHint: localFile.localUriHint,
+        language: draft.language,
       ),
     );
     late final DocumentStatusUpdate ingest;
@@ -176,6 +195,7 @@ class DocumentUploadDraft {
     required this.source,
     this.subjectId,
     this.documentDate,
+    this.language,
   });
 
   final String title;
@@ -183,6 +203,7 @@ class DocumentUploadDraft {
   final DocumentSourceFile source;
   final String? subjectId;
   final String? documentDate;
+  final String? language;
 }
 
 class DocumentSourceFile {

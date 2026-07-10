@@ -198,9 +198,9 @@ Append-only record of sensitive actions (export, delete, login). See
 | Field | Type | Notes |
 |-------|------|-------|
 | id | UUID (PK) | |
-| user_id | FK → User (nullable) | |
+| user_id | FK → User (nullable, SET_NULL) | Cleared when an account is hard-deleted |
 | action | varchar | e.g. data_export, account_delete, login |
-| metadata | JSONB | Non-sensitive context |
+| metadata | JSONB | Non-sensitive context; no raw health content/tokens |
 | ip_address | inet (nullable) | |
 | created_at | timestamptz | |
 
@@ -252,7 +252,7 @@ flexibly so the schema can evolve without migrations.
 - **Update**: users can edit/confirm AI-extracted events; summaries regenerate on change.
 - **Soft delete**: `deleted_at` hides records while preserving referential history.
 - **Hard delete / export (GDPR)**: account deletion purges DB rows;
-  backend export produces JSON metadata/history (original files are user-managed on-device). See
+  backend export returns immediate JSON metadata/history (original files are user-managed on-device). See
   [security-privacy.md](./security-privacy.md).
 
 ## 7. Indexing & Performance Notes

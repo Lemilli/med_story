@@ -208,27 +208,73 @@ class AppLocalizationsRu extends AppLocalizations {
       'Расскажите о воспоминании, симптоме или лечении.';
 
   @override
-  String get recordVoiceDeferredDescription =>
-      'Голосовая запись появится позже. Сейчас используйте документ, фото или файл.';
-
-  @override
   String get recordVoiceSemanticHint =>
       'Начинает голосовую запись. Перед сохранением можно прослушать.';
-
-  @override
-  String get recordVoiceDeferredSemanticHint =>
-      'Голосовая запись запланирована на будущий этап.';
 
   @override
   String get voiceCaptureTitle => 'Голосовая запись';
 
   @override
   String get voiceCaptureMessage =>
-      'Запись с микрофона будет подключена к контроллеру захвата.';
+      'Запишите короткую голосовую заметку, проверьте её и отправьте для предложенных событий хронологии.';
 
   @override
-  String get voiceCaptureDeferredMessage =>
-      'Голосовая запись отложена до этапа voice-first.';
+  String get voiceNoteTitle => 'Голосовая заметка';
+
+  @override
+  String get voicePermissionRequesting => 'Проверяем доступ к микрофону';
+
+  @override
+  String get voicePermissionRequestingDescription =>
+      'Запись остаётся на этом устройстве, пока вы не решите её загрузить.';
+
+  @override
+  String get voiceRecordingInProgress => 'Идёт запись';
+
+  @override
+  String voiceRecordingDuration(String duration) {
+    return 'Длительность: $duration';
+  }
+
+  @override
+  String get voiceStopAction => 'Остановить';
+
+  @override
+  String get voiceDiscardAction => 'Удалить';
+
+  @override
+  String get voiceReviewTitle => 'Проверить голосовую заметку';
+
+  @override
+  String voiceRecordedMetadata(String duration, String size) {
+    return '$duration • $size';
+  }
+
+  @override
+  String get voiceRecordAgainAction => 'Записать заново';
+
+  @override
+  String get voiceUploadAction => 'Загрузить голосовую заметку';
+
+  @override
+  String get voiceRecordingMaxDurationMessage =>
+      'Запись остановлена на 4 минутах, чтобы файл оставался небольшим.';
+
+  @override
+  String get voiceFileTooLargeMessage =>
+      'Запишите более короткую заметку. Аудио должно быть не больше 5 МБ.';
+
+  @override
+  String get voicePermissionDeniedMessage =>
+      'Для голосовой заметки нужен доступ к микрофону. Вы всё ещё можете добавить документы или события вручную.';
+
+  @override
+  String get voiceRecordingMissingMessage =>
+      'MedStory не удалось найти запись на этом устройстве.';
+
+  @override
+  String get voiceRecordingFailedMessage =>
+      'Не удалось записать голосовую заметку. Попробуйте ещё раз или добавьте документ.';
 
   @override
   String get scanDocumentTitle => 'Сканировать документ';

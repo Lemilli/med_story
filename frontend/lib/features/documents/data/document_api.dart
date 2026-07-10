@@ -53,6 +53,40 @@ class DocumentApi {
     }
   }
 
+  Future<DocumentStatusUpdate> uploadAudio({
+    required String filePath,
+    required String fileName,
+    required String mimeType,
+    required String title,
+    String? subjectId,
+    String? language,
+    String? localUriHint,
+    String? documentDate,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'mime_type': mimeType,
+        'title': title,
+        if (subjectId != null && subjectId.isNotEmpty) 'subject_id': subjectId,
+        if (language != null && language.isNotEmpty) 'language': language,
+        if (localUriHint != null && localUriHint.isNotEmpty)
+          'local_uri_hint': localUriHint,
+        if (documentDate != null && documentDate.isNotEmpty)
+          'document_date': documentDate,
+        'file': await MultipartFile.fromFile(filePath, filename: fileName),
+      });
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/documents/upload-audio',
+        data: formData,
+      );
+      return DocumentStatusUpdate.fromJson(
+        response.data ?? <String, dynamic>{},
+      );
+    } on DioException catch (error) {
+      throw mapDioException(error, fallback: 'document_audio_upload_failed');
+    }
+  }
+
   Future<DocumentPage> listDocuments({
     String? subjectId,
     DocumentType? docType,

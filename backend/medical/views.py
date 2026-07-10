@@ -11,7 +11,7 @@ from rest_framework.pagination import CursorPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from medical.models import Document, MedicalEvent, MedicalSummary, ProcessingJob, Subject
+from medical.models import AuditLog, Document, MedicalEvent, MedicalSummary, ProcessingJob, Subject
 from medical.pagination import TimelineCursorPagination
 from medical.serializers import (
     MAX_DOCUMENT_SIZE_BYTES,
@@ -26,9 +26,11 @@ from medical.serializers import (
     SubjectSerializer,
 )
 from medical.services import (
+    build_privacy_export,
     build_summary_export_pdf,
     enqueue_summary_regeneration,
     get_or_create_default_subject,
+    log_audit_event,
     summary_export_json,
 )
 from medical.tasks import explain_document_task, ingest_document_task
@@ -575,6 +577,12 @@ class SummaryExportView(SummaryQuerysetMixin, generics.GenericAPIView):
             response["Content-Disposition"] = 'attachment; filename="medstory-summary.pdf"'
             return response
         raise ValidationError({"format": ["Unsupported export format. Use json or pdf."]})
+
+
+class PrivacyExportView(generics.GenericAPIView):
+    def post(self, request, *args, **kwargs):
+        log_audit_event(user=request.user, action=AuditLog.Action.DATA_EXPORT, request=request)
+        return Response(build_privacy_export(request.user), status=status.HTTP_200_OK)
 
 
 class JobDetailView(generics.RetrieveAPIView):

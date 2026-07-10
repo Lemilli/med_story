@@ -16,6 +16,7 @@ import '../../../documents/data/document_repository.dart';
 import '../../../documents/domain/medical_document.dart';
 import '../../../documents/presentation/controllers/document_controllers.dart';
 import '../../../subjects/presentation/controllers/subject_controller.dart';
+import '../controllers/voice_capture_controller.dart';
 
 const _maxDocumentBytes = 5 * 1024 * 1024;
 
@@ -41,6 +42,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     final textTheme = Theme.of(context).textTheme;
     final l10n = context.l10n;
     final uploadState = ref.watch(documentUploadControllerProvider);
+    final voiceState = ref.watch(voiceCaptureControllerProvider);
     final uploadStage = uploadState.maybeWhen(
       data: (state) => state.stage,
       orElse: () => null,
@@ -48,6 +50,15 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     final isUploadBusy =
         uploadStage == DocumentUploadStage.uploading ||
         uploadStage == DocumentUploadStage.processing;
+    final isVoiceBusy = voiceState.maybeWhen(
+      data: (state) =>
+          state.stage == VoiceCaptureStage.requestingPermission ||
+          state.stage == VoiceCaptureStage.recording,
+      orElse: () => false,
+    );
+    final activeVoiceState = voiceState.hasValue
+        ? voiceState.requireValue
+        : null;
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(
@@ -113,8 +124,40 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               }
             },
           ),
+          const SizedBox(height: AppSpacing.sm),
+          MedStoryActionRow(
+            icon: Icons.mic_none_rounded,
+            title: l10n.recordVoiceTitle,
+            description: l10n.recordVoiceDescription,
+            semanticHint: l10n.recordVoiceSemanticHint,
+            onTap: () {
+              if (!isUploadBusy && !isVoiceBusy) {
+                _startVoiceRecording();
+              }
+            },
+          ),
           const SizedBox(height: AppSpacing.xl),
-          if (_selectedFile == null)
+          if (voiceState.hasError)
+            _VoiceErrorPanel(
+              message: _voiceErrorMessage(context, voiceState.error!),
+              onRetry: _startVoiceRecording,
+            )
+          else if (activeVoiceState?.stage == VoiceCaptureStage.recording ||
+              activeVoiceState?.stage == VoiceCaptureStage.requestingPermission)
+            _VoiceRecordingPanel(
+              state: activeVoiceState!,
+              onStop: _stopVoiceRecording,
+              onDiscard: _discardVoiceRecording,
+            )
+          else if (activeVoiceState?.stage == VoiceCaptureStage.recorded)
+            _RecordedVoicePanel(
+              state: activeVoiceState!,
+              isUploadBusy: isUploadBusy,
+              onUpload: _uploadRecordedVoice,
+              onDiscard: _discardVoiceRecording,
+              onRecordAgain: _restartVoiceRecording,
+            )
+          else if (_selectedFile == null)
             _EmptySelectionPanel(message: l10n.documentSelectionEmpty)
           else
             _SelectedFilePanel(selectedFile: _selectedFile!),
@@ -133,17 +176,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          MedStoryActionRow(
-            icon: Icons.mic_none_rounded,
-            title: l10n.recordVoiceTitle,
-            description: l10n.recordVoiceDeferredDescription,
-            semanticHint: l10n.recordVoiceDeferredSemanticHint,
-            onTap: () => _showDeferredAction(
-              title: l10n.voiceCaptureTitle,
-              message: l10n.voiceCaptureDeferredMessage,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
           MedStoryActionRow(
             icon: Icons.edit_note_rounded,
             title: l10n.writeNoteTitle,
@@ -250,6 +282,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       return;
     }
 
+    await _discardVoiceRecording();
     setState(() {
       _selectedFile = _SelectedDocumentFile(
         path: path,
@@ -287,6 +320,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                 fileName: selectedFile.fileName,
                 mimeType: selectedFile.mimeType,
               ),
+              language: Localizations.localeOf(context).languageCode,
             ),
           );
     } on Object {
@@ -295,6 +329,12 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   }
 
   void _retrySelectedFile() {
+    final voiceState = ref.read(voiceCaptureControllerProvider);
+    final voice = voiceState.hasValue ? voiceState.requireValue : null;
+    if (voice?.stage == VoiceCaptureStage.recorded) {
+      _uploadRecordedVoice();
+      return;
+    }
     _uploadSelectedFile();
   }
 
@@ -304,6 +344,68 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       return;
     }
     context.push('/documents/$documentId');
+  }
+
+  Future<void> _startVoiceRecording() async {
+    setState(() {
+      _selectedFile = null;
+    });
+    ref.read(documentUploadControllerProvider.notifier).reset();
+    await ref.read(voiceCaptureControllerProvider.notifier).startRecording();
+  }
+
+  Future<void> _stopVoiceRecording() async {
+    await ref.read(voiceCaptureControllerProvider.notifier).stopRecording();
+    final voiceState = ref.read(voiceCaptureControllerProvider);
+    final voice = voiceState.hasValue ? voiceState.requireValue : null;
+    if (voice?.maxDurationReached == true && mounted) {
+      _showSnack(context.l10n.voiceRecordingMaxDurationMessage);
+    }
+  }
+
+  Future<void> _discardVoiceRecording() {
+    return ref.read(voiceCaptureControllerProvider.notifier).discardRecording();
+  }
+
+  Future<void> _restartVoiceRecording() async {
+    await _discardVoiceRecording();
+    await _startVoiceRecording();
+  }
+
+  Future<void> _uploadRecordedVoice() async {
+    final voiceState = ref.read(voiceCaptureControllerProvider);
+    final recorded = voiceState.hasValue ? voiceState.requireValue : null;
+    if (recorded == null ||
+        recorded.stage != VoiceCaptureStage.recorded ||
+        recorded.path == null ||
+        recorded.fileName == null) {
+      return;
+    }
+
+    ref.read(documentUploadControllerProvider.notifier).reset();
+    final subjectState = ref
+        .read(subjectControllerProvider)
+        .maybeWhen(data: (state) => state, orElse: () => null);
+    try {
+      await ref
+          .read(documentUploadControllerProvider.notifier)
+          .upload(
+            DocumentUploadDraft(
+              title: context.l10n.voiceNoteTitle,
+              docType: DocumentType.audio,
+              subjectId: subjectState?.selectedSubjectId,
+              source: DocumentSourceFile(
+                path: recorded.path!,
+                fileName: recorded.fileName!,
+                mimeType: voiceCaptureMimeType,
+              ),
+              language: Localizations.localeOf(context).languageCode,
+            ),
+          );
+      await _discardVoiceRecording();
+    } on Object {
+      // Keep the recorded source available so retry can re-upload it.
+    }
   }
 
   void _showDeferredAction({required String title, required String message}) {
@@ -368,6 +470,234 @@ class _SelectedFilePanel extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VoiceRecordingPanel extends StatelessWidget {
+  const _VoiceRecordingPanel({
+    required this.state,
+    required this.onStop,
+    required this.onDiscard,
+  });
+
+  final VoiceCaptureState state;
+  final VoidCallback onStop;
+  final VoidCallback onDiscard;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isRequestingPermission =
+        state.stage == VoiceCaptureStage.requestingPermission;
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.mic_rounded,
+                color: AppColors.controlledCrimson,
+                size: 32,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isRequestingPermission
+                          ? l10n.voicePermissionRequesting
+                          : l10n.voiceRecordingInProgress,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.patientInk,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      isRequestingPermission
+                          ? l10n.voicePermissionRequestingDescription
+                          : l10n.voiceRecordingDuration(
+                              _formatDuration(state.duration),
+                            ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.secondaryInk,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (!isRequestingPermission) ...[
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onDiscard,
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    label: Text(l10n.voiceDiscardAction),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: onStop,
+                    icon: const Icon(Icons.stop_rounded),
+                    label: Text(l10n.voiceStopAction),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: AppSpacing.md),
+            const LinearProgressIndicator(),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RecordedVoicePanel extends StatelessWidget {
+  const _RecordedVoicePanel({
+    required this.state,
+    required this.isUploadBusy,
+    required this.onUpload,
+    required this.onDiscard,
+    required this.onRecordAgain,
+  });
+
+  final VoiceCaptureState state;
+  final bool isUploadBusy;
+  final VoidCallback onUpload;
+  final VoidCallback onDiscard;
+  final VoidCallback onRecordAgain;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.voiceReviewTitle,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: AppColors.patientInk,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.graphic_eq_rounded,
+                color: AppColors.deepClinicalBlue,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.voiceNoteTitle,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: AppColors.patientInk,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      l10n.voiceRecordedMetadata(
+                        _formatDuration(state.duration),
+                        _formatBytes(state.sizeBytes),
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.secondaryInk,
+                      ),
+                    ),
+                    if (state.maxDurationReached) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        l10n.voiceRecordingMaxDurationMessage,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.secondaryInk,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              OutlinedButton.icon(
+                onPressed: isUploadBusy ? null : onDiscard,
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: Text(l10n.voiceDiscardAction),
+              ),
+              OutlinedButton.icon(
+                onPressed: isUploadBusy ? null : onRecordAgain,
+                icon: const Icon(Icons.mic_none_rounded),
+                label: Text(l10n.voiceRecordAgainAction),
+              ),
+              FilledButton.icon(
+                onPressed: isUploadBusy ? null : onUpload,
+                icon: const Icon(Icons.cloud_upload_outlined),
+                label: Text(l10n.voiceUploadAction),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VoiceErrorPanel extends StatelessWidget {
+  const _VoiceErrorPanel({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.mic_off_outlined,
+                color: AppColors.deepClinicalBlue,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.mic_none_rounded),
+            label: Text(l10n.voiceRecordAgainAction),
           ),
         ],
       ),
@@ -635,6 +965,12 @@ String _formatBytes(int bytes) {
   return '$bytes B';
 }
 
+String _formatDuration(Duration duration) {
+  final minutes = duration.inMinutes;
+  final seconds = duration.inSeconds.remainder(60);
+  return '$minutes:${seconds.toString().padLeft(2, '0')}';
+}
+
 String _documentErrorMessage(BuildContext context, Object error) {
   final l10n = context.l10n;
   final message = error is AppFailure ? error.message : error.toString();
@@ -653,4 +989,22 @@ String _documentErrorMessage(BuildContext context, Object error) {
     return message;
   }
   return l10n.documentUploadFailedMessage;
+}
+
+String _voiceErrorMessage(BuildContext context, Object error) {
+  final l10n = context.l10n;
+  final message = error is AppFailure ? error.message : error.toString();
+  final mapped = switch (message) {
+    'voice_permission_denied' => l10n.voicePermissionDeniedMessage,
+    'voice_recording_missing' => l10n.voiceRecordingMissingMessage,
+    'voice_file_too_large' => l10n.voiceFileTooLargeMessage,
+    _ => null,
+  };
+  if (mapped != null) {
+    return mapped;
+  }
+  if (message.trim().isNotEmpty && !message.contains('_')) {
+    return message;
+  }
+  return l10n.voiceRecordingFailedMessage;
 }

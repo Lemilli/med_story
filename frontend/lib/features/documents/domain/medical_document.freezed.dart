@@ -326,7 +326,7 @@ as DateTime?,
 /// @nodoc
 mixin _$DocumentCreateRequest {
 
- String get title;@JsonKey(name: 'doc_type') DocumentType get docType;@JsonKey(name: 'mime_type') String get mimeType;@JsonKey(name: 'size_bytes') int get sizeBytes;@JsonKey(name: 'subject_id') String? get subjectId;@JsonKey(name: 'document_date') String? get documentDate;@JsonKey(name: 'local_uri_hint') String? get localUriHint;
+ String get title;@JsonKey(name: 'doc_type') DocumentType get docType;@JsonKey(name: 'mime_type') String get mimeType;@JsonKey(name: 'size_bytes') int get sizeBytes;@JsonKey(name: 'subject_id') String? get subjectId;@JsonKey(name: 'document_date') String? get documentDate;@JsonKey(name: 'local_uri_hint') String? get localUriHint; String? get language;
 /// Create a copy of DocumentCreateRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -339,16 +339,16 @@ $DocumentCreateRequestCopyWith<DocumentCreateRequest> get copyWith => _$Document
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentCreateRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentCreateRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.language, language) || other.language == language));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,title,docType,mimeType,sizeBytes,subjectId,documentDate,localUriHint);
+int get hashCode => Object.hash(runtimeType,title,docType,mimeType,sizeBytes,subjectId,documentDate,localUriHint,language);
 
 @override
 String toString() {
-  return 'DocumentCreateRequest(title: $title, docType: $docType, mimeType: $mimeType, sizeBytes: $sizeBytes, subjectId: $subjectId, documentDate: $documentDate, localUriHint: $localUriHint)';
+  return 'DocumentCreateRequest(title: $title, docType: $docType, mimeType: $mimeType, sizeBytes: $sizeBytes, subjectId: $subjectId, documentDate: $documentDate, localUriHint: $localUriHint, language: $language)';
 }
 
 
@@ -359,7 +359,7 @@ abstract mixin class $DocumentCreateRequestCopyWith<$Res>  {
   factory $DocumentCreateRequestCopyWith(DocumentCreateRequest value, $Res Function(DocumentCreateRequest) _then) = _$DocumentCreateRequestCopyWithImpl;
 @useResult
 $Res call({
- String title,@JsonKey(name: 'doc_type') DocumentType docType,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'size_bytes') int sizeBytes,@JsonKey(name: 'subject_id') String? subjectId,@JsonKey(name: 'document_date') String? documentDate,@JsonKey(name: 'local_uri_hint') String? localUriHint
+ String title,@JsonKey(name: 'doc_type') DocumentType docType,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'size_bytes') int sizeBytes,@JsonKey(name: 'subject_id') String? subjectId,@JsonKey(name: 'document_date') String? documentDate,@JsonKey(name: 'local_uri_hint') String? localUriHint, String? language
 });
 
 
@@ -376,7 +376,7 @@ class _$DocumentCreateRequestCopyWithImpl<$Res>
 
 /// Create a copy of DocumentCreateRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? title = null,Object? docType = null,Object? mimeType = null,Object? sizeBytes = null,Object? subjectId = freezed,Object? documentDate = freezed,Object? localUriHint = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? title = null,Object? docType = null,Object? mimeType = null,Object? sizeBytes = null,Object? subjectId = freezed,Object? documentDate = freezed,Object? localUriHint = freezed,Object? language = freezed,}) {
   return _then(_self.copyWith(
 title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,docType: null == docType ? _self.docType : docType // ignore: cast_nullable_to_non_nullable
@@ -385,6 +385,7 @@ as String,sizeBytes: null == sizeBytes ? _self.sizeBytes : sizeBytes // ignore: 
 as int,subjectId: freezed == subjectId ? _self.subjectId : subjectId // ignore: cast_nullable_to_non_nullable
 as String?,documentDate: freezed == documentDate ? _self.documentDate : documentDate // ignore: cast_nullable_to_non_nullable
 as String?,localUriHint: freezed == localUriHint ? _self.localUriHint : localUriHint // ignore: cast_nullable_to_non_nullable
+as String?,language: freezed == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -470,10 +471,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate, @JsonKey(name: 'local_uri_hint')  String? localUriHint)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate, @JsonKey(name: 'local_uri_hint')  String? localUriHint,  String? language)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DocumentCreateRequest() when $default != null:
-return $default(_that.title,_that.docType,_that.mimeType,_that.sizeBytes,_that.subjectId,_that.documentDate,_that.localUriHint);case _:
+return $default(_that.title,_that.docType,_that.mimeType,_that.sizeBytes,_that.subjectId,_that.documentDate,_that.localUriHint,_that.language);case _:
   return orElse();
 
 }
@@ -491,10 +492,10 @@ return $default(_that.title,_that.docType,_that.mimeType,_that.sizeBytes,_that.s
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate, @JsonKey(name: 'local_uri_hint')  String? localUriHint)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate, @JsonKey(name: 'local_uri_hint')  String? localUriHint,  String? language)  $default,) {final _that = this;
 switch (_that) {
 case _DocumentCreateRequest():
-return $default(_that.title,_that.docType,_that.mimeType,_that.sizeBytes,_that.subjectId,_that.documentDate,_that.localUriHint);case _:
+return $default(_that.title,_that.docType,_that.mimeType,_that.sizeBytes,_that.subjectId,_that.documentDate,_that.localUriHint,_that.language);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -511,10 +512,10 @@ return $default(_that.title,_that.docType,_that.mimeType,_that.sizeBytes,_that.s
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate, @JsonKey(name: 'local_uri_hint')  String? localUriHint)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate, @JsonKey(name: 'local_uri_hint')  String? localUriHint,  String? language)?  $default,) {final _that = this;
 switch (_that) {
 case _DocumentCreateRequest() when $default != null:
-return $default(_that.title,_that.docType,_that.mimeType,_that.sizeBytes,_that.subjectId,_that.documentDate,_that.localUriHint);case _:
+return $default(_that.title,_that.docType,_that.mimeType,_that.sizeBytes,_that.subjectId,_that.documentDate,_that.localUriHint,_that.language);case _:
   return null;
 
 }
@@ -526,7 +527,7 @@ return $default(_that.title,_that.docType,_that.mimeType,_that.sizeBytes,_that.s
 @JsonSerializable()
 
 class _DocumentCreateRequest implements DocumentCreateRequest {
-  const _DocumentCreateRequest({required this.title, @JsonKey(name: 'doc_type') required this.docType, @JsonKey(name: 'mime_type') required this.mimeType, @JsonKey(name: 'size_bytes') required this.sizeBytes, @JsonKey(name: 'subject_id') this.subjectId, @JsonKey(name: 'document_date') this.documentDate, @JsonKey(name: 'local_uri_hint') this.localUriHint});
+  const _DocumentCreateRequest({required this.title, @JsonKey(name: 'doc_type') required this.docType, @JsonKey(name: 'mime_type') required this.mimeType, @JsonKey(name: 'size_bytes') required this.sizeBytes, @JsonKey(name: 'subject_id') this.subjectId, @JsonKey(name: 'document_date') this.documentDate, @JsonKey(name: 'local_uri_hint') this.localUriHint, this.language});
   factory _DocumentCreateRequest.fromJson(Map<String, dynamic> json) => _$DocumentCreateRequestFromJson(json);
 
 @override final  String title;
@@ -536,6 +537,7 @@ class _DocumentCreateRequest implements DocumentCreateRequest {
 @override@JsonKey(name: 'subject_id') final  String? subjectId;
 @override@JsonKey(name: 'document_date') final  String? documentDate;
 @override@JsonKey(name: 'local_uri_hint') final  String? localUriHint;
+@override final  String? language;
 
 /// Create a copy of DocumentCreateRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -550,16 +552,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentCreateRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentCreateRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.language, language) || other.language == language));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,title,docType,mimeType,sizeBytes,subjectId,documentDate,localUriHint);
+int get hashCode => Object.hash(runtimeType,title,docType,mimeType,sizeBytes,subjectId,documentDate,localUriHint,language);
 
 @override
 String toString() {
-  return 'DocumentCreateRequest(title: $title, docType: $docType, mimeType: $mimeType, sizeBytes: $sizeBytes, subjectId: $subjectId, documentDate: $documentDate, localUriHint: $localUriHint)';
+  return 'DocumentCreateRequest(title: $title, docType: $docType, mimeType: $mimeType, sizeBytes: $sizeBytes, subjectId: $subjectId, documentDate: $documentDate, localUriHint: $localUriHint, language: $language)';
 }
 
 
@@ -570,7 +572,7 @@ abstract mixin class _$DocumentCreateRequestCopyWith<$Res> implements $DocumentC
   factory _$DocumentCreateRequestCopyWith(_DocumentCreateRequest value, $Res Function(_DocumentCreateRequest) _then) = __$DocumentCreateRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String title,@JsonKey(name: 'doc_type') DocumentType docType,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'size_bytes') int sizeBytes,@JsonKey(name: 'subject_id') String? subjectId,@JsonKey(name: 'document_date') String? documentDate,@JsonKey(name: 'local_uri_hint') String? localUriHint
+ String title,@JsonKey(name: 'doc_type') DocumentType docType,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'size_bytes') int sizeBytes,@JsonKey(name: 'subject_id') String? subjectId,@JsonKey(name: 'document_date') String? documentDate,@JsonKey(name: 'local_uri_hint') String? localUriHint, String? language
 });
 
 
@@ -587,7 +589,7 @@ class __$DocumentCreateRequestCopyWithImpl<$Res>
 
 /// Create a copy of DocumentCreateRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? title = null,Object? docType = null,Object? mimeType = null,Object? sizeBytes = null,Object? subjectId = freezed,Object? documentDate = freezed,Object? localUriHint = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? title = null,Object? docType = null,Object? mimeType = null,Object? sizeBytes = null,Object? subjectId = freezed,Object? documentDate = freezed,Object? localUriHint = freezed,Object? language = freezed,}) {
   return _then(_DocumentCreateRequest(
 title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,docType: null == docType ? _self.docType : docType // ignore: cast_nullable_to_non_nullable
@@ -596,6 +598,7 @@ as String,sizeBytes: null == sizeBytes ? _self.sizeBytes : sizeBytes // ignore: 
 as int,subjectId: freezed == subjectId ? _self.subjectId : subjectId // ignore: cast_nullable_to_non_nullable
 as String?,documentDate: freezed == documentDate ? _self.documentDate : documentDate // ignore: cast_nullable_to_non_nullable
 as String?,localUriHint: freezed == localUriHint ? _self.localUriHint : localUriHint // ignore: cast_nullable_to_non_nullable
+as String?,language: freezed == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

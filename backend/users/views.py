@@ -1,8 +1,12 @@
+from django.db import transaction
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from medical.models import AuditLog
+from medical.services import log_audit_event
 from users.serializers import LogoutSerializer, RegisterSerializer, UserSerializer
 
 
@@ -25,6 +29,14 @@ class RegisterView(generics.CreateAPIView):
         )
 
 
+class AuditedTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        log_audit_event(user=serializer.user, action=AuditLog.Action.LOGIN, request=request)
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+
+
 class MeView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
 
@@ -32,8 +44,26 @@ class MeView(generics.RetrieveUpdateDestroyAPIView):
         return self.request.user
 
     def destroy(self, request, *args, **kwargs):
-        # Phase 6 will replace this placeholder with a hard-delete workflow.
-        return Response({"status": "deletion_scheduled"}, status=status.HTTP_202_ACCEPTED)
+        user = request.user
+        refresh_token = request.data.get("refresh") if isinstance(request.data, dict) else None
+        if refresh_token:
+            try:
+                refresh = RefreshToken(refresh_token)
+                if str(refresh.get("user_id")) == str(user.id):
+                    refresh.blacklist()
+            except TokenError:
+                pass
+
+        with transaction.atomic():
+            log_audit_event(
+                user=user,
+                action=AuditLog.Action.ACCOUNT_DELETE,
+                request=request,
+                metadata={"refresh_token_blacklist_requested": bool(refresh_token)},
+            )
+            user.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class LogoutView(generics.GenericAPIView):

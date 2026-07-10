@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Med Story needs camera access to scan and upload medical documents.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Med Story needs microphone access to record voice notes that you choose to upload for processing.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Med Story needs photo library access to attach medical document images.</string>
 	<key>UIBackgroundModes</key>

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from medical.models import Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, Tag
+from medical.models import AuditLog, Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, Tag
 
 
 @admin.register(Subject)
@@ -55,3 +55,11 @@ class ProcessingJobAdmin(admin.ModelAdmin):
 class TagAdmin(admin.ModelAdmin):
     list_display = ("name", "user", "color")
     search_fields = ("name", "user__email")
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ("action", "user", "ip_address", "created_at")
+    list_filter = ("action", "created_at")
+    search_fields = ("user__email", "action")
+    readonly_fields = ("created_at",)

@@ -91,12 +91,42 @@
   "captureSubtitle": "Capture what you remember. You can organize it later.",
   "recordVoiceTitle": "Record voice",
   "recordVoiceDescription": "Speak a memory, symptom update, or treatment note.",
-  "recordVoiceDeferredDescription": "Voice capture comes later. Use a document, photo, or file for now.",
   "recordVoiceSemanticHint": "Starts a voice capture. You can review before saving.",
-  "recordVoiceDeferredSemanticHint": "Voice capture is planned for a later phase.",
   "voiceCaptureTitle": "Voice capture",
-  "voiceCaptureMessage": "Microphone recording will be wired to the capture controller next.",
-  "voiceCaptureDeferredMessage": "Voice capture is deferred until the voice-first phase.",
+  "voiceCaptureMessage": "Record a short voice note, review it, then upload it for suggested timeline events.",
+  "voiceNoteTitle": "Voice note",
+  "voicePermissionRequesting": "Checking microphone access",
+  "voicePermissionRequestingDescription": "Your recording stays on this device until you choose to upload it.",
+  "voiceRecordingInProgress": "Recording",
+  "voiceRecordingDuration": "Duration: {duration}",
+  "@voiceRecordingDuration": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "voiceStopAction": "Stop",
+  "voiceDiscardAction": "Discard",
+  "voiceReviewTitle": "Review voice note",
+  "voiceRecordedMetadata": "{duration} • {size}",
+  "@voiceRecordedMetadata": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "voiceRecordAgainAction": "Record again",
+  "voiceUploadAction": "Upload voice note",
+  "voiceRecordingMaxDurationMessage": "Recording stopped at 4 minutes to keep the upload small.",
+  "voiceFileTooLargeMessage": "Record a shorter voice note. Audio uploads must be 5 MB or smaller.",
+  "voicePermissionDeniedMessage": "Microphone access is needed to record a voice note. You can still add documents or manual events.",
+  "voiceRecordingMissingMessage": "MedStory could not find the recording on this device.",
+  "voiceRecordingFailedMessage": "We could not record this voice note. Try again or add a document instead.",
   "scanDocumentTitle": "Scan document",
   "scanDocumentDescription": "Use the camera for records, reports, prescriptions, or letters.",
   "scanDocumentSemanticHint": "Opens the camera to capture a medical document.",

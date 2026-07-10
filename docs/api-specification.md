@@ -71,7 +71,8 @@ Returns the authenticated user.
 Update `full_name`, `locale`. → `200` updated user.
 
 ### DELETE /me
-Initiates GDPR account + data deletion. → `202 { "status": "deletion_scheduled" }`.
+Immediately hard-deletes the account and backend records. Optional body:
+`{ "refresh": "jwt..." }` for best-effort refresh-token blacklist. → `204`.
 
 ### GET /subjects
 List subjects (patient profiles). The default self-subject is always present.
@@ -239,11 +240,10 @@ Poll an async job (used after regenerate / ingestions when a job_id is returned)
 ## 9. Data Export & Privacy (GDPR)
 
 ### POST /privacy/export
-Requests a backend data export (events + document metadata + summaries + audit data).
-→ `202 { "job_id": "uuid" }`; when ready, download via the job result URL.
-
-### GET /privacy/export/{job_id}
-Returns export status and, when ready, a short-lived bundle download URL.
+Returns an immediate JSON backend data export:
+profile, subjects, tags, document metadata/extracted text, document explanations,
+events, summaries, processing jobs, and audit data. Original uploaded files are not
+included because they are not persisted server-side. → `200`.
 
 > See [security-privacy.md](./security-privacy.md) for retention, encryption, and erasure details.
 
@@ -299,5 +299,4 @@ All errors share one envelope:
 | GET | /summary/versions | Summary history |
 | GET | /summary/export | Doctor-ready export |
 | GET | /jobs/{id} | Poll async job |
-| POST | /privacy/export | Request data export |
-| GET | /privacy/export/{job_id} | Export status/download |
+| POST | /privacy/export | Immediate JSON data export |

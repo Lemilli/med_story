@@ -263,3 +263,33 @@ class MedicalEvent(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class AuditLog(models.Model):
+    class Action(models.TextChoices):
+        LOGIN = "login", "Login"
+        DATA_EXPORT = "data_export", "Data export"
+        ACCOUNT_DELETE = "account_delete", "Account delete"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="audit_logs",
+        null=True,
+        blank=True,
+    )
+    action = models.CharField(max_length=50, choices=Action.choices)
+    metadata = models.JSONField(default=dict, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=("user", "-created_at"), name="audit_user_created_idx"),
+            models.Index(fields=("action",), name="audit_action_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.action}:{self.created_at:%Y-%m-%d %H:%M:%S}"

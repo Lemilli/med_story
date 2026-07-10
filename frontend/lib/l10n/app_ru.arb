@@ -91,12 +91,42 @@
   "captureSubtitle": "Запишите то, что помните. Разложить по полочкам можно позже.",
   "recordVoiceTitle": "Записать голос",
   "recordVoiceDescription": "Расскажите о воспоминании, симптоме или лечении.",
-  "recordVoiceDeferredDescription": "Голосовая запись появится позже. Сейчас используйте документ, фото или файл.",
   "recordVoiceSemanticHint": "Начинает голосовую запись. Перед сохранением можно прослушать.",
-  "recordVoiceDeferredSemanticHint": "Голосовая запись запланирована на будущий этап.",
   "voiceCaptureTitle": "Голосовая запись",
-  "voiceCaptureMessage": "Запись с микрофона будет подключена к контроллеру захвата.",
-  "voiceCaptureDeferredMessage": "Голосовая запись отложена до этапа voice-first.",
+  "voiceCaptureMessage": "Запишите короткую голосовую заметку, проверьте её и отправьте для предложенных событий хронологии.",
+  "voiceNoteTitle": "Голосовая заметка",
+  "voicePermissionRequesting": "Проверяем доступ к микрофону",
+  "voicePermissionRequestingDescription": "Запись остаётся на этом устройстве, пока вы не решите её загрузить.",
+  "voiceRecordingInProgress": "Идёт запись",
+  "voiceRecordingDuration": "Длительность: {duration}",
+  "@voiceRecordingDuration": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "voiceStopAction": "Остановить",
+  "voiceDiscardAction": "Удалить",
+  "voiceReviewTitle": "Проверить голосовую заметку",
+  "voiceRecordedMetadata": "{duration} • {size}",
+  "@voiceRecordedMetadata": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "voiceRecordAgainAction": "Записать заново",
+  "voiceUploadAction": "Загрузить голосовую заметку",
+  "voiceRecordingMaxDurationMessage": "Запись остановлена на 4 минутах, чтобы файл оставался небольшим.",
+  "voiceFileTooLargeMessage": "Запишите более короткую заметку. Аудио должно быть не больше 5 МБ.",
+  "voicePermissionDeniedMessage": "Для голосовой заметки нужен доступ к микрофону. Вы всё ещё можете добавить документы или события вручную.",
+  "voiceRecordingMissingMessage": "MedStory не удалось найти запись на этом устройстве.",
+  "voiceRecordingFailedMessage": "Не удалось записать голосовую заметку. Попробуйте ещё раз или добавьте документ.",
   "scanDocumentTitle": "Сканировать документ",
   "scanDocumentDescription": "Используйте камеру для записей, отчётов, рецептов или писем.",
   "scanDocumentSemanticHint": "Открывает камеру для медицинского документа.",

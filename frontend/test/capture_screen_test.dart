@@ -7,7 +7,7 @@ import 'package:med_story/l10n/app_localizations.dart';
 
 void main() {
   testWidgets(
-    'capture screen shows active document inputs and deferred notes',
+    'capture screen shows active document and voice inputs with deferred notes',
     (tester) async {
       await tester.pumpWidget(
         ProviderScope(
@@ -32,7 +32,7 @@ void main() {
       expect(find.text(l10n.documentSelectionEmpty), findsOneWidget);
       await tester.scrollUntilVisible(find.text(l10n.recordVoiceTitle), 160);
       expect(find.text(l10n.recordVoiceTitle), findsOneWidget);
-      expect(find.text(l10n.recordVoiceDeferredDescription), findsOneWidget);
+      expect(find.text(l10n.recordVoiceDescription), findsOneWidget);
       await tester.scrollUntilVisible(find.text(l10n.writeNoteTitle), 160);
       expect(find.text(l10n.writeNoteTitle), findsOneWidget);
       expect(find.text(l10n.writeNoteDeferredDescription), findsOneWidget);

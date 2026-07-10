@@ -210,27 +210,73 @@ class AppLocalizationsEn extends AppLocalizations {
       'Speak a memory, symptom update, or treatment note.';
 
   @override
-  String get recordVoiceDeferredDescription =>
-      'Voice capture comes later. Use a document, photo, or file for now.';
-
-  @override
   String get recordVoiceSemanticHint =>
       'Starts a voice capture. You can review before saving.';
-
-  @override
-  String get recordVoiceDeferredSemanticHint =>
-      'Voice capture is planned for a later phase.';
 
   @override
   String get voiceCaptureTitle => 'Voice capture';
 
   @override
   String get voiceCaptureMessage =>
-      'Microphone recording will be wired to the capture controller next.';
+      'Record a short voice note, review it, then upload it for suggested timeline events.';
 
   @override
-  String get voiceCaptureDeferredMessage =>
-      'Voice capture is deferred until the voice-first phase.';
+  String get voiceNoteTitle => 'Voice note';
+
+  @override
+  String get voicePermissionRequesting => 'Checking microphone access';
+
+  @override
+  String get voicePermissionRequestingDescription =>
+      'Your recording stays on this device until you choose to upload it.';
+
+  @override
+  String get voiceRecordingInProgress => 'Recording';
+
+  @override
+  String voiceRecordingDuration(String duration) {
+    return 'Duration: $duration';
+  }
+
+  @override
+  String get voiceStopAction => 'Stop';
+
+  @override
+  String get voiceDiscardAction => 'Discard';
+
+  @override
+  String get voiceReviewTitle => 'Review voice note';
+
+  @override
+  String voiceRecordedMetadata(String duration, String size) {
+    return '$duration • $size';
+  }
+
+  @override
+  String get voiceRecordAgainAction => 'Record again';
+
+  @override
+  String get voiceUploadAction => 'Upload voice note';
+
+  @override
+  String get voiceRecordingMaxDurationMessage =>
+      'Recording stopped at 4 minutes to keep the upload small.';
+
+  @override
+  String get voiceFileTooLargeMessage =>
+      'Record a shorter voice note. Audio uploads must be 5 MB or smaller.';
+
+  @override
+  String get voicePermissionDeniedMessage =>
+      'Microphone access is needed to record a voice note. You can still add documents or manual events.';
+
+  @override
+  String get voiceRecordingMissingMessage =>
+      'MedStory could not find the recording on this device.';
+
+  @override
+  String get voiceRecordingFailedMessage =>
+      'We could not record this voice note. Try again or add a document instead.';
 
   @override
   String get scanDocumentTitle => 'Scan document';

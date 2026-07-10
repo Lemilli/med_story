@@ -95,17 +95,18 @@ remain for deterministic local tests.
 - **Exit:** user generates a concise doctor summary and reviews treatment history (C & D).
 
 ### Phase 5 — Voice-First Capture
+**Status:** Implemented.
 **Goal:** low-friction voice input (BRD §9 NFR).
 - Backend: audio document type, **STT** provider, STT→structuring task. **Implemented.**
 - Frontend: voice recording + local audio persistence + transient ingest reusing the same state
-  machine.
+  machine. **Implemented.**
 - **Exit:** backend supports recording upload to structured, confirmable events; frontend voice
-  recording remains the user-facing completion step.
+  capture records locally, reviews before upload, and sends audio through the transient ingest flow.
 
 ### Phase 6 — Privacy, Hardening & Launch Prep
 **Goal:** GDPR flows, security checklist, store readiness.
 - Backend: `/privacy/export`, `DELETE /me` (hard delete of backend records), `AuditLog`,
-  throttling, dependency/secret scanning; finalize DPAs.
+  backend tests implemented; throttling, dependency/secret scanning, and DPAs remain planned.
 - Frontend: settings (export, delete account, locale), onboarding disclaimer ("organizer, not
   a doctor"), accessibility pass.
 - Ops: backend metadata backups, monitoring/error tracking, cost alerts; complete the security checklist

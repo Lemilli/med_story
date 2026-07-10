@@ -45,6 +45,7 @@ abstract class DocumentCreateRequest with _$DocumentCreateRequest {
     @JsonKey(name: 'subject_id') String? subjectId,
     @JsonKey(name: 'document_date') String? documentDate,
     @JsonKey(name: 'local_uri_hint') String? localUriHint,
+    String? language,
   }) = _DocumentCreateRequest;
 
   factory DocumentCreateRequest.fromJson(Map<String, dynamic> json) =>

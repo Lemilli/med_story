@@ -86,6 +86,7 @@ _DocumentCreateRequest _$DocumentCreateRequestFromJson(
   subjectId: json['subject_id'] as String?,
   documentDate: json['document_date'] as String?,
   localUriHint: json['local_uri_hint'] as String?,
+  language: json['language'] as String?,
 );
 
 Map<String, dynamic> _$DocumentCreateRequestToJson(
@@ -98,6 +99,7 @@ Map<String, dynamic> _$DocumentCreateRequestToJson(
   'subject_id': instance.subjectId,
   'document_date': instance.documentDate,
   'local_uri_hint': instance.localUriHint,
+  'language': instance.language,
 };
 
 _DocumentStatusUpdate _$DocumentStatusUpdateFromJson(

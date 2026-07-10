@@ -12,6 +12,7 @@ from medical.views import (
     EventListCreateView,
     EventSearchView,
     JobDetailView,
+    PrivacyExportView,
     SummaryCurrentView,
     SummaryExportView,
     SummaryRegenerateView,
@@ -43,5 +44,6 @@ urlpatterns = [
     path("summary/regenerate", SummaryRegenerateView.as_view(), name="summary-regenerate"),
     path("summary/versions", SummaryVersionsView.as_view(), name="summary-versions"),
     path("summary/export", SummaryExportView.as_view(), name="summary-export"),
+    path("privacy/export", PrivacyExportView.as_view(), name="privacy-export"),
     path("jobs/<uuid:id>", JobDetailView.as_view(), name="job-detail"),
 ]

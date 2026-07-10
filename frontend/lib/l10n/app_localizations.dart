@@ -434,23 +434,11 @@ abstract class AppLocalizations {
   /// **'Speak a memory, symptom update, or treatment note.'**
   String get recordVoiceDescription;
 
-  /// No description provided for @recordVoiceDeferredDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Voice capture comes later. Use a document, photo, or file for now.'**
-  String get recordVoiceDeferredDescription;
-
   /// No description provided for @recordVoiceSemanticHint.
   ///
   /// In en, this message translates to:
   /// **'Starts a voice capture. You can review before saving.'**
   String get recordVoiceSemanticHint;
-
-  /// No description provided for @recordVoiceDeferredSemanticHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Voice capture is planned for a later phase.'**
-  String get recordVoiceDeferredSemanticHint;
 
   /// No description provided for @voiceCaptureTitle.
   ///
@@ -461,14 +449,104 @@ abstract class AppLocalizations {
   /// No description provided for @voiceCaptureMessage.
   ///
   /// In en, this message translates to:
-  /// **'Microphone recording will be wired to the capture controller next.'**
+  /// **'Record a short voice note, review it, then upload it for suggested timeline events.'**
   String get voiceCaptureMessage;
 
-  /// No description provided for @voiceCaptureDeferredMessage.
+  /// No description provided for @voiceNoteTitle.
   ///
   /// In en, this message translates to:
-  /// **'Voice capture is deferred until the voice-first phase.'**
-  String get voiceCaptureDeferredMessage;
+  /// **'Voice note'**
+  String get voiceNoteTitle;
+
+  /// No description provided for @voicePermissionRequesting.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking microphone access'**
+  String get voicePermissionRequesting;
+
+  /// No description provided for @voicePermissionRequestingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your recording stays on this device until you choose to upload it.'**
+  String get voicePermissionRequestingDescription;
+
+  /// No description provided for @voiceRecordingInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording'**
+  String get voiceRecordingInProgress;
+
+  /// No description provided for @voiceRecordingDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration: {duration}'**
+  String voiceRecordingDuration(String duration);
+
+  /// No description provided for @voiceStopAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get voiceStopAction;
+
+  /// No description provided for @voiceDiscardAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get voiceDiscardAction;
+
+  /// No description provided for @voiceReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review voice note'**
+  String get voiceReviewTitle;
+
+  /// No description provided for @voiceRecordedMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} • {size}'**
+  String voiceRecordedMetadata(String duration, String size);
+
+  /// No description provided for @voiceRecordAgainAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Record again'**
+  String get voiceRecordAgainAction;
+
+  /// No description provided for @voiceUploadAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload voice note'**
+  String get voiceUploadAction;
+
+  /// No description provided for @voiceRecordingMaxDurationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording stopped at 4 minutes to keep the upload small.'**
+  String get voiceRecordingMaxDurationMessage;
+
+  /// No description provided for @voiceFileTooLargeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a shorter voice note. Audio uploads must be 5 MB or smaller.'**
+  String get voiceFileTooLargeMessage;
+
+  /// No description provided for @voicePermissionDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is needed to record a voice note. You can still add documents or manual events.'**
+  String get voicePermissionDeniedMessage;
+
+  /// No description provided for @voiceRecordingMissingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'MedStory could not find the recording on this device.'**
+  String get voiceRecordingMissingMessage;
+
+  /// No description provided for @voiceRecordingFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not record this voice note. Try again or add a document instead.'**
+  String get voiceRecordingFailedMessage;
 
   /// No description provided for @scanDocumentTitle.
   ///

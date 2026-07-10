@@ -12,7 +12,7 @@ from rest_framework.test import APITestCase
 
 from ai.providers.base import OCRResult
 from ai.schemas import SchemaValidationError
-from medical.models import Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject
+from medical.models import AuditLog, Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, Tag
 
 
 TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
@@ -901,6 +901,92 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(detail_response.data["status"], ProcessingJob.Status.SUCCEEDED)
         self.assertEqual(hidden_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(other_summary_response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_privacy_export_returns_user_data_and_audits_access(self):
+        subject = Subject.objects.create(
+            user=self.user,
+            display_name="Jane Doe",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+        other_subject = Subject.objects.create(
+            user=self.other_user,
+            display_name="Other User",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+        tag = Tag.objects.create(user=self.user, name="GI", color="#336699")
+        document = Document.objects.create(
+            user=self.user,
+            subject=subject,
+            title="Lab result",
+            doc_type=Document.DocumentType.LAB_RESULT,
+            mime_type="application/pdf",
+            size_bytes=512,
+            status=Document.Status.PROCESSED,
+            extracted_text="Hemoglobin 13.2",
+        )
+        document.explanations.create(
+            summary_text="A short explanation.",
+            key_points=["Hemoglobin listed."],
+            glossary={},
+            model_name="mock",
+            language="en",
+        )
+        event = MedicalEvent.objects.create(
+            user=self.user,
+            subject=subject,
+            source_document=document,
+            event_type=MedicalEvent.EventType.EXAMINATION,
+            title="CBC",
+            description="Complete blood count",
+            event_date=date(2026, 6, 1),
+            attributes={"result": "normal"},
+            source=MedicalEvent.Source.AI_DOCUMENT,
+            confidence=0.8,
+            is_confirmed=False,
+        )
+        event.tags.add(tag)
+        MedicalSummary.objects.create(
+            user=self.user,
+            subject=subject,
+            version=1,
+            is_current=True,
+            content={"key_symptoms": []},
+            narrative_text="Summary text",
+            generated_from_event_count=1,
+            model_name="mock",
+            language="en",
+        )
+        ProcessingJob.objects.create(
+            user=self.user,
+            document=document,
+            job_type=ProcessingJob.JobType.INGESTION,
+            status=ProcessingJob.Status.SUCCEEDED,
+        )
+        MedicalEvent.objects.create(
+            user=self.other_user,
+            subject=other_subject,
+            event_type=MedicalEvent.EventType.NOTE,
+            title="Other event",
+            event_date=date(2026, 6, 2),
+        )
+
+        response = self.client.post("/api/v1/privacy/export", {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["user"]["email"], "user@example.com")
+        self.assertEqual(response.data["subjects"][0]["id"], str(subject.id))
+        self.assertEqual(response.data["tags"][0]["name"], "GI")
+        self.assertEqual(response.data["documents"][0]["extracted_text"], "Hemoglobin 13.2")
+        self.assertEqual(response.data["document_explanations"][0]["summary_text"], "A short explanation.")
+        self.assertEqual(response.data["medical_events"][0]["title"], "CBC")
+        self.assertEqual(response.data["medical_events"][0]["tags"], ["GI"])
+        self.assertEqual(response.data["medical_summaries"][0]["narrative_text"], "Summary text")
+        self.assertEqual(response.data["processing_jobs"][0]["status"], ProcessingJob.Status.SUCCEEDED)
+        self.assertNotIn("Other event", json.dumps(response.data))
+        self.assertTrue(AuditLog.objects.filter(user=self.user, action=AuditLog.Action.DATA_EXPORT).exists())
+        self.assertTrue(any(item["action"] == AuditLog.Action.DATA_EXPORT for item in response.data["audit_logs"]))
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_summary_generation_failure_preserves_existing_current_summary(self):
