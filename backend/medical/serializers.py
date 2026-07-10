@@ -347,3 +347,17 @@ class ProcessingJobSerializer(serializers.ModelSerializer):
         if obj.summary_id is None:
             return None
         return str(obj.summary_id)
+
+
+class PrivacyExportSerializer(serializers.Serializer):
+    schema_version = serializers.CharField(read_only=True)
+    exported_at = serializers.DateTimeField(read_only=True)
+    user = serializers.JSONField(read_only=True)
+    subjects = serializers.ListField(child=serializers.JSONField(), read_only=True)
+    tags = serializers.ListField(child=serializers.JSONField(), read_only=True)
+    documents = serializers.ListField(child=serializers.JSONField(), read_only=True)
+    document_explanations = serializers.ListField(child=serializers.JSONField(), read_only=True)
+    medical_events = serializers.ListField(child=serializers.JSONField(), read_only=True)
+    medical_summaries = serializers.ListField(child=serializers.JSONField(), read_only=True)
+    processing_jobs = serializers.ListField(child=serializers.JSONField(), read_only=True)
+    audit_logs = serializers.ListField(child=serializers.JSONField(), read_only=True)

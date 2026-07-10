@@ -10,6 +10,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import CursorPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
 
 from medical.models import AuditLog, Document, MedicalEvent, MedicalSummary, ProcessingJob, Subject
 from medical.pagination import TimelineCursorPagination
@@ -22,6 +23,7 @@ from medical.serializers import (
     DocumentExplanationSerializer,
     MedicalEventSerializer,
     MedicalSummarySerializer,
+    PrivacyExportSerializer,
     ProcessingJobSerializer,
     SubjectSerializer,
 )
@@ -580,6 +582,9 @@ class SummaryExportView(SummaryQuerysetMixin, generics.GenericAPIView):
 
 
 class PrivacyExportView(generics.GenericAPIView):
+    serializer_class = PrivacyExportSerializer
+
+    @extend_schema(request=None, responses=PrivacyExportSerializer)
     def post(self, request, *args, **kwargs):
         log_audit_event(user=request.user, action=AuditLog.Action.DATA_EXPORT, request=request)
         return Response(build_privacy_export(request.user), status=status.HTTP_200_OK)
