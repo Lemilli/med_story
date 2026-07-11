@@ -91,6 +91,7 @@ class DocumentApi {
     String? subjectId,
     DocumentType? docType,
     DocumentStatus? status,
+    String? query,
     String? cursor,
     int limit = 20,
   }) async {
@@ -103,6 +104,7 @@ class DocumentApi {
             'subject_id': subjectId,
           if (docType != null) 'doc_type': docType.apiName,
           if (status != null) 'status': status.apiName,
+          if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
           if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
         },
       );

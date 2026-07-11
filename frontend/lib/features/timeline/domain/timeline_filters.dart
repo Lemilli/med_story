@@ -12,5 +12,6 @@ abstract class TimelineFilters with _$TimelineFilters {
     DateTime? to,
     @Default('') String tag,
     @Default('') String query,
+    bool? confirmed,
   }) = _TimelineFilters;
 }

@@ -6,7 +6,9 @@ import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/screens/auth_form_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 import '../features/capture/presentation/screens/capture_screen.dart';
+import '../features/capture/presentation/screens/quick_note_screen.dart';
 import '../features/documents/presentation/screens/document_detail_screen.dart';
+import '../features/documents/presentation/screens/document_list_screen.dart';
 import '../features/events/presentation/screens/event_detail_screen.dart';
 import '../features/events/presentation/screens/event_form_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
@@ -60,6 +62,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/events/new',
         builder: (context, state) => const EventFormScreen(),
       ),
+      GoRoute(path: '/notes/new', builder: (context, state) => const QuickNoteScreen()),
+      GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
       GoRoute(
         path: '/events/:id',
         builder: (context, state) =>
@@ -75,6 +79,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             DocumentDetailScreen(documentId: state.pathParameters['id']!),
       ),
+      GoRoute(path: '/documents', builder: (context, state) => const DocumentListScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppShell(navigationShell: navigationShell);
@@ -92,32 +97,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/capture',
-                pageBuilder: (context, state) =>
-                    const NoTransitionPage(child: CaptureScreen()),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
                 path: '/summary',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: SummaryScreen()),
               ),
             ],
           ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/settings',
-                pageBuilder: (context, state) =>
-                    const NoTransitionPage(child: SettingsScreen()),
-              ),
-            ],
-          ),
         ],
       ),
+      GoRoute(path: '/capture', builder: (context, state) => const CaptureScreen()),
     ],
   );
 });

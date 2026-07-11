@@ -12,13 +12,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appTitle => 'MedStory';
 
   @override
-  String get navTimeline => 'Хронология';
+  String get navTimeline => 'Моя история';
 
   @override
-  String get navCapture => 'Запись';
+  String get navCapture => 'Добавить';
 
   @override
-  String get navSummary => 'Сводка';
+  String get navSummary => 'К визиту';
 
   @override
   String get navSettings => 'Настройки';
@@ -37,7 +37,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get summaryMessage => 'Здесь будут сводки для врача и экспорт данных.';
 
   @override
-  String get summaryHeadline => 'Сводка для врача';
+  String get summaryHeadline => 'Подготовка к визиту';
 
   @override
   String summarySubjectLabel(String name) {
@@ -401,14 +401,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get writeNoteDeferredDescription =>
-      'Текстовые заметки пока остаются ручными. Добавляйте события на вкладке хронологии.';
+      'Сохраните короткую заметку в медицинской истории.';
 
   @override
   String get writeNoteSemanticHint => 'Открывает текстовую заметку.';
 
   @override
   String get writeNoteDeferredSemanticHint =>
-      'Захват текстовых заметок запланирован на будущий этап.';
+      'Открывает создание текстовой заметки.';
 
   @override
   String get textNoteTitle => 'Текстовая заметка';

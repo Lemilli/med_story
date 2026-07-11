@@ -153,6 +153,26 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(search_response.status_code, status.HTTP_200_OK)
         self.assertEqual(search_response.data["results"][0]["id"], str(older.id))
 
+    def test_timeline_confirmed_filter_limits_review_queue(self):
+        subject = Subject.objects.create(
+            user=self.user,
+            display_name="Jane Doe",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+        confirmed = MedicalEvent.objects.create(
+            user=self.user, subject=subject, event_type=MedicalEvent.EventType.NOTE,
+            title="Confirmed", event_date=date(2026, 6, 1), is_confirmed=True,
+        )
+        suggested = MedicalEvent.objects.create(
+            user=self.user, subject=subject, event_type=MedicalEvent.EventType.NOTE,
+            title="Suggested", event_date=date(2026, 6, 2), is_confirmed=False,
+        )
+        response = self.client.get("/api/v1/timeline?confirmed=false")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual([item["id"] for item in response.data["results"]], [str(suggested.id)])
+        self.assertNotEqual(response.data["results"][0]["id"], str(confirmed.id))
+
     def test_soft_delete_hides_event_from_detail_and_timeline(self):
         subject = Subject.objects.create(
             user=self.user,
@@ -297,6 +317,19 @@ class MedicalApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_document_search_matches_title_and_extracted_text_for_subject(self):
+        subject = Subject.objects.create(
+            user=self.user, display_name="Jane Doe", relationship=Subject.Relationship.SELF, is_default=True,
+        )
+        Document.objects.create(
+            user=self.user, subject=subject, title="MRI report", doc_type=Document.DocumentType.REPORT,
+            mime_type="application/pdf", size_bytes=128, extracted_text="Finding: benign cyst",
+        )
+        response = self.client.get("/api/v1/documents?q=benign")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["title"], "MRI report")
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_lab_result_creates_unconfirmed_ai_event_and_confirm_endpoint(self):

@@ -107,19 +107,19 @@ abstract class AppLocalizations {
   /// No description provided for @navTimeline.
   ///
   /// In en, this message translates to:
-  /// **'Timeline'**
+  /// **'My Story'**
   String get navTimeline;
 
   /// No description provided for @navCapture.
   ///
   /// In en, this message translates to:
-  /// **'Capture'**
+  /// **'Add'**
   String get navCapture;
 
   /// No description provided for @navSummary.
   ///
   /// In en, this message translates to:
-  /// **'Summary'**
+  /// **'For Visits'**
   String get navSummary;
 
   /// No description provided for @navSettings.
@@ -155,7 +155,7 @@ abstract class AppLocalizations {
   /// No description provided for @summaryHeadline.
   ///
   /// In en, this message translates to:
-  /// **'Doctor summary'**
+  /// **'Prepare for a visit'**
   String get summaryHeadline;
 
   /// No description provided for @summarySubjectLabel.
@@ -767,7 +767,7 @@ abstract class AppLocalizations {
   /// No description provided for @writeNoteDeferredDescription.
   ///
   /// In en, this message translates to:
-  /// **'Text notes stay manual for now. Add timeline events from the Timeline tab.'**
+  /// **'Save a short note to your medical story.'**
   String get writeNoteDeferredDescription;
 
   /// No description provided for @writeNoteSemanticHint.
@@ -779,7 +779,7 @@ abstract class AppLocalizations {
   /// No description provided for @writeNoteDeferredSemanticHint.
   ///
   /// In en, this message translates to:
-  /// **'Text note capture is planned for a later phase.'**
+  /// **'Opens a text note capture.'**
   String get writeNoteDeferredSemanticHint;
 
   /// No description provided for @textNoteTitle.

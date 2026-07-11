@@ -56,6 +56,16 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                     const SizedBox(height: AppSpacing.lg),
                     const _SubjectSwitcher(),
                     const SizedBox(height: AppSpacing.lg),
+                    _StoryShortcuts(
+                      onDocuments: () => context.push('/documents'),
+                      onReview: () => ref.read(timelineControllerProvider.notifier).updateFilters(
+                        const TimelineFilters(confirmed: false),
+                      ),
+                      onTypes: (types) => ref.read(timelineControllerProvider.notifier).updateFilters(
+                        TimelineFilters(types: types),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
                     timelineState.maybeWhen(
                       data: (state) => _TimelineFilters(
                         state: state,
@@ -183,6 +193,11 @@ class _TimelineHeader extends StatelessWidget {
           icon: const Icon(Icons.add_rounded),
           color: AppColors.clinicalWhite,
         ),
+        IconButton(
+          tooltip: context.l10n.navSettings,
+          onPressed: () => context.push('/settings'),
+          icon: const Icon(Icons.settings_outlined),
+        ),
       ],
     );
   }
@@ -259,36 +274,62 @@ class _TimelineFilters extends StatelessWidget {
           onSubmitted: (value) => onChanged(filters.copyWith(query: value)),
         ),
         const SizedBox(height: AppSpacing.sm),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              FilterChip(
-                label: Text(l10n.timelineAllTypes),
-                selected: filters.types.isEmpty,
-                onSelected: (_) => onChanged(
-                  filters.copyWith(types: const <MedicalEventType>{}),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              for (final type in MedicalEventType.values) ...[
-                FilterChip(
-                  label: Text(type.label(l10n)),
-                  selected: filters.types.contains(type),
-                  onSelected: (selected) {
-                    final next = {...filters.types};
-                    selected ? next.add(type) : next.remove(type);
-                    onChanged(filters.copyWith(types: next));
-                  },
-                ),
-                const SizedBox(width: AppSpacing.sm),
-              ],
-            ],
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            icon: const Icon(Icons.filter_list_rounded),
+            label: Text(l10n.timelineFiltersAction),
+            onPressed: () => _showFilters(context, filters),
           ),
         ),
       ],
     );
   }
+
+  Future<void> _showFilters(BuildContext context, TimelineFilters filters) async {
+    final selected = await showModalBottomSheet<Set<MedicalEventType>>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => _TypeFilterSheet(initial: filters.types),
+    );
+    if (selected != null) onChanged(filters.copyWith(types: selected));
+  }
+}
+
+class _StoryShortcuts extends StatelessWidget {
+  const _StoryShortcuts({required this.onDocuments, required this.onReview, required this.onTypes});
+  final VoidCallback onDocuments;
+  final VoidCallback onReview;
+  final ValueChanged<Set<MedicalEventType>> onTypes;
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Wrap(spacing: AppSpacing.sm, runSpacing: AppSpacing.sm, children: [
+      ActionChip(label: Text(l10n.summarySectionMedications), onPressed: () => onTypes({MedicalEventType.medication, MedicalEventType.treatmentOutcome})),
+      ActionChip(label: Text(l10n.summarySectionTestResults), onPressed: () => onTypes({MedicalEventType.examination, MedicalEventType.procedure})),
+      ActionChip(label: Text(l10n.summarySectionKeySymptoms), onPressed: () => onTypes({MedicalEventType.symptom})),
+      ActionChip(label: Text(l10n.documentDetailTitle), onPressed: onDocuments),
+      ActionChip(label: Text(l10n.eventUnconfirmedBadge), onPressed: onReview),
+    ]);
+  }
+}
+
+class _TypeFilterSheet extends StatefulWidget {
+  const _TypeFilterSheet({required this.initial});
+  final Set<MedicalEventType> initial;
+  @override State<_TypeFilterSheet> createState() => _TypeFilterSheetState();
+}
+class _TypeFilterSheetState extends State<_TypeFilterSheet> {
+  late final Set<MedicalEventType> _selected = {...widget.initial};
+  @override Widget build(BuildContext context) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+    for (final type in MedicalEventType.values) CheckboxListTile(
+      value: _selected.contains(type), title: Text(type.label(context.l10n)),
+      onChanged: (value) => setState(() => value == true ? _selected.add(type) : _selected.remove(type)),
+    ),
+    Padding(padding: const EdgeInsets.all(AppSpacing.lg), child: FilledButton(
+      onPressed: () => Navigator.pop(context, _selected), child: Text(context.l10n.timelineFiltersAction),
+    )),
+  ]));
 }
 
 class _TimelineEventRow extends ConsumerWidget {

@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TimelineFilters {
 
- Set<MedicalEventType> get types; DateTime? get from; DateTime? get to; String get tag; String get query;
+ Set<MedicalEventType> get types; DateTime? get from; DateTime? get to; String get tag; String get query; bool? get confirmed;
 /// Create a copy of TimelineFilters
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $TimelineFiltersCopyWith<TimelineFilters> get copyWith => _$TimelineFiltersCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TimelineFilters&&const DeepCollectionEquality().equals(other.types, types)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&(identical(other.tag, tag) || other.tag == tag)&&(identical(other.query, query) || other.query == query));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TimelineFilters&&const DeepCollectionEquality().equals(other.types, types)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&(identical(other.tag, tag) || other.tag == tag)&&(identical(other.query, query) || other.query == query)&&(identical(other.confirmed, confirmed) || other.confirmed == confirmed));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(types),from,to,tag,query);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(types),from,to,tag,query,confirmed);
 
 @override
 String toString() {
-  return 'TimelineFilters(types: $types, from: $from, to: $to, tag: $tag, query: $query)';
+  return 'TimelineFilters(types: $types, from: $from, to: $to, tag: $tag, query: $query, confirmed: $confirmed)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $TimelineFiltersCopyWith<$Res>  {
   factory $TimelineFiltersCopyWith(TimelineFilters value, $Res Function(TimelineFilters) _then) = _$TimelineFiltersCopyWithImpl;
 @useResult
 $Res call({
- Set<MedicalEventType> types, DateTime? from, DateTime? to, String tag, String query
+ Set<MedicalEventType> types, DateTime? from, DateTime? to, String tag, String query, bool? confirmed
 });
 
 
@@ -62,14 +62,15 @@ class _$TimelineFiltersCopyWithImpl<$Res>
 
 /// Create a copy of TimelineFilters
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? types = null,Object? from = freezed,Object? to = freezed,Object? tag = null,Object? query = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? types = null,Object? from = freezed,Object? to = freezed,Object? tag = null,Object? query = null,Object? confirmed = freezed,}) {
   return _then(_self.copyWith(
 types: null == types ? _self.types : types // ignore: cast_nullable_to_non_nullable
 as Set<MedicalEventType>,from: freezed == from ? _self.from : from // ignore: cast_nullable_to_non_nullable
 as DateTime?,to: freezed == to ? _self.to : to // ignore: cast_nullable_to_non_nullable
 as DateTime?,tag: null == tag ? _self.tag : tag // ignore: cast_nullable_to_non_nullable
 as String,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
-as String,
+as String,confirmed: freezed == confirmed ? _self.confirmed : confirmed // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 
@@ -154,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Set<MedicalEventType> types,  DateTime? from,  DateTime? to,  String tag,  String query)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Set<MedicalEventType> types,  DateTime? from,  DateTime? to,  String tag,  String query,  bool? confirmed)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TimelineFilters() when $default != null:
-return $default(_that.types,_that.from,_that.to,_that.tag,_that.query);case _:
+return $default(_that.types,_that.from,_that.to,_that.tag,_that.query,_that.confirmed);case _:
   return orElse();
 
 }
@@ -175,10 +176,10 @@ return $default(_that.types,_that.from,_that.to,_that.tag,_that.query);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Set<MedicalEventType> types,  DateTime? from,  DateTime? to,  String tag,  String query)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Set<MedicalEventType> types,  DateTime? from,  DateTime? to,  String tag,  String query,  bool? confirmed)  $default,) {final _that = this;
 switch (_that) {
 case _TimelineFilters():
-return $default(_that.types,_that.from,_that.to,_that.tag,_that.query);case _:
+return $default(_that.types,_that.from,_that.to,_that.tag,_that.query,_that.confirmed);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +196,10 @@ return $default(_that.types,_that.from,_that.to,_that.tag,_that.query);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Set<MedicalEventType> types,  DateTime? from,  DateTime? to,  String tag,  String query)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Set<MedicalEventType> types,  DateTime? from,  DateTime? to,  String tag,  String query,  bool? confirmed)?  $default,) {final _that = this;
 switch (_that) {
 case _TimelineFilters() when $default != null:
-return $default(_that.types,_that.from,_that.to,_that.tag,_that.query);case _:
+return $default(_that.types,_that.from,_that.to,_that.tag,_that.query,_that.confirmed);case _:
   return null;
 
 }
@@ -210,7 +211,7 @@ return $default(_that.types,_that.from,_that.to,_that.tag,_that.query);case _:
 
 
 class _TimelineFilters implements TimelineFilters {
-  const _TimelineFilters({final  Set<MedicalEventType> types = const <MedicalEventType>{}, this.from, this.to, this.tag = '', this.query = ''}): _types = types;
+  const _TimelineFilters({final  Set<MedicalEventType> types = const <MedicalEventType>{}, this.from, this.to, this.tag = '', this.query = '', this.confirmed}): _types = types;
   
 
  final  Set<MedicalEventType> _types;
@@ -224,6 +225,7 @@ class _TimelineFilters implements TimelineFilters {
 @override final  DateTime? to;
 @override@JsonKey() final  String tag;
 @override@JsonKey() final  String query;
+@override final  bool? confirmed;
 
 /// Create a copy of TimelineFilters
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +237,16 @@ _$TimelineFiltersCopyWith<_TimelineFilters> get copyWith => __$TimelineFiltersCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TimelineFilters&&const DeepCollectionEquality().equals(other._types, _types)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&(identical(other.tag, tag) || other.tag == tag)&&(identical(other.query, query) || other.query == query));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TimelineFilters&&const DeepCollectionEquality().equals(other._types, _types)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&(identical(other.tag, tag) || other.tag == tag)&&(identical(other.query, query) || other.query == query)&&(identical(other.confirmed, confirmed) || other.confirmed == confirmed));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_types),from,to,tag,query);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_types),from,to,tag,query,confirmed);
 
 @override
 String toString() {
-  return 'TimelineFilters(types: $types, from: $from, to: $to, tag: $tag, query: $query)';
+  return 'TimelineFilters(types: $types, from: $from, to: $to, tag: $tag, query: $query, confirmed: $confirmed)';
 }
 
 
@@ -255,7 +257,7 @@ abstract mixin class _$TimelineFiltersCopyWith<$Res> implements $TimelineFilters
   factory _$TimelineFiltersCopyWith(_TimelineFilters value, $Res Function(_TimelineFilters) _then) = __$TimelineFiltersCopyWithImpl;
 @override @useResult
 $Res call({
- Set<MedicalEventType> types, DateTime? from, DateTime? to, String tag, String query
+ Set<MedicalEventType> types, DateTime? from, DateTime? to, String tag, String query, bool? confirmed
 });
 
 
@@ -272,14 +274,15 @@ class __$TimelineFiltersCopyWithImpl<$Res>
 
 /// Create a copy of TimelineFilters
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? types = null,Object? from = freezed,Object? to = freezed,Object? tag = null,Object? query = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? types = null,Object? from = freezed,Object? to = freezed,Object? tag = null,Object? query = null,Object? confirmed = freezed,}) {
   return _then(_TimelineFilters(
 types: null == types ? _self._types : types // ignore: cast_nullable_to_non_nullable
 as Set<MedicalEventType>,from: freezed == from ? _self.from : from // ignore: cast_nullable_to_non_nullable
 as DateTime?,to: freezed == to ? _self.to : to // ignore: cast_nullable_to_non_nullable
 as DateTime?,tag: null == tag ? _self.tag : tag // ignore: cast_nullable_to_non_nullable
 as String,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
-as String,
+as String,confirmed: freezed == confirmed ? _self.confirmed : confirmed // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 

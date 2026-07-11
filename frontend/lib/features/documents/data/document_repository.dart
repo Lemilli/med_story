@@ -83,6 +83,7 @@ class DocumentRepository {
     String? subjectId,
     DocumentType? docType,
     DocumentStatus? status,
+    String? query,
     String? cursor,
     int limit = 20,
   }) {
@@ -90,6 +91,7 @@ class DocumentRepository {
       subjectId: subjectId,
       docType: docType,
       status: status,
+      query: query,
       cursor: cursor,
       limit: limit,
     );

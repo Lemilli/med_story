@@ -118,7 +118,8 @@ Constraints:
 → `202 { "id": "uuid", "status": "processing" }`
 
 ### GET /documents
-List documents. Filters: `subject_id`, `doc_type`, `status`. Cursor paginated.
+List documents. Filters: `subject_id`, `doc_type`, `status`, and `q`. `q` searches document
+titles and extracted text while list responses continue to return metadata only. Cursor paginated.
 
 ### GET /documents/{id}
 ```jsonc
@@ -171,7 +172,8 @@ Re-runs explanation (e.g. different language). → `202`.
 
 ### GET /timeline
 The primary chronological read model (Scenario E).
-Filters: `subject_id`, `types` (comma list), `from`, `to` (dates), `tag`, `q` (text search).
+Filters: `subject_id`, `types` (comma list), `from`, `to` (dates), `tag`, `q` (text search),
+and `confirmed=true|false` for the review queue.
 Cursor paginated, default newest-first.
 ```jsonc
 { "results": [

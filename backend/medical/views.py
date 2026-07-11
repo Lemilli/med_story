@@ -133,6 +133,13 @@ class MedicalEventQuerysetMixin:
         if query:
             queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
+        confirmed = self.request.query_params.get("confirmed")
+        if confirmed:
+            normalized = confirmed.strip().lower()
+            if normalized not in {"true", "false"}:
+                raise ValidationError({"confirmed": ["Use true or false."]})
+            queryset = queryset.filter(is_confirmed=normalized == "true")
+
         return queryset.distinct()
 
 
@@ -229,6 +236,12 @@ class DocumentQuerysetMixin:
             if status_value not in valid_statuses:
                 raise ValidationError({"status": ["Unsupported document status."]})
             queryset = queryset.filter(status=status_value)
+
+        query = self.request.query_params.get("q")
+        if query:
+            queryset = queryset.filter(
+                Q(title__icontains=query.strip()) | Q(extracted_text__icontains=query.strip())
+            )
 
         return queryset
 

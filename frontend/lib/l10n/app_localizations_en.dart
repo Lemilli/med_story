@@ -12,13 +12,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'MedStory';
 
   @override
-  String get navTimeline => 'Timeline';
+  String get navTimeline => 'My Story';
 
   @override
-  String get navCapture => 'Capture';
+  String get navCapture => 'Add';
 
   @override
-  String get navSummary => 'Summary';
+  String get navSummary => 'For Visits';
 
   @override
   String get navSettings => 'Settings';
@@ -38,7 +38,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Doctor-ready summaries and exports will live here.';
 
   @override
-  String get summaryHeadline => 'Doctor summary';
+  String get summaryHeadline => 'Prepare for a visit';
 
   @override
   String summarySubjectLabel(String name) {
@@ -402,14 +402,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get writeNoteDeferredDescription =>
-      'Text notes stay manual for now. Add timeline events from the Timeline tab.';
+      'Save a short note to your medical story.';
 
   @override
   String get writeNoteSemanticHint => 'Opens a text note capture.';
 
   @override
-  String get writeNoteDeferredSemanticHint =>
-      'Text note capture is planned for a later phase.';
+  String get writeNoteDeferredSemanticHint => 'Opens a text note capture.';
 
   @override
   String get textNoteTitle => 'Text note';
