@@ -43,7 +43,6 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
                 child: TextField(
                   controller: _controller,
                   autofocus: true,
-                  minLines: 6,
                   maxLines: null,
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,

@@ -593,7 +593,7 @@ abstract class AppLocalizations {
   /// No description provided for @captureSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Capture what you remember. You can organize it later.'**
+  /// **'Choose how you want to add something. You can review it before it becomes part of your story.'**
   String get captureSubtitle;
 
   /// No description provided for @recordVoiceTitle.
@@ -740,18 +740,6 @@ abstract class AppLocalizations {
   /// **'Opens the camera to capture a medical document.'**
   String get scanDocumentSemanticHint;
 
-  /// No description provided for @documentScanTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Document scan'**
-  String get documentScanTitle;
-
-  /// No description provided for @documentScanMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Camera and file capture will be wired to the upload flow next.'**
-  String get documentScanMessage;
-
   /// No description provided for @writeNoteTitle.
   ///
   /// In en, this message translates to:
@@ -764,46 +752,16 @@ abstract class AppLocalizations {
   /// **'Type thoughts, questions, or details you remember.'**
   String get writeNoteDescription;
 
-  /// No description provided for @writeNoteDeferredDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Save a short note to your medical story.'**
-  String get writeNoteDeferredDescription;
-
   /// No description provided for @writeNoteSemanticHint.
   ///
   /// In en, this message translates to:
   /// **'Opens a text note capture.'**
   String get writeNoteSemanticHint;
 
-  /// No description provided for @writeNoteDeferredSemanticHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Opens a text note capture.'**
-  String get writeNoteDeferredSemanticHint;
-
-  /// No description provided for @textNoteTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Text note'**
-  String get textNoteTitle;
-
-  /// No description provided for @textNoteMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Manual note entry will be added to this flow next.'**
-  String get textNoteMessage;
-
-  /// No description provided for @textNoteDeferredMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'For Phase 2, document ingestion handles photos and files. Manual notes stay in timeline events.'**
-  String get textNoteDeferredMessage;
-
   /// No description provided for @addPhotoTitle.
   ///
   /// In en, this message translates to:
-  /// **'Add photo or file'**
+  /// **'Add a photo'**
   String get addPhotoTitle;
 
   /// No description provided for @addPhotoDescription.
@@ -821,32 +779,20 @@ abstract class AppLocalizations {
   /// No description provided for @chooseFileTitle.
   ///
   /// In en, this message translates to:
-  /// **'Choose PDF or image'**
+  /// **'Browse files'**
   String get chooseFileTitle;
 
   /// No description provided for @chooseFileDescription.
   ///
   /// In en, this message translates to:
-  /// **'Upload a PDF, PNG, or JPEG up to 5 MB.'**
+  /// **'Choose a PDF or image from your device files, up to 5 MB.'**
   String get chooseFileDescription;
 
   /// No description provided for @chooseFileSemanticHint.
   ///
   /// In en, this message translates to:
-  /// **'Opens file selection for a PDF or image document.'**
+  /// **'Opens your device files to choose a PDF or image document.'**
   String get chooseFileSemanticHint;
-
-  /// No description provided for @photoOrFileTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Photo or file'**
-  String get photoOrFileTitle;
-
-  /// No description provided for @photoOrFileMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Gallery and file picker support will be connected next.'**
-  String get photoOrFileMessage;
 
   /// No description provided for @documentSelectionEmpty.
   ///

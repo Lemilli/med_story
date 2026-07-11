@@ -64,8 +64,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/events/new',
         builder: (context, state) => const EventFormScreen(),
       ),
-      GoRoute(path: '/notes/new', builder: (context, state) => const QuickNoteScreen()),
-      GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
+      GoRoute(
+        path: '/notes/new',
+        builder: (context, state) => const QuickNoteScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
       GoRoute(
         path: '/events/:id',
         builder: (context, state) =>
@@ -81,11 +87,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             DocumentDetailScreen(documentId: state.pathParameters['id']!),
       ),
-      GoRoute(path: '/documents', builder: (context, state) => const DocumentListScreen()),
-      GoRoute(path: '/review', builder: (context, state) => const ReviewInboxScreen()),
-      GoRoute(path: '/medications', builder: (context, state) => const MedicationHistoryScreen()),
-      GoRoute(path: '/search', builder: (context, state) => const HistorySearchScreen()),
-      GoRoute(path: '/visit-preparation', builder: (context, state) => const VisitPreparationScreen()),
+      GoRoute(
+        path: '/documents',
+        builder: (context, state) => const DocumentListScreen(),
+      ),
+      GoRoute(
+        path: '/review',
+        builder: (context, state) => const ReviewInboxScreen(),
+      ),
+      GoRoute(
+        path: '/medications',
+        builder: (context, state) => const MedicationHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/search',
+        builder: (context, state) => const HistorySearchScreen(),
+      ),
+      GoRoute(
+        path: '/visit-preparation',
+        builder: (context, state) => const VisitPreparationScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppShell(navigationShell: navigationShell);
@@ -103,6 +124,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                path: '/capture',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: CaptureScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
                 path: '/summary',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: SummaryScreen()),
@@ -110,10 +140,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
-      ),
-      GoRoute(
-        path: '/capture',
-        builder: (context, state) => CaptureScreen(initialAction: state.uri.queryParameters['action']),
       ),
     ],
   );

@@ -297,7 +297,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get captureSubtitle =>
-      'Capture what you remember. You can organize it later.';
+      'Choose how you want to add something. You can review it before it becomes part of your story.';
 
   @override
   String get recordVoiceTitle => 'Record voice';
@@ -387,13 +387,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Opens the camera to capture a medical document.';
 
   @override
-  String get documentScanTitle => 'Document scan';
-
-  @override
-  String get documentScanMessage =>
-      'Camera and file capture will be wired to the upload flow next.';
-
-  @override
   String get writeNoteTitle => 'Write a note';
 
   @override
@@ -401,28 +394,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Type thoughts, questions, or details you remember.';
 
   @override
-  String get writeNoteDeferredDescription =>
-      'Save a short note to your medical story.';
-
-  @override
   String get writeNoteSemanticHint => 'Opens a text note capture.';
 
   @override
-  String get writeNoteDeferredSemanticHint => 'Opens a text note capture.';
-
-  @override
-  String get textNoteTitle => 'Text note';
-
-  @override
-  String get textNoteMessage =>
-      'Manual note entry will be added to this flow next.';
-
-  @override
-  String get textNoteDeferredMessage =>
-      'For Phase 2, document ingestion handles photos and files. Manual notes stay in timeline events.';
-
-  @override
-  String get addPhotoTitle => 'Add photo or file';
+  String get addPhotoTitle => 'Add a photo';
 
   @override
   String get addPhotoDescription =>
@@ -433,21 +408,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Opens the photo library to choose a document image.';
 
   @override
-  String get chooseFileTitle => 'Choose PDF or image';
+  String get chooseFileTitle => 'Browse files';
 
   @override
-  String get chooseFileDescription => 'Upload a PDF, PNG, or JPEG up to 5 MB.';
+  String get chooseFileDescription =>
+      'Choose a PDF or image from your device files, up to 5 MB.';
 
   @override
   String get chooseFileSemanticHint =>
-      'Opens file selection for a PDF or image document.';
-
-  @override
-  String get photoOrFileTitle => 'Photo or file';
-
-  @override
-  String get photoOrFileMessage =>
-      'Gallery and file picker support will be connected next.';
+      'Opens your device files to choose a PDF or image document.';
 
   @override
   String get documentSelectionEmpty =>

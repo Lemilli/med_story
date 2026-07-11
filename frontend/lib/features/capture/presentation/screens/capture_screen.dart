@@ -21,9 +21,7 @@ import '../controllers/voice_capture_controller.dart';
 const _maxDocumentBytes = 5 * 1024 * 1024;
 
 class CaptureScreen extends ConsumerStatefulWidget {
-  const CaptureScreen({this.initialAction, super.key});
-
-  final String? initialAction;
+  const CaptureScreen({super.key});
 
   @override
   ConsumerState<CaptureScreen> createState() => _CaptureScreenState();
@@ -37,15 +35,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   void initState() {
     super.initState();
     _retrieveLostImageData();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      switch (widget.initialAction) {
-        case 'scan': _pickCameraImage();
-        case 'photo': _pickGalleryImage();
-        case 'file': _pickFile();
-        case 'voice': _startVoiceRecording();
-        case 'note': context.push('/notes/new');
-      }
-    });
   }
 
   @override
@@ -70,138 +59,140 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     final activeVoiceState = voiceState.hasValue
         ? voiceState.requireValue
         : null;
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xl,
-          AppSpacing.xl,
-          AppSpacing.xl,
-          AppSpacing.xxxl,
+    return Material(
+      color: AppColors.clinicalWhite,
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.xxxl,
+          ),
+          children: [
+            Text(
+              l10n.captureHeadline,
+              style: textTheme.headlineLarge?.copyWith(
+                color: AppColors.patientInk,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.4,
+                height: 1.05,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              l10n.captureSubtitle,
+              style: textTheme.titleMedium?.copyWith(
+                color: AppColors.secondaryInk,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            MedStoryActionRow(
+              icon: Icons.document_scanner_outlined,
+              title: l10n.scanDocumentTitle,
+              description: l10n.scanDocumentDescription,
+              isPrimary: true,
+              semanticHint: l10n.scanDocumentSemanticHint,
+              onTap: () {
+                if (!isUploadBusy) {
+                  _pickCameraImage();
+                }
+              },
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            MedStoryActionRow(
+              icon: Icons.add_photo_alternate_outlined,
+              title: l10n.addPhotoTitle,
+              description: l10n.addPhotoDescription,
+              semanticHint: l10n.addPhotoSemanticHint,
+              onTap: () {
+                if (!isUploadBusy) {
+                  _pickGalleryImage();
+                }
+              },
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            MedStoryActionRow(
+              icon: Icons.attach_file_rounded,
+              title: l10n.chooseFileTitle,
+              description: l10n.chooseFileDescription,
+              semanticHint: l10n.chooseFileSemanticHint,
+              onTap: () {
+                if (!isUploadBusy) {
+                  _pickFile();
+                }
+              },
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            MedStoryActionRow(
+              icon: Icons.mic_none_rounded,
+              title: l10n.recordVoiceTitle,
+              description: l10n.recordVoiceDescription,
+              semanticHint: l10n.recordVoiceSemanticHint,
+              onTap: () {
+                if (!isUploadBusy && !isVoiceBusy) {
+                  _startVoiceRecording();
+                }
+              },
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            if (voiceState.hasError)
+              _VoiceErrorPanel(
+                message: _voiceErrorMessage(context, voiceState.error!),
+                onRetry: _startVoiceRecording,
+              )
+            else if (activeVoiceState?.stage == VoiceCaptureStage.recording ||
+                activeVoiceState?.stage ==
+                    VoiceCaptureStage.requestingPermission)
+              _VoiceRecordingPanel(
+                state: activeVoiceState!,
+                onStop: _stopVoiceRecording,
+                onDiscard: _discardVoiceRecording,
+              )
+            else if (activeVoiceState?.stage == VoiceCaptureStage.recorded)
+              _RecordedVoicePanel(
+                state: activeVoiceState!,
+                isUploadBusy: isUploadBusy,
+                onUpload: _uploadRecordedVoice,
+                onDiscard: _discardVoiceRecording,
+                onRecordAgain: _restartVoiceRecording,
+              )
+            else if (_selectedFile == null)
+              _EmptySelectionPanel(message: l10n.documentSelectionEmpty)
+            else
+              _SelectedFilePanel(selectedFile: _selectedFile!),
+            const SizedBox(height: AppSpacing.md),
+            uploadState.when(
+              data: (state) => _UploadStatusPanelView(
+                state: state,
+                onViewResult: () => _viewProcessedDocument(state),
+              ),
+              loading: () => const _UploadStatusPanelView(
+                state: DocumentUploadState(
+                  stage: DocumentUploadStage.uploading,
+                ),
+              ),
+              error: (error, _) => _UploadErrorPanel(
+                message: _documentErrorMessage(context, error),
+                onRetry: _retrySelectedFile,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            MedStoryActionRow(
+              icon: Icons.edit_note_rounded,
+              title: l10n.writeNoteTitle,
+              description: l10n.writeNoteDescription,
+              semanticHint: l10n.writeNoteSemanticHint,
+              onTap: () => context.push('/notes/new'),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            const _PrivacyPanel(),
+            const SizedBox(height: AppSpacing.lg),
+            const _BoundaryNote(),
+          ],
         ),
-        children: [
-          Text(
-            l10n.captureHeadline,
-            style: textTheme.headlineLarge?.copyWith(
-              color: AppColors.patientInk,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.4,
-              height: 1.05,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            l10n.captureSubtitle,
-            style: textTheme.titleMedium?.copyWith(
-              color: AppColors.secondaryInk,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          MedStoryActionRow(
-            icon: Icons.document_scanner_outlined,
-            title: l10n.scanDocumentTitle,
-            description: l10n.scanDocumentDescription,
-            isPrimary: true,
-            semanticHint: l10n.scanDocumentSemanticHint,
-            onTap: () {
-              if (!isUploadBusy) {
-                _pickCameraImage();
-              }
-            },
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          MedStoryActionRow(
-            icon: Icons.add_photo_alternate_outlined,
-            title: l10n.addPhotoTitle,
-            description: l10n.addPhotoDescription,
-            isPrimary: true,
-            semanticHint: l10n.addPhotoSemanticHint,
-            onTap: () {
-              if (!isUploadBusy) {
-                _pickGalleryImage();
-              }
-            },
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          MedStoryActionRow(
-            icon: Icons.attach_file_rounded,
-            title: l10n.chooseFileTitle,
-            description: l10n.chooseFileDescription,
-            semanticHint: l10n.chooseFileSemanticHint,
-            onTap: () {
-              if (!isUploadBusy) {
-                _pickFile();
-              }
-            },
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          MedStoryActionRow(
-            icon: Icons.mic_none_rounded,
-            title: l10n.recordVoiceTitle,
-            description: l10n.recordVoiceDescription,
-            semanticHint: l10n.recordVoiceSemanticHint,
-            onTap: () {
-              if (!isUploadBusy && !isVoiceBusy) {
-                _startVoiceRecording();
-              }
-            },
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          if (voiceState.hasError)
-            _VoiceErrorPanel(
-              message: _voiceErrorMessage(context, voiceState.error!),
-              onRetry: _startVoiceRecording,
-            )
-          else if (activeVoiceState?.stage == VoiceCaptureStage.recording ||
-              activeVoiceState?.stage == VoiceCaptureStage.requestingPermission)
-            _VoiceRecordingPanel(
-              state: activeVoiceState!,
-              onStop: _stopVoiceRecording,
-              onDiscard: _discardVoiceRecording,
-            )
-          else if (activeVoiceState?.stage == VoiceCaptureStage.recorded)
-            _RecordedVoicePanel(
-              state: activeVoiceState!,
-              isUploadBusy: isUploadBusy,
-              onUpload: _uploadRecordedVoice,
-              onDiscard: _discardVoiceRecording,
-              onRecordAgain: _restartVoiceRecording,
-            )
-          else if (_selectedFile == null)
-            _EmptySelectionPanel(message: l10n.documentSelectionEmpty)
-          else
-            _SelectedFilePanel(selectedFile: _selectedFile!),
-          const SizedBox(height: AppSpacing.md),
-          uploadState.when(
-            data: (state) => _UploadStatusPanelView(
-              state: state,
-              onViewResult: () => _viewProcessedDocument(state),
-            ),
-            loading: () => const _UploadStatusPanelView(
-              state: DocumentUploadState(stage: DocumentUploadStage.uploading),
-            ),
-            error: (error, _) => _UploadErrorPanel(
-              message: _documentErrorMessage(context, error),
-              onRetry: _retrySelectedFile,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          MedStoryActionRow(
-            icon: Icons.edit_note_rounded,
-            title: l10n.writeNoteTitle,
-            description: l10n.writeNoteDeferredDescription,
-            semanticHint: l10n.writeNoteDeferredSemanticHint,
-            onTap: () => _showDeferredAction(
-              title: l10n.textNoteTitle,
-              message: l10n.textNoteDeferredMessage,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const _PrivacyPanel(),
-          const SizedBox(height: AppSpacing.lg),
-          const _BoundaryNote(),
-        ],
       ),
     );
   }
@@ -417,10 +408,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     } on Object {
       // Keep the recorded source available so retry can re-upload it.
     }
-  }
-
-  void _showDeferredAction({required String title, required String message}) {
-    _showSnack(context.l10n.pendingActionMessage(title, message));
   }
 
   void _showSnack(String message) {

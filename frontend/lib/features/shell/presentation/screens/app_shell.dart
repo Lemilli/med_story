@@ -20,7 +20,9 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _showOnboardingIfNeeded());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _showOnboardingIfNeeded(),
+    );
   }
 
   @override
@@ -34,7 +36,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           border: Border(top: BorderSide(color: AppColors.clinicalLine)),
         ),
         child: NavigationBar(
-          selectedIndex: widget.navigationShell.currentIndex == 0 ? 0 : 2,
+          selectedIndex: widget.navigationShell.currentIndex,
           backgroundColor: AppColors.clinicalWhite,
           indicatorColor: AppColors.quietSurface,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
@@ -61,41 +63,10 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   void _goToBranch(BuildContext context, int index) {
-    if (index == 1) {
-      _showAddSheet(context);
-      return;
-    }
     widget.navigationShell.goBranch(
-      index == 0 ? 0 : 1,
-      initialLocation: (index == 0 ? 0 : 1) == widget.navigationShell.currentIndex,
+      index,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
-  }
-
-  void _showAddSheet(BuildContext context) {
-    final l10n = context.l10n;
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            _AddAction(icon: Icons.document_scanner_outlined, title: l10n.scanDocumentTitle, onTap: () => _open(sheetContext, '/capture?action=scan')),
-            _AddAction(icon: Icons.add_photo_alternate_outlined, title: l10n.addPhotoTitle, onTap: () => _open(sheetContext, '/capture?action=photo')),
-            _AddAction(icon: Icons.attach_file_rounded, title: l10n.chooseFileTitle, onTap: () => _open(sheetContext, '/capture?action=file')),
-            _AddAction(icon: Icons.mic_none_rounded, title: l10n.recordVoiceTitle, onTap: () => _open(sheetContext, '/capture?action=voice')),
-            _AddAction(icon: Icons.edit_note_rounded, title: l10n.writeNoteTitle, onTap: () => _open(sheetContext, '/notes/new')),
-            _AddAction(icon: Icons.add_rounded, title: l10n.timelineAddEvent, onTap: () => _open(sheetContext, '/events/new')),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _open(BuildContext context, String route) {
-    Navigator.of(context).pop();
-    context.push(route);
   }
 
   Future<void> _showOnboardingIfNeeded() async {
@@ -107,30 +78,36 @@ class _AppShellState extends ConsumerState<AppShell> {
       builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(sheetContext.l10n.onboardingTitle, style: Theme.of(sheetContext).textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.md),
-            Text(sheetContext.l10n.onboardingBody),
-            const SizedBox(height: AppSpacing.lg),
-            FilledButton(onPressed: () { storage.markOnboardingSeen(); Navigator.pop(sheetContext); context.push('/capture'); }, child: Text(sheetContext.l10n.onboardingStart)),
-            TextButton(onPressed: () { storage.markOnboardingSeen(); Navigator.pop(sheetContext); }, child: Text(sheetContext.l10n.onboardingSkip)),
-          ]),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                sheetContext.l10n.onboardingTitle,
+                style: Theme.of(sheetContext).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(sheetContext.l10n.onboardingBody),
+              const SizedBox(height: AppSpacing.lg),
+              FilledButton(
+                onPressed: () {
+                  storage.markOnboardingSeen();
+                  Navigator.pop(sheetContext);
+                  context.go('/capture');
+                },
+                child: Text(sheetContext.l10n.onboardingStart),
+              ),
+              TextButton(
+                onPressed: () {
+                  storage.markOnboardingSeen();
+                  Navigator.pop(sheetContext);
+                },
+                child: Text(sheetContext.l10n.onboardingSkip),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-class _AddAction extends StatelessWidget {
-  const _AddAction({required this.icon, required this.title, required this.onTap});
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => ListTile(
-    minVerticalPadding: AppSpacing.sm,
-    leading: Icon(icon),
-    title: Text(title),
-    onTap: onTap,
-  );
 }

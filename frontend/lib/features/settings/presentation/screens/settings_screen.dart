@@ -29,50 +29,52 @@ class SettingsScreen extends ConsumerWidget {
       ref.read(settingsControllerProvider.notifier).consumeActionMessages();
     });
 
-    return SafeArea(
-      child: authState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => _SettingsMessage(message: l10n.networkFailedMessage),
-        data: (state) {
-          final user = state.user;
-          if (user == null) {
-            return _SettingsMessage(message: l10n.authCheckingSession);
-          }
+    return Scaffold(
+      body: SafeArea(
+        child: authState.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, _) => _SettingsMessage(message: l10n.networkFailedMessage),
+          data: (state) {
+            final user = state.user;
+            if (user == null) {
+              return _SettingsMessage(message: l10n.authCheckingSession);
+            }
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              AppSpacing.xl,
-              AppSpacing.xl,
-              AppSpacing.xxxl,
-            ),
-            children: [
-              _SettingsHeader(user: user),
-              const SizedBox(height: AppSpacing.xl),
-              _OrganizerNotice(),
-              const SizedBox(height: AppSpacing.xl),
-              _SettingsSection(
-                title: l10n.settingsAccountSectionTitle,
-                child: _AccountPanel(user: user),
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.xl,
+                AppSpacing.xl,
+                AppSpacing.xxxl,
               ),
-              const SizedBox(height: AppSpacing.lg),
-              _SettingsSection(
-                title: l10n.settingsPrivacySectionTitle,
-                child: _PrivacyPanel(state: settingsState),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _SettingsSection(
-                title: l10n.settingsLanguageSectionTitle,
-                child: _LanguagePanel(user: user, state: settingsState),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _SettingsSection(
-                title: l10n.settingsActionsSectionTitle,
-                child: _AccountActionsPanel(state: settingsState),
-              ),
-            ],
-          );
-        },
+              children: [
+                _SettingsHeader(user: user),
+                const SizedBox(height: AppSpacing.xl),
+                _OrganizerNotice(),
+                const SizedBox(height: AppSpacing.xl),
+                _SettingsSection(
+                  title: l10n.settingsAccountSectionTitle,
+                  child: _AccountPanel(user: user),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _SettingsSection(
+                  title: l10n.settingsPrivacySectionTitle,
+                  child: _PrivacyPanel(state: settingsState),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _SettingsSection(
+                  title: l10n.settingsLanguageSectionTitle,
+                  child: _LanguagePanel(user: user, state: settingsState),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _SettingsSection(
+                  title: l10n.settingsActionsSectionTitle,
+                  child: _AccountActionsPanel(state: settingsState),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

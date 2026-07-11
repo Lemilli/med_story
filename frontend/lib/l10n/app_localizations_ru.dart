@@ -296,7 +296,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get captureSubtitle =>
-      'Запишите то, что помните. Разложить по полочкам можно позже.';
+      'Выберите, как добавить информацию. Перед добавлением в историю её можно проверить.';
 
   @override
   String get recordVoiceTitle => 'Записать голос';
@@ -386,13 +386,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Открывает камеру для медицинского документа.';
 
   @override
-  String get documentScanTitle => 'Сканирование документа';
-
-  @override
-  String get documentScanMessage =>
-      'Камера и захват файлов будут подключены к загрузке.';
-
-  @override
   String get writeNoteTitle => 'Написать заметку';
 
   @override
@@ -400,29 +393,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Введите мысли, вопросы или детали, которые помните.';
 
   @override
-  String get writeNoteDeferredDescription =>
-      'Сохраните короткую заметку в медицинской истории.';
-
-  @override
   String get writeNoteSemanticHint => 'Открывает текстовую заметку.';
 
   @override
-  String get writeNoteDeferredSemanticHint =>
-      'Открывает создание текстовой заметки.';
-
-  @override
-  String get textNoteTitle => 'Текстовая заметка';
-
-  @override
-  String get textNoteMessage =>
-      'Ручной ввод заметок будет добавлен в этот поток.';
-
-  @override
-  String get textNoteDeferredMessage =>
-      'На этапе 2 обработка документов работает с фото и файлами. Ручные заметки пока остаются событиями хронологии.';
-
-  @override
-  String get addPhotoTitle => 'Добавить фото или файл';
+  String get addPhotoTitle => 'Добавить фото';
 
   @override
   String get addPhotoDescription =>
@@ -433,21 +407,15 @@ class AppLocalizationsRu extends AppLocalizations {
       'Открывает галерею для выбора изображения документа.';
 
   @override
-  String get chooseFileTitle => 'Выбрать PDF или изображение';
+  String get chooseFileTitle => 'Выбрать файл';
 
   @override
-  String get chooseFileDescription => 'Загрузите PDF, PNG или JPEG до 5 МБ.';
+  String get chooseFileDescription =>
+      'Выберите PDF или изображение из файлов на устройстве, до 5 МБ.';
 
   @override
   String get chooseFileSemanticHint =>
-      'Открывает выбор файла PDF или изображения.';
-
-  @override
-  String get photoOrFileTitle => 'Фото или файл';
-
-  @override
-  String get photoOrFileMessage =>
-      'Галерея и выбор файлов будут подключены далее.';
+      'Открывает файлы на устройстве для выбора PDF или изображения.';
 
   @override
   String get documentSelectionEmpty =>
