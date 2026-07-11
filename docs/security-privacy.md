@@ -85,6 +85,7 @@ control. This document defines the controls to achieve that.
   account and cascaded backend records, making existing access tokens unusable because the
   user no longer exists. A provided refresh token is blacklisted best-effort before deletion.
 - `POST /privacy/export` returns immediate JSON and does not persist a server-side export bundle.
+- Visit-preparation notes are user-authored sensitive data: they are included in the privacy export and in a doctor PDF only when the user explicitly requests that PDF. They are never sent to an AI provider.
 
 ## 8. Application Security Practices
 

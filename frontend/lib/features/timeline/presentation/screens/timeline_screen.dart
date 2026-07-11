@@ -58,9 +58,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                     const SizedBox(height: AppSpacing.lg),
                     _StoryShortcuts(
                       onDocuments: () => context.push('/documents'),
-                      onReview: () => ref.read(timelineControllerProvider.notifier).updateFilters(
-                        const TimelineFilters(confirmed: false),
-                      ),
+                      onReview: () => context.push('/review'),
                       onTypes: (types) => ref.read(timelineControllerProvider.notifier).updateFilters(
                         TimelineFilters(types: types),
                       ),
@@ -194,6 +192,11 @@ class _TimelineHeader extends StatelessWidget {
           color: AppColors.clinicalWhite,
         ),
         IconButton(
+          tooltip: context.l10n.searchTitle,
+          onPressed: () => context.push('/search'),
+          icon: const Icon(Icons.search_rounded),
+        ),
+        IconButton(
           tooltip: context.l10n.navSettings,
           onPressed: () => context.push('/settings'),
           icon: const Icon(Icons.settings_outlined),
@@ -276,11 +279,18 @@ class _TimelineFilters extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         Align(
           alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            icon: const Icon(Icons.filter_list_rounded),
-            label: Text(l10n.timelineFiltersAction),
-            onPressed: () => _showFilters(context, filters),
-          ),
+          child: Wrap(spacing: AppSpacing.xs, children: [
+            TextButton.icon(
+              icon: const Icon(Icons.calendar_month_outlined),
+              label: Text(l10n.timelineYear),
+              onPressed: () => _pickYear(context, filters),
+            ),
+            TextButton.icon(
+              icon: const Icon(Icons.filter_list_rounded),
+              label: Text(l10n.timelineFiltersAction),
+              onPressed: () => _showFilters(context, filters),
+            ),
+          ]),
         ),
       ],
     );
@@ -293,6 +303,22 @@ class _TimelineFilters extends StatelessWidget {
       builder: (context) => _TypeFilterSheet(initial: filters.types),
     );
     if (selected != null) onChanged(filters.copyWith(types: selected));
+  }
+
+  Future<void> _pickYear(BuildContext context, TimelineFilters filters) async {
+    final today = DateTime.now();
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: filters.from ?? today,
+      firstDate: DateTime(1900),
+      lastDate: today,
+      helpText: context.l10n.timelineYear,
+    );
+    if (selected == null) return;
+    onChanged(filters.copyWith(
+      from: DateTime(selected.year),
+      to: DateTime(selected.year, 12, 31),
+    ));
   }
 }
 
@@ -310,6 +336,7 @@ class _StoryShortcuts extends StatelessWidget {
       ActionChip(label: Text(l10n.summarySectionKeySymptoms), onPressed: () => onTypes({MedicalEventType.symptom})),
       ActionChip(label: Text(l10n.documentDetailTitle), onPressed: onDocuments),
       ActionChip(label: Text(l10n.eventUnconfirmedBadge), onPressed: onReview),
+      ActionChip(label: Text(l10n.medicationsTitle), onPressed: () => context.push('/medications')),
     ]);
   }
 }

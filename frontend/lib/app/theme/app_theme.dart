@@ -22,6 +22,7 @@ class AppTheme {
         surface: AppColors.clinicalWhite,
         onSurface: AppColors.patientInk,
         outline: AppColors.clinicalLine,
+        error: AppColors.error,
       ),
       textTheme: base.textTheme.apply(
         bodyColor: AppColors.patientInk,
@@ -86,6 +87,9 @@ class AppTheme {
         ),
       ),
       splashFactory: InkSparkle.splashFactory,
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+      ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.clinicalWhite,
         selectedItemColor: AppColors.controlledCrimson,

@@ -163,7 +163,19 @@ Versioned snapshot of the user's consolidated health story (Scenario D, BRD §8 
 `content` sections (per BRD §8 summary fields): `key_symptoms`, `major_diagnoses`,
 `treatment_history`, `important_examinations`, `relevant_medications`.
 
-### 3.7 Tag & EventTag
+### 3.7 VisitPreparation
+One sensitive, user-authored note per subject for questions and concerns to discuss at a visit.
+It is not AI input and is appended to a requested PDF export only when non-empty.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | UUID (PK) | |
+| user_id | FK → User | Ownership isolation |
+| subject_id | one-to-one FK → Subject | One note per subject |
+| note | text | May be empty |
+| created_at / updated_at | timestamptz | |
+
+### 3.8 Tag & EventTag
 Lightweight categorization / grouping (e.g. by condition).
 
 | Tag field | Type | Notes |
@@ -175,7 +187,7 @@ Lightweight categorization / grouping (e.g. by condition).
 
 `EventTag` is a join table: `(event_id, tag_id)`.
 
-### 3.8 ProcessingJob
+### 3.9 ProcessingJob
 Tracks async pipeline work for observability and retries.
 
 | Field | Type | Notes |

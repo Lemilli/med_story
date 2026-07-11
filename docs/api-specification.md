@@ -228,6 +228,13 @@ Lists historical summary versions (the story as it evolved over time).
 
 ### GET /summary/export
 Doctor-ready export of the current summary. Param `format=pdf|json`.
+When `format=pdf`, a non-empty user-authored visit-preparation note is appended as
+“Questions and concerns to discuss”; it is never included in AI summary generation.
+
+### GET/PUT /visit-preparation
+Gets or updates the authenticated user's single visit-preparation note for a subject.
+Pass `subject_id` as a query parameter (or omit it for the default subject). `PUT`
+accepts `{ "note": "..." }`; an empty note is valid.
 Returns `application/pdf` bytes for PDF or inline JSON.
 
 ## 8. Jobs & Status
@@ -304,5 +311,6 @@ Throttled responses include a `Retry-After` header and
 | POST | /summary/regenerate | Rebuild summary |
 | GET | /summary/versions | Summary history |
 | GET | /summary/export | Doctor-ready export |
+| GET/PUT | /visit-preparation | Per-subject visit questions/concerns |
 | GET | /jobs/{id} | Poll async job |
 | POST | /privacy/export | Immediate JSON data export |

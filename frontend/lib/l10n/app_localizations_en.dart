@@ -1005,4 +1005,66 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get eventNetworkRequired =>
       'Saving changes requires a connection to MedStory.';
+
+  @override
+  String get reviewTitle => 'Review suggestions';
+
+  @override
+  String get reviewEmpty => 'Nothing needs your review right now.';
+
+  @override
+  String get reviewDismiss => 'Dismiss';
+
+  @override
+  String get reviewEdit => 'Edit before confirming';
+
+  @override
+  String get medicationsTitle => 'Medication history';
+
+  @override
+  String get medicationsEmpty =>
+      'Confirmed medications and treatment outcomes will appear here.';
+
+  @override
+  String get searchTitle => 'Search your history';
+
+  @override
+  String get searchHint => 'Search events, tags, and documents';
+
+  @override
+  String get searchEvents => 'Events';
+
+  @override
+  String get searchDocuments => 'Documents';
+
+  @override
+  String get visitPrepTitle => 'Prepare for a visit';
+
+  @override
+  String get visitPrepHint => 'Questions or concerns you want to discuss';
+
+  @override
+  String get visitPrepSave => 'Save visit note';
+
+  @override
+  String get visitPrepExport => 'Export visit summary';
+
+  @override
+  String get visitPrepSaved => 'Visit note saved.';
+
+  @override
+  String get onboardingTitle => 'Your medical story, in one place';
+
+  @override
+  String get onboardingBody =>
+      'MedStory helps you organize and understand your records. It does not diagnose or recommend treatment.';
+
+  @override
+  String get onboardingStart => 'Add your first record';
+
+  @override
+  String get onboardingSkip => 'Not now';
+
+  @override
+  String get timelineYear => 'Year';
 }

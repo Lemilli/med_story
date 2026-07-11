@@ -1,27 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../core/storage/secure_token_storage.dart';
 import '../../../../l10n/l10n.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
+
+  @override
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showOnboardingIfNeeded());
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
     return Scaffold(
-      body: navigationShell,
+      body: widget.navigationShell,
       bottomNavigationBar: DecoratedBox(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.clinicalLine)),
         ),
         child: NavigationBar(
-          selectedIndex: navigationShell.currentIndex == 0 ? 0 : 2,
+          selectedIndex: widget.navigationShell.currentIndex == 0 ? 0 : 2,
           backgroundColor: AppColors.clinicalWhite,
           indicatorColor: AppColors.quietSurface,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
@@ -52,9 +65,9 @@ class AppShell extends StatelessWidget {
       _showAddSheet(context);
       return;
     }
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index == 0 ? 0 : 1,
-      initialLocation: (index == 0 ? 0 : 1) == navigationShell.currentIndex,
+      initialLocation: (index == 0 ? 0 : 1) == widget.navigationShell.currentIndex,
     );
   }
 
@@ -68,9 +81,10 @@ class AppShell extends StatelessWidget {
           shrinkWrap: true,
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            _AddAction(icon: Icons.document_scanner_outlined, title: l10n.scanDocumentTitle, onTap: () => _open(sheetContext, '/capture')),
-            _AddAction(icon: Icons.add_photo_alternate_outlined, title: l10n.addPhotoTitle, onTap: () => _open(sheetContext, '/capture')),
-            _AddAction(icon: Icons.mic_none_rounded, title: l10n.recordVoiceTitle, onTap: () => _open(sheetContext, '/capture')),
+            _AddAction(icon: Icons.document_scanner_outlined, title: l10n.scanDocumentTitle, onTap: () => _open(sheetContext, '/capture?action=scan')),
+            _AddAction(icon: Icons.add_photo_alternate_outlined, title: l10n.addPhotoTitle, onTap: () => _open(sheetContext, '/capture?action=photo')),
+            _AddAction(icon: Icons.attach_file_rounded, title: l10n.chooseFileTitle, onTap: () => _open(sheetContext, '/capture?action=file')),
+            _AddAction(icon: Icons.mic_none_rounded, title: l10n.recordVoiceTitle, onTap: () => _open(sheetContext, '/capture?action=voice')),
             _AddAction(icon: Icons.edit_note_rounded, title: l10n.writeNoteTitle, onTap: () => _open(sheetContext, '/notes/new')),
             _AddAction(icon: Icons.add_rounded, title: l10n.timelineAddEvent, onTap: () => _open(sheetContext, '/events/new')),
           ],
@@ -82,6 +96,28 @@ class AppShell extends StatelessWidget {
   void _open(BuildContext context, String route) {
     Navigator.of(context).pop();
     context.push(route);
+  }
+
+  Future<void> _showOnboardingIfNeeded() async {
+    final storage = ref.read(secureTokenStorageProvider);
+    if (await storage.hasSeenOnboarding() || !mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(sheetContext.l10n.onboardingTitle, style: Theme.of(sheetContext).textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.md),
+            Text(sheetContext.l10n.onboardingBody),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(onPressed: () { storage.markOnboardingSeen(); Navigator.pop(sheetContext); context.push('/capture'); }, child: Text(sheetContext.l10n.onboardingStart)),
+            TextButton(onPressed: () { storage.markOnboardingSeen(); Navigator.pop(sheetContext); }, child: Text(sheetContext.l10n.onboardingSkip)),
+          ]),
+        ),
+      ),
+    );
   }
 }
 

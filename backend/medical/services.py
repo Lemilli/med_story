@@ -18,7 +18,17 @@ from ai.schemas import (
     validate_event_extraction,
     validate_medical_summary,
 )
-from medical.models import AuditLog, Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, Tag
+from medical.models import (
+    AuditLog,
+    Document,
+    DocumentExplanation,
+    MedicalEvent,
+    MedicalSummary,
+    ProcessingJob,
+    Subject,
+    Tag,
+    VisitPreparation,
+)
 
 
 STRUCTURING_SYSTEM_PROMPT = (
@@ -385,7 +395,7 @@ def process_medical_summary(*, subject, job=None, language=None):
         raise exc
 
 
-def build_summary_export_pdf(summary):
+def build_summary_export_pdf(summary, *, visit_note=""):
     try:
         from reportlab.lib.pagesizes import letter
         from reportlab.lib.styles import getSampleStyleSheet
@@ -410,10 +420,18 @@ def build_summary_export_pdf(summary):
                     story.append(Paragraph(f"- {item}", styles["BodyText"]))
             else:
                 story.append(Paragraph("No confirmed events recorded.", styles["BodyText"]))
+        if visit_note.strip():
+            story.extend(
+                [
+                    Spacer(1, 10),
+                    Paragraph("Questions and concerns to discuss", styles["Heading2"]),
+                    Paragraph(visit_note.strip(), styles["BodyText"]),
+                ]
+            )
         document.build(story)
         return buffer.getvalue()
     except ImportError:
-        return _build_minimal_pdf(summary)
+        return _build_minimal_pdf(summary, visit_note=visit_note)
 
 
 def summary_export_json(summary):
@@ -466,6 +484,9 @@ def build_privacy_export(user):
         .select_related("subject")
         .order_by("subject_id", "-version", "id")
     )
+    visit_preparations = list(
+        VisitPreparation.objects.filter(user=user).select_related("subject").order_by("subject_id")
+    )
     jobs = list(
         ProcessingJob.objects.filter(user=user)
         .select_related("document", "summary")
@@ -474,7 +495,7 @@ def build_privacy_export(user):
     audit_logs = list(AuditLog.objects.filter(user=user).order_by("-created_at", "id"))
 
     return {
-        "schema_version": "2026-07-10",
+        "schema_version": "2026-07-11",
         "exported_at": _json_timestamp(timezone.now()),
         "user": {
             "id": str(user.id),
@@ -491,6 +512,7 @@ def build_privacy_export(user):
         "document_explanations": [_document_explanation_export(explanation) for explanation in explanations],
         "medical_events": [_medical_event_export(event) for event in events],
         "medical_summaries": [_medical_summary_export(summary) for summary in summaries],
+        "visit_preparations": [_visit_preparation_export(preparation) for preparation in visit_preparations],
         "processing_jobs": [_processing_job_export(job) for job in jobs],
         "audit_logs": [_audit_log_export(audit_log) for audit_log in audit_logs],
     }
@@ -587,6 +609,16 @@ def _medical_summary_export(summary):
         "generated_from_event_count": summary.generated_from_event_count,
         "language": summary.language,
         "created_at": _json_timestamp(summary.created_at),
+    }
+
+
+def _visit_preparation_export(preparation):
+    return {
+        "id": str(preparation.id),
+        "subject_id": str(preparation.subject_id),
+        "note": preparation.note,
+        "created_at": _json_timestamp(preparation.created_at),
+        "updated_at": _json_timestamp(preparation.updated_at),
     }
 
 
@@ -746,7 +778,7 @@ def _humanize_summary_section(section):
     return section.replace("_", " ").title()
 
 
-def _build_minimal_pdf(summary):
+def _build_minimal_pdf(summary, *, visit_note=""):
     lines = [
         "MedStory Doctor Summary",
         f"Subject: {summary.subject.display_name}",
@@ -760,6 +792,8 @@ def _build_minimal_pdf(summary):
         items = summary.content.get(section, [])
         lines.extend([f"- {item}" for item in items] or ["No confirmed events recorded."])
         lines.append("")
+    if visit_note.strip():
+        lines.extend(["Questions and concerns to discuss", visit_note.strip(), ""])
     return _simple_pdf(lines)
 
 

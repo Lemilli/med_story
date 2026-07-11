@@ -213,6 +213,31 @@ class MedicalSummary(models.Model):
         return f"{self.subject_id}:v{self.version}"
 
 
+class VisitPreparation(models.Model):
+    """A user-authored, per-subject note for an upcoming healthcare visit."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="visit_preparations",
+    )
+    subject = models.OneToOneField(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="visit_preparation",
+    )
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=("user", "subject"), name="visit_prep_user_subject_idx")]
+
+    def __str__(self):
+        return f"{self.subject_id}:visit-preparation"
+
+
 class MedicalEvent(models.Model):
     class EventType(models.TextChoices):
         SYMPTOM = "symptom", "Symptom"

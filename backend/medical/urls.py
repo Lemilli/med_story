@@ -20,6 +20,7 @@ from medical.views import (
     SubjectDetailView,
     SubjectListCreateView,
     TimelineView,
+    VisitPreparationView,
 )
 
 urlpatterns = [
@@ -44,6 +45,7 @@ urlpatterns = [
     path("summary/regenerate", SummaryRegenerateView.as_view(), name="summary-regenerate"),
     path("summary/versions", SummaryVersionsView.as_view(), name="summary-versions"),
     path("summary/export", SummaryExportView.as_view(), name="summary-export"),
+    path("visit-preparation", VisitPreparationView.as_view(), name="visit-preparation"),
     path("privacy/export", PrivacyExportView.as_view(), name="privacy-export"),
     path("jobs/<uuid:id>", JobDetailView.as_view(), name="job-detail"),
 ]

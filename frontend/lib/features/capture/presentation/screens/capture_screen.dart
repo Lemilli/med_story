@@ -21,7 +21,9 @@ import '../controllers/voice_capture_controller.dart';
 const _maxDocumentBytes = 5 * 1024 * 1024;
 
 class CaptureScreen extends ConsumerStatefulWidget {
-  const CaptureScreen({super.key});
+  const CaptureScreen({this.initialAction, super.key});
+
+  final String? initialAction;
 
   @override
   ConsumerState<CaptureScreen> createState() => _CaptureScreenState();
@@ -35,6 +37,15 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   void initState() {
     super.initState();
     _retrieveLostImageData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      switch (widget.initialAction) {
+        case 'scan': _pickCameraImage();
+        case 'photo': _pickGalleryImage();
+        case 'file': _pickFile();
+        case 'voice': _startVoiceRecording();
+        case 'note': context.push('/notes/new');
+      }
+    });
   }
 
   @override

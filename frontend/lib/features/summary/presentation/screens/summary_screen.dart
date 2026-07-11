@@ -211,11 +211,9 @@ class _SummaryHeader extends ConsumerWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: state.isExporting || state.currentSummary == null
+                  onPressed: state.currentSummary == null
                       ? null
-                      : () => ref
-                            .read(summaryControllerProvider.notifier)
-                            .exportPdf(),
+                      : () => context.push('/visit-preparation'),
                   icon: state.isExporting
                       ? const SizedBox.square(
                           dimension: 20,

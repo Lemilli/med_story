@@ -10,6 +10,7 @@ class SecureTokenStorage {
 
   static const _accessTokenKey = 'auth.access_token';
   static const _refreshTokenKey = 'auth.refresh_token';
+  static const _onboardingSeenKey = 'app.onboarding_seen';
 
   final FlutterSecureStorage _storage;
 
@@ -35,4 +36,10 @@ class SecureTokenStorage {
       _storage.delete(key: _refreshTokenKey),
     ]);
   }
+
+  Future<bool> hasSeenOnboarding() async =>
+      (await _storage.read(key: _onboardingSeenKey)) == 'true';
+
+  Future<void> markOnboardingSeen() =>
+      _storage.write(key: _onboardingSeenKey, value: 'true');
 }

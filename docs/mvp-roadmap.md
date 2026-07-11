@@ -118,6 +118,14 @@ legal/operations launch hardening remains in progress.
   (`security-privacy.md` §14).
 - **Exit:** GDPR export/erasure work; security checklist green; app store builds ready.
 
+### Core UX Release — Capture, Review & Visit Preparation
+**Status:** Implemented; launch hardening remains separate.
+- Capture navigation starts the selected scan, photo, file, voice, note, or manual-event flow directly.
+- AI suggestions have a dedicated review inbox with confirm, edit, and dismiss actions.
+- Timeline has year filtering, history search, and a derived confirmed medication/treatment-history view.
+- A per-subject visit-preparation note is appended to the doctor-summary PDF only when the user writes one.
+- First-use onboarding reinforces the organizer-only boundary; reminders, caregiver mode, bulk import, and semantic search remain deferred.
+
 ## 4. Dependency Order
 
 ```

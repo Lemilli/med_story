@@ -1006,4 +1006,66 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get eventNetworkRequired =>
       'Для сохранения изменений нужно подключение к MedStory.';
+
+  @override
+  String get reviewTitle => 'Проверить предложения';
+
+  @override
+  String get reviewEmpty => 'Сейчас нет предложений, которые нужно проверить.';
+
+  @override
+  String get reviewDismiss => 'Отклонить';
+
+  @override
+  String get reviewEdit => 'Изменить перед подтверждением';
+
+  @override
+  String get medicationsTitle => 'История лекарств';
+
+  @override
+  String get medicationsEmpty =>
+      'Подтверждённые лекарства и результаты лечения появятся здесь.';
+
+  @override
+  String get searchTitle => 'Поиск по истории';
+
+  @override
+  String get searchHint => 'Ищите события, теги и документы';
+
+  @override
+  String get searchEvents => 'События';
+
+  @override
+  String get searchDocuments => 'Документы';
+
+  @override
+  String get visitPrepTitle => 'Подготовка к визиту';
+
+  @override
+  String get visitPrepHint => 'Вопросы или темы, которые вы хотите обсудить';
+
+  @override
+  String get visitPrepSave => 'Сохранить заметку к визиту';
+
+  @override
+  String get visitPrepExport => 'Экспортировать сводку к визиту';
+
+  @override
+  String get visitPrepSaved => 'Заметка к визиту сохранена.';
+
+  @override
+  String get onboardingTitle => 'Ваша медицинская история — в одном месте';
+
+  @override
+  String get onboardingBody =>
+      'MedStory помогает организовать и понять ваши записи. Он не ставит диагнозы и не рекомендует лечение.';
+
+  @override
+  String get onboardingStart => 'Добавить первую запись';
+
+  @override
+  String get onboardingSkip => 'Не сейчас';
+
+  @override
+  String get timelineYear => 'Год';
 }

@@ -80,6 +80,8 @@ frontend/lib/
 │   ├── timeline/                  # chronological events (home)
 │   ├── events/                    # event detail, manual add/edit, confirm
 │   ├── summary/                   # medical memory + doctor export
+│   ├── organize/                  # review inbox, medication history, unified search
+│   ├── visit_preparation/         # per-subject questions/concerns for a visit
 │   ├── subjects/                  # patient profile switcher
 │   └── settings/                  # account, privacy/export/delete, locale
 └── l10n/                          # ARB files (en, ru) + generated AppLocalizations
@@ -140,6 +142,8 @@ Same machine as 7.1.
 ### 7.4 Doctor Summary (Scenario D)
 - `summary` screen shows the structured memory + narrative.
 - "Prepare for visit" → `GET /summary/export?format=pdf` → share sheet.
+- The prepare-for-visit flow saves a per-subject note before export; the note is user-authored and is not AI input.
+- Review inbox reads unconfirmed timeline events; medication history is a confirmed-event filter, not a separate medication store.
 
 ## 8. Offline & Caching
 

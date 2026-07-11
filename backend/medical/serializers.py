@@ -1,7 +1,16 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 
-from medical.models import Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, Tag
+from medical.models import (
+    Document,
+    DocumentExplanation,
+    MedicalEvent,
+    MedicalSummary,
+    ProcessingJob,
+    Subject,
+    Tag,
+    VisitPreparation,
+)
 from medical.services import get_or_create_default_subject
 
 
@@ -316,6 +325,15 @@ class MedicalSummarySerializer(serializers.ModelSerializer):
         return str(obj.subject_id)
 
 
+class VisitPreparationSerializer(serializers.ModelSerializer):
+    subject_id = serializers.UUIDField(read_only=True)
+
+    class Meta:
+        model = VisitPreparation
+        fields = ("id", "subject_id", "note", "created_at", "updated_at")
+        read_only_fields = ("id", "subject_id", "created_at", "updated_at")
+
+
 class ProcessingJobSerializer(serializers.ModelSerializer):
     document_id = serializers.SerializerMethodField()
     summary_id = serializers.SerializerMethodField()
@@ -359,5 +377,6 @@ class PrivacyExportSerializer(serializers.Serializer):
     document_explanations = serializers.ListField(child=serializers.JSONField(), read_only=True)
     medical_events = serializers.ListField(child=serializers.JSONField(), read_only=True)
     medical_summaries = serializers.ListField(child=serializers.JSONField(), read_only=True)
+    visit_preparations = serializers.ListField(child=serializers.JSONField(), read_only=True)
     processing_jobs = serializers.ListField(child=serializers.JSONField(), read_only=True)
     audit_logs = serializers.ListField(child=serializers.JSONField(), read_only=True)

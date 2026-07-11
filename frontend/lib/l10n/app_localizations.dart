@@ -1831,6 +1831,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saving changes requires a connection to MedStory.'**
   String get eventNetworkRequired;
+
+  /// No description provided for @reviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review suggestions'**
+  String get reviewTitle;
+
+  /// No description provided for @reviewEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing needs your review right now.'**
+  String get reviewEmpty;
+
+  /// No description provided for @reviewDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get reviewDismiss;
+
+  /// No description provided for @reviewEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit before confirming'**
+  String get reviewEdit;
+
+  /// No description provided for @medicationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication history'**
+  String get medicationsTitle;
+
+  /// No description provided for @medicationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed medications and treatment outcomes will appear here.'**
+  String get medicationsEmpty;
+
+  /// No description provided for @searchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search your history'**
+  String get searchTitle;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search events, tags, and documents'**
+  String get searchHint;
+
+  /// No description provided for @searchEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get searchEvents;
+
+  /// No description provided for @searchDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get searchDocuments;
+
+  /// No description provided for @visitPrepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare for a visit'**
+  String get visitPrepTitle;
+
+  /// No description provided for @visitPrepHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Questions or concerns you want to discuss'**
+  String get visitPrepHint;
+
+  /// No description provided for @visitPrepSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save visit note'**
+  String get visitPrepSave;
+
+  /// No description provided for @visitPrepExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export visit summary'**
+  String get visitPrepExport;
+
+  /// No description provided for @visitPrepSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit note saved.'**
+  String get visitPrepSaved;
+
+  /// No description provided for @onboardingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your medical story, in one place'**
+  String get onboardingTitle;
+
+  /// No description provided for @onboardingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'MedStory helps you organize and understand your records. It does not diagnose or recommend treatment.'**
+  String get onboardingBody;
+
+  /// No description provided for @onboardingStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first record'**
+  String get onboardingStart;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get onboardingSkip;
+
+  /// No description provided for @timelineYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get timelineYear;
 }
 
 class _AppLocalizationsDelegate

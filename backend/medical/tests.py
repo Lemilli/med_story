@@ -12,7 +12,7 @@ from rest_framework.test import APITestCase
 
 from ai.providers.base import OCRResult
 from ai.schemas import SchemaValidationError
-from medical.models import AuditLog, Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, Tag
+from medical.models import AuditLog, Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, Tag, VisitPreparation
 
 
 TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
@@ -39,6 +39,36 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["display_name"], "Jane Doe")
         self.assertTrue(response.data[0]["is_default"])
+
+    def test_visit_preparation_is_subject_scoped_and_exported(self):
+        subject = Subject.objects.create(
+            user=self.user,
+            display_name="Jane Doe",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+        other_subject = Subject.objects.create(
+            user=self.other_user,
+            display_name="Other",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+
+        get_response = self.client.get(f"/api/v1/visit-preparation?subject_id={subject.id}")
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(get_response.data["note"], "")
+
+        save_response = self.client.put(
+            f"/api/v1/visit-preparation?subject_id={subject.id}",
+            {"note": "Ask about the recent symptom pattern."},
+            format="json",
+        )
+        self.assertEqual(save_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(save_response.data["note"], "Ask about the recent symptom pattern.")
+        self.assertEqual(VisitPreparation.objects.get(subject=subject).user, self.user)
+
+        forbidden_response = self.client.get(f"/api/v1/visit-preparation?subject_id={other_subject.id}")
+        self.assertEqual(forbidden_response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_subject_crud_and_default_delete_guard(self):
         default_subject = Subject.objects.create(

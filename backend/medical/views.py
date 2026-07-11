@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from drf_spectacular.utils import extend_schema
 
-from medical.models import AuditLog, Document, MedicalEvent, MedicalSummary, ProcessingJob, Subject
+from medical.models import AuditLog, Document, MedicalEvent, MedicalSummary, ProcessingJob, Subject, VisitPreparation
 from medical.pagination import TimelineCursorPagination
 from medical.serializers import (
     MAX_DOCUMENT_SIZE_BYTES,
@@ -27,6 +27,7 @@ from medical.serializers import (
     PrivacyExportSerializer,
     ProcessingJobSerializer,
     SubjectSerializer,
+    VisitPreparationSerializer,
 )
 from medical.services import (
     build_privacy_export,
@@ -132,7 +133,11 @@ class MedicalEventQuerysetMixin:
 
         query = self.request.query_params.get("q")
         if query:
-            queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+            queryset = queryset.filter(
+                Q(title__icontains=query)
+                | Q(description__icontains=query)
+                | Q(tags__name__icontains=query)
+            )
 
         confirmed = self.request.query_params.get("confirmed")
         if confirmed:
@@ -594,11 +599,45 @@ class SummaryExportView(SummaryQuerysetMixin, generics.GenericAPIView):
         if export_format == "json":
             return Response(summary_export_json(summary), status=status.HTTP_200_OK)
         if export_format == "pdf":
-            payload = build_summary_export_pdf(summary)
+            visit_preparation = VisitPreparation.objects.filter(
+                user=request.user,
+                subject=summary.subject,
+            ).first()
+            payload = build_summary_export_pdf(summary, visit_note=visit_preparation.note if visit_preparation else "")
             response = HttpResponse(payload, content_type="application/pdf")
             response["Content-Disposition"] = 'attachment; filename="medstory-summary.pdf"'
             return response
         raise ValidationError({"format": ["Unsupported export format. Use json or pdf."]})
+
+
+class VisitPreparationView(generics.GenericAPIView):
+    serializer_class = VisitPreparationSerializer
+
+    def _subject(self):
+        subject_id = self.request.query_params.get("subject_id")
+        if not subject_id:
+            return get_or_create_default_subject(self.request.user)
+        subject = Subject.objects.filter(id=subject_id, user=self.request.user).first()
+        if not subject:
+            raise ValidationError({"subject_id": ["Subject not found."]})
+        return subject
+
+    def get(self, request, *args, **kwargs):
+        preparation, _ = VisitPreparation.objects.get_or_create(
+            user=request.user,
+            subject=self._subject(),
+        )
+        return Response(self.get_serializer(preparation).data)
+
+    def put(self, request, *args, **kwargs):
+        preparation, _ = VisitPreparation.objects.get_or_create(
+            user=request.user,
+            subject=self._subject(),
+        )
+        serializer = self.get_serializer(preparation, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class PrivacyExportView(generics.GenericAPIView):

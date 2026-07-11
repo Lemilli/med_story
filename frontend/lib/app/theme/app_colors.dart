@@ -16,4 +16,9 @@ class AppColors {
   static const controlledCrimson = Color(0xFFBA1237);
   static const deepClinicalBlue = Color(0xFF003F9E);
   static const disabledFill = Color(0xFFE8ECF2);
+  static const success = Color(0xFF176B43);
+  static const warning = Color(0xFF8A5A00);
+  static const info = Color(0xFF003F9E);
+  static const error = Color(0xFF9E1233);
+  static const selectedSurface = Color(0xFFFCEEF1);
 }

@@ -11,10 +11,12 @@ import '../features/documents/presentation/screens/document_detail_screen.dart';
 import '../features/documents/presentation/screens/document_list_screen.dart';
 import '../features/events/presentation/screens/event_detail_screen.dart';
 import '../features/events/presentation/screens/event_form_screen.dart';
+import '../features/organize/presentation/screens/organize_screens.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
 import '../features/shell/presentation/screens/app_shell.dart';
 import '../features/summary/presentation/screens/summary_screen.dart';
 import '../features/timeline/presentation/screens/timeline_screen.dart';
+import '../features/visit_preparation/presentation/screens/visit_preparation_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _RouterRefreshNotifier();
@@ -80,6 +82,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             DocumentDetailScreen(documentId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/documents', builder: (context, state) => const DocumentListScreen()),
+      GoRoute(path: '/review', builder: (context, state) => const ReviewInboxScreen()),
+      GoRoute(path: '/medications', builder: (context, state) => const MedicationHistoryScreen()),
+      GoRoute(path: '/search', builder: (context, state) => const HistorySearchScreen()),
+      GoRoute(path: '/visit-preparation', builder: (context, state) => const VisitPreparationScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppShell(navigationShell: navigationShell);
@@ -105,7 +111,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      GoRoute(path: '/capture', builder: (context, state) => const CaptureScreen()),
+      GoRoute(
+        path: '/capture',
+        builder: (context, state) => CaptureScreen(initialAction: state.uri.queryParameters['action']),
+      ),
     ],
   );
 });
