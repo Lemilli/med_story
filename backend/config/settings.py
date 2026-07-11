@@ -18,6 +18,9 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 
+THROTTLE_CACHE_URL = env("THROTTLE_CACHE_URL", default="")
+THROTTLE_TRUSTED_PROXY_COUNT = env.int("THROTTLE_TRUSTED_PROXY_COUNT", default=0)
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -113,8 +116,37 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "120/minute",
+        "user": "120/minute",
+        "auth_register": "5/hour",
+        "auth_login": "5/hour",
+        "auth_session": "20/hour",
+        "ai": "10/hour",
+    },
+    "NUM_PROXIES": THROTTLE_TRUSTED_PROXY_COUNT,
+    "EXCEPTION_HANDLER": "config.exceptions.api_exception_handler",
     "URL_FORMAT_OVERRIDE": None,
 }
+
+if THROTTLE_CACHE_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": THROTTLE_CACHE_URL,
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "medstory-local-cache",
+        }
+    }
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),

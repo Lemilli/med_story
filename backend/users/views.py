@@ -1,18 +1,21 @@
 from django.db import transaction
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from medical.models import AuditLog
 from medical.services import log_audit_event
+from config.throttling import ClientIPScopedRateThrottle
 from users.serializers import LogoutSerializer, RegisterSerializer, UserSerializer
 
 
 class RegisterView(generics.CreateAPIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
+    throttle_classes = (ClientIPScopedRateThrottle,)
+    throttle_scope = "auth_register"
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -30,6 +33,9 @@ class RegisterView(generics.CreateAPIView):
 
 
 class AuditedTokenObtainPairView(TokenObtainPairView):
+    throttle_classes = (ClientIPScopedRateThrottle,)
+    throttle_scope = "auth_login"
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -68,6 +74,8 @@ class MeView(generics.RetrieveUpdateDestroyAPIView):
 
 class LogoutView(generics.GenericAPIView):
     serializer_class = LogoutSerializer
+    throttle_classes = (ClientIPScopedRateThrottle,)
+    throttle_scope = "auth_session"
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -83,3 +91,8 @@ class LogoutView(generics.GenericAPIView):
             )
 
         return Response(status=status.HTTP_205_RESET_CONTENT)
+
+
+class ThrottledTokenRefreshView(TokenRefreshView):
+    throttle_classes = (ClientIPScopedRateThrottle,)
+    throttle_scope = "auth_session"

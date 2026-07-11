@@ -104,10 +104,14 @@ remain for deterministic local tests.
   capture records locally, reviews before upload, and sends audio through the transient ingest flow.
 
 ### Phase 6 — Privacy, Hardening & Launch Prep
-**Status:** Frontend GDPR/settings flows implemented; launch hardening still in progress.
+**Status:** GDPR/settings flows, API throttling, and CI dependency/secret scanning implemented;
+legal/operations launch hardening remains in progress.
 **Goal:** GDPR flows, security checklist, store readiness.
 - Backend: `/privacy/export`, `DELETE /me` (hard delete of backend records), `AuditLog`,
-  backend tests implemented; throttling, dependency/secret scanning, and DPAs remain planned.
+  Redis-backed auth/AI throttling, and backend tests implemented.
+- CI: blocking dependency and full-history secret scans plus weekly Dependabot updates.
+- Compliance: optional subprocessor register and DPA review checklist are available; they do not
+  gate production provider configuration.
 - Frontend: settings (export, delete account, locale), onboarding disclaimer ("organizer, not
   a doctor"), accessibility pass. **Implemented.**
 - Ops: backend metadata backups, monitoring/error tracking, cost alerts; complete the security checklist

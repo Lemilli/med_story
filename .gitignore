@@ -6,6 +6,8 @@
 # Environment secrets (also covered in backend/.gitignore)
 .env
 .env.*
+!backend/.env.example
+!backend/.env.production.example
 
 # Tooling local overrides
 .impeccable/config.local.json

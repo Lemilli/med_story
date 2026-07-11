@@ -10,6 +10,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import CursorPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from drf_spectacular.utils import extend_schema
 
 from medical.models import AuditLog, Document, MedicalEvent, MedicalSummary, ProcessingJob, Subject
@@ -273,6 +274,8 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
     serializer_class = DocumentSerializer
     lookup_url_kwarg = "id"
     parser_classes = (MultiPartParser, FormParser)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "ai"
 
     def get_queryset(self):
         return self.get_base_queryset()
@@ -472,6 +475,8 @@ class DocumentExplanationView(DocumentQuerysetMixin, generics.GenericAPIView):
 class DocumentExplanationRegenerateView(DocumentQuerysetMixin, generics.GenericAPIView):
     serializer_class = DocumentExplanationSerializer
     lookup_url_kwarg = "id"
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "ai"
 
     def get_queryset(self):
         return self.get_base_queryset()
@@ -552,6 +557,8 @@ class SummaryCurrentView(SummaryQuerysetMixin, generics.GenericAPIView):
 
 class SummaryRegenerateView(SummaryQuerysetMixin, generics.GenericAPIView):
     serializer_class = MedicalSummarySerializer
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "ai"
 
     def post(self, request, *args, **kwargs):
         subject = self.resolve_subject()

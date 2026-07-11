@@ -59,10 +59,12 @@ control. This document defines the controls to achieve that.
 
 - Health content is sent to external AI providers **only from backend workers**, over TLS.
 - Send the **minimum necessary** content; redact identifiers where feasible.
-- Use providers offering **no-training-on-customer-data / zero or minimal retention**, bound
-  by a **Data Processing Agreement (DPA)**.
+- Prefer providers offering **no-training-on-customer-data / zero or minimal retention**.
 - Record provider + model + prompt version per output for traceability (metadata only).
 - Document all sub-processors (AI, OCR, STT) in the privacy policy.
+- The [subprocessor register](./compliance/subprocessor-register.md) and
+  [DPA checklist](./compliance/dpa-execution-checklist.md) are optional compliance references;
+  they do not block provider configuration or production startup.
 
 ## 7. GDPR Alignment
 
@@ -88,10 +90,13 @@ control. This document defines the controls to achieve that.
 
 - **Input validation** via DRF serializers; reject unexpected fields.
 - **Output**: consistent error envelope; never leak stack traces or internal IDs to clients.
-- **Rate limiting / throttling** on auth and AI-triggering endpoints (cost + abuse control).
-- **Dependency hygiene**: pinned dependencies; automated vulnerability scanning (e.g.
-  `pip-audit`, Dependabot) in CI.
-- **Secrets scanning** in CI to prevent committed credentials.
+- **Rate limiting / throttling**: login/registration are limited to 5 requests/IP/hour;
+  refresh/logout to 20/IP/hour; ingestion and AI regenerations to 10/user/hour; other traffic
+  to 120 requests/minute. Production throttle state is shared through Redis. The reverse proxy
+  must replace `X-Forwarded-For`; `THROTTLE_TRUSTED_PROXY_COUNT=1` enables that trusted address.
+- **Dependency hygiene**: automated `pip-audit` and OSV scans cover Python and Flutter
+  dependencies, and Dependabot proposes weekly updates for supported manifests and CI actions.
+- **Secrets scanning**: Gitleaks scans full committed history in CI.
 - **CORS** locked to known clients; security headers (HSTS, no-sniff, etc.) at the proxy.
 - **CSRF**: API is token-based (JWT in header), not cookie-session, reducing CSRF surface.
 - **SQL injection / XSS**: ORM-parameterized queries; no raw SQL with user input.
@@ -125,7 +130,7 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 
 | Status | Item |
 |--------|------|
-| MVP | GDPR alignment, TLS, encryption at rest, isolation, export/erasure, DPAs |
+| MVP | GDPR alignment, TLS, encryption at rest, isolation, export/erasure |
 | Hardening | Malware scanning, field-level encryption, pen-test, biometric lock, cert pinning |
 | HIPAA-ready (later) | BAAs with vendors, expanded audit controls, formal risk assessments, access reviews |
 
@@ -138,6 +143,6 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 - [ ] Per-user queryset isolation verified by tests.
 - [x] Backend export + delete flows verified by tests; backups policy still requires ops/legal review.
 - [ ] No health data in logs; PII scrubbing on.
-- [ ] DPAs signed with all AI/OCR/STT sub-processors; privacy policy lists them.
-- [ ] Dependency + secret scanning in CI; no secrets in repo.
+- [ ] Optional: review DPAs and maintain the subprocessor register where applicable.
+- [x] Dependency + secret scanning in CI; no secrets in repo.
 - [ ] Incident response runbook in place.

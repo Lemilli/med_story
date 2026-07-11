@@ -17,7 +17,8 @@
 - **Filtering**: query params per endpoint (documented below).
 - **Errors**: consistent envelope (see §8).
 - **Idempotency**: mutating ingestion calls keyed by document ID; safe to retry.
-- **Rate limiting**: stricter throttles on auth + AI-triggering endpoints (HTTP 429).
+- **Rate limiting**: registration/login are 5/IP/hour, refresh/logout 20/IP/hour, and
+  AI-triggering uploads/regenerations 10/user/hour; other traffic is 120/minute (HTTP 429).
 
 ## 2. Authentication
 
@@ -270,6 +271,9 @@ All errors share one envelope:
 | 413 | file_too_large | Upload exceeds limit |
 | 429 | throttled | Rate limit hit |
 | 500 | server_error | Unexpected |
+
+Throttled responses include a `Retry-After` header and
+`error.details.retry_after_seconds`.
 
 ## 11. Endpoint Summary
 
