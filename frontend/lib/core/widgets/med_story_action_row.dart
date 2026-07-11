@@ -10,6 +10,7 @@ class MedStoryActionRow extends StatelessWidget {
     required this.description,
     required this.onTap,
     this.isPrimary = false,
+    this.isGrouped = false,
     this.semanticHint,
     super.key,
   });
@@ -19,6 +20,7 @@ class MedStoryActionRow extends StatelessWidget {
   final String description;
   final VoidCallback onTap;
   final bool isPrimary;
+  final bool isGrouped;
   final String? semanticHint;
 
   @override
@@ -34,14 +36,16 @@ class MedStoryActionRow extends StatelessWidget {
       hint: semanticHint ?? description,
       child: Material(
         color: AppColors.clinicalWhite,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-            color: isPrimary
-                ? AppColors.controlledCrimson
-                : AppColors.clinicalLine,
-          ),
-        ),
+        shape: isGrouped
+            ? null
+            : RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: BorderSide(
+                  color: isPrimary
+                      ? AppColors.controlledCrimson
+                      : AppColors.clinicalLine,
+                ),
+              ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,

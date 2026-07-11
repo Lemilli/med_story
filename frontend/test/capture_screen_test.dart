@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:med_story/app/theme/app_theme.dart';
+import 'package:med_story/core/widgets/med_story_action_row.dart';
 import 'package:med_story/features/capture/presentation/screens/capture_screen.dart';
 import 'package:med_story/l10n/app_localizations.dart';
 
@@ -50,8 +51,23 @@ void main() {
       expect(find.text(l10n.chooseFileDescription), findsOneWidget);
       expect(l10n.addPhotoTitle, 'Add a photo');
       expect(l10n.chooseFileTitle, 'Browse files');
-
+      expect(
+        tester
+            .widgetList<MedStoryActionRow>(find.byType(MedStoryActionRow))
+            .map((row) => row.title),
+        [
+          l10n.addPhotoTitle,
+          l10n.scanDocumentTitle,
+          l10n.chooseFileTitle,
+          l10n.writeNoteTitle,
+          l10n.recordVoiceTitle,
+        ],
+      );
       await tester.scrollUntilVisible(find.text(l10n.writeNoteTitle), 160);
+      await tester.scrollUntilVisible(find.text(l10n.capturePrivacyNotice), 160);
+      expect(find.text(l10n.capturePrivacyNotice), findsOneWidget);
+
+      await tester.scrollUntilVisible(find.text(l10n.writeNoteTitle), -160);
       await tester.tap(find.text(l10n.writeNoteTitle));
       await tester.pumpAndSettle();
 

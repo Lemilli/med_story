@@ -300,6 +300,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose how you want to add something. You can review it before it becomes part of your story.';
 
   @override
+  String get capturePrivacyNotice =>
+      'Private to you. You review suggestions before they join your story. MedStory organizes your information; it does not diagnose.';
+
+  @override
   String get recordVoiceTitle => 'Record voice';
 
   @override
@@ -424,6 +428,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentProcessingTitle => 'Processing upload';
+
+  @override
+  String get documentProcessingBackgroundMessage =>
+      'You can leave this screen while processing continues. Your document will be ready to review here when it finishes.';
+
+  @override
+  String get documentProcessingDoneAction => 'Done';
 
   @override
   String get documentReviewTitle => 'Selected document';
@@ -790,7 +801,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get timelineHeadline => 'Your medical story';
+  String get timelineHeadline => 'MedStory';
 
   @override
   String get timelineSubtitle =>
@@ -820,7 +831,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timelineFiltersAction => 'Filters';
 
   @override
+  String get timelineApplyFiltersAction => 'Show results';
+
+  @override
+  String get timelineClearFiltersAction => 'Clear all filters';
+
+  @override
+  String get timelineClearSearchAction => 'Clear search';
+
+  @override
+  String get timelineFiltersActive => 'Filters are applied';
+
+  @override
   String get timelineAllTypes => 'All types';
+
+  @override
+  String get timelineAllYears => 'All years';
 
   @override
   String get timelineOfflineNotice =>

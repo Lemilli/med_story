@@ -299,6 +299,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Выберите, как добавить информацию. Перед добавлением в историю её можно проверить.';
 
   @override
+  String get capturePrivacyNotice =>
+      'Только для вас. Вы проверяете предложения перед добавлением в историю. MedStory организует вашу информацию, но не ставит диагнозы.';
+
+  @override
   String get recordVoiceTitle => 'Записать голос';
 
   @override
@@ -423,6 +427,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get documentProcessingTitle => 'Обработка файла';
+
+  @override
+  String get documentProcessingBackgroundMessage =>
+      'Вы можете уйти с этого экрана, пока обработка продолжается. Когда она завершится, документ будет готов к проверке здесь.';
+
+  @override
+  String get documentProcessingDoneAction => 'Готово';
 
   @override
   String get documentReviewTitle => 'Выбранный документ';
@@ -790,7 +801,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get timelineHeadline => 'Ваша медицинская история';
+  String get timelineHeadline => 'MedStory';
 
   @override
   String get timelineSubtitle =>
@@ -820,7 +831,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get timelineFiltersAction => 'Фильтры';
 
   @override
+  String get timelineApplyFiltersAction => 'Показать результаты';
+
+  @override
+  String get timelineClearFiltersAction => 'Сбросить все фильтры';
+
+  @override
+  String get timelineClearSearchAction => 'Очистить поиск';
+
+  @override
+  String get timelineFiltersActive => 'Фильтры применены';
+
+  @override
   String get timelineAllTypes => 'Все типы';
+
+  @override
+  String get timelineAllYears => 'Все годы';
 
   @override
   String get timelineOfflineNotice =>

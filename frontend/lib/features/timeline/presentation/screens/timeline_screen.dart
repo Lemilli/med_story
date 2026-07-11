@@ -9,7 +9,6 @@ import '../../../../l10n/l10n.dart';
 import '../../../events/domain/medical_event.dart';
 import '../../../events/presentation/controllers/event_controllers.dart';
 import '../../../events/presentation/event_type_l10n.dart';
-import '../../../subjects/presentation/controllers/subject_controller.dart';
 import '../../domain/timeline_filters.dart';
 import '../controllers/timeline_controller.dart';
 
@@ -52,17 +51,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _TimelineHeader(onAdd: () => context.push('/events/new')),
-                    const SizedBox(height: AppSpacing.lg),
-                    const _SubjectSwitcher(),
-                    const SizedBox(height: AppSpacing.lg),
-                    _StoryShortcuts(
-                      onDocuments: () => context.push('/documents'),
-                      onReview: () => context.push('/review'),
-                      onTypes: (types) => ref.read(timelineControllerProvider.notifier).updateFilters(
-                        TimelineFilters(types: types),
-                      ),
-                    ),
+                    const _TimelineHeader(),
                     const SizedBox(height: AppSpacing.lg),
                     timelineState.maybeWhen(
                       data: (state) => _TimelineFilters(
@@ -150,51 +139,23 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
 }
 
 class _TimelineHeader extends StatelessWidget {
-  const _TimelineHeader({required this.onAdd});
-
-  final VoidCallback onAdd;
+  const _TimelineHeader();
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final l10n = context.l10n;
-
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.timelineHeadline,
-                style: textTheme.headlineMedium?.copyWith(
-                  color: AppColors.patientInk,
-                  fontWeight: FontWeight.w900,
-                  height: 1.08,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                l10n.timelineSubtitle,
-                style: textTheme.bodyLarge?.copyWith(
-                  color: AppColors.secondaryInk,
-                  height: 1.35,
-                ),
-              ),
-            ],
+          child: Text(
+            context.l10n.appTitle,
+            style: textTheme.headlineMedium?.copyWith(
+              color: AppColors.patientInk,
+              fontWeight: FontWeight.w900,
+              height: 1.08,
+            ),
           ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        IconButton.filled(
-          onPressed: onAdd,
-          icon: const Icon(Icons.add_rounded),
-          color: AppColors.clinicalWhite,
-        ),
-        IconButton(
-          tooltip: context.l10n.searchTitle,
-          onPressed: () => context.push('/search'),
-          icon: const Icon(Icons.search_rounded),
         ),
         IconButton(
           tooltip: context.l10n.navSettings,
@@ -202,45 +163,6 @@ class _TimelineHeader extends StatelessWidget {
           icon: const Icon(Icons.settings_outlined),
         ),
       ],
-    );
-  }
-}
-
-class _SubjectSwitcher extends ConsumerWidget {
-  const _SubjectSwitcher();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final subjects = ref.watch(subjectControllerProvider);
-
-    return subjects.when(
-      loading: () => const LinearProgressIndicator(minHeight: 2),
-      error: (error, _) => _InlineNotice(message: error.toString()),
-      data: (state) {
-        if (state.subjects.isEmpty) {
-          return _InlineNotice(message: l10n.timelineNoSubjectMessage);
-        }
-        return DropdownButtonFormField<String>(
-          initialValue: state.selectedSubjectId,
-          decoration: InputDecoration(labelText: l10n.subjectSwitcherLabel),
-          items: state.subjects.map((subject) {
-            final suffix = subject.isDefault
-                ? ' • ${l10n.subjectDefaultLabel}'
-                : '';
-            return DropdownMenuItem(
-              value: subject.id,
-              child: Text('${subject.displayName}$suffix'),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            ref.read(subjectControllerProvider.notifier).selectSubject(value);
-          },
-        );
-      },
     );
   }
 }
@@ -260,6 +182,7 @@ class _TimelineFilters extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final filters = state.filters;
+    final hasActiveFilters = filters.hasActiveFilters;
     if (searchController.text != filters.query) {
       searchController.text = filters.query;
     }
@@ -272,91 +195,209 @@ class _TimelineFilters extends StatelessWidget {
           decoration: InputDecoration(
             labelText: l10n.timelineSearchLabel,
             prefixIcon: const Icon(Icons.search_rounded),
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (filters.query.isNotEmpty)
+                  IconButton(
+                    tooltip: l10n.timelineClearSearchAction,
+                    onPressed: () {
+                      searchController.clear();
+                      onChanged(filters.copyWith(query: ''));
+                    },
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                IconButton(
+                  tooltip: l10n.timelineFiltersAction,
+                  onPressed: () => _showFilters(context, filters),
+                  icon: Badge(
+                    isLabelVisible: hasActiveFilters,
+                    smallSize: 8,
+                    child: Icon(
+                      hasActiveFilters ? Icons.tune : Icons.tune_rounded,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           textInputAction: TextInputAction.search,
           onSubmitted: (value) => onChanged(filters.copyWith(query: value)),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Wrap(spacing: AppSpacing.xs, children: [
-            TextButton.icon(
-              icon: const Icon(Icons.calendar_month_outlined),
-              label: Text(l10n.timelineYear),
-              onPressed: () => _pickYear(context, filters),
-            ),
-            TextButton.icon(
-              icon: const Icon(Icons.filter_list_rounded),
-              label: Text(l10n.timelineFiltersAction),
-              onPressed: () => _showFilters(context, filters),
-            ),
-          ]),
-        ),
+        if (hasActiveFilters) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              const Icon(
+                Icons.filter_alt_rounded,
+                size: 18,
+                color: AppColors.deepClinicalBlue,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  l10n.timelineFiltersActive,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.deepClinicalBlue,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  searchController.clear();
+                  onChanged(const TimelineFilters());
+                },
+                child: Text(l10n.timelineClearFiltersAction),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
 
-  Future<void> _showFilters(BuildContext context, TimelineFilters filters) async {
-    final selected = await showModalBottomSheet<Set<MedicalEventType>>(
+  Future<void> _showFilters(
+    BuildContext context,
+    TimelineFilters filters,
+  ) async {
+    final selected = await showModalBottomSheet<TimelineFilters>(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       showDragHandle: true,
-      builder: (context) => _TypeFilterSheet(initial: filters.types),
+      builder: (context) => _TimelineFilterSheet(initial: filters),
     );
-    if (selected != null) onChanged(filters.copyWith(types: selected));
+    if (selected != null) onChanged(selected);
+  }
+}
+
+extension on TimelineFilters {
+  bool get hasActiveFilters =>
+      types.isNotEmpty ||
+      from != null ||
+      to != null ||
+      tag.trim().isNotEmpty ||
+      query.trim().isNotEmpty ||
+      confirmed != null;
+}
+
+class _TimelineFilterSheet extends StatefulWidget {
+  const _TimelineFilterSheet({required this.initial});
+
+  final TimelineFilters initial;
+
+  @override
+  State<_TimelineFilterSheet> createState() => _TimelineFilterSheetState();
+}
+
+class _TimelineFilterSheetState extends State<_TimelineFilterSheet> {
+  late final Set<MedicalEventType> _selected = {...widget.initial.types};
+  late DateTime? _year = widget.initial.from;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final selectedYear = _year == null ? null : DateFormat.y().format(_year!);
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.78,
+      minChildSize: 0.5,
+      maxChildSize: 0.92,
+      builder: (context, scrollController) => Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.sm,
+          AppSpacing.xl,
+          AppSpacing.xl,
+        ),
+        child: CustomScrollView(
+          controller: scrollController,
+          slivers: [
+            SliverToBoxAdapter(
+              child: Text(
+                l10n.timelineFiltersAction,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+            SliverToBoxAdapter(
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.calendar_month_outlined),
+                title: Text(l10n.timelineYear),
+                subtitle: Text(selectedYear ?? l10n.timelineAllYears),
+                trailing: selectedYear == null
+                    ? const Icon(Icons.chevron_right_rounded)
+                    : IconButton(
+                        tooltip: l10n.timelineAllYears,
+                        onPressed: () => setState(() => _year = null),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                onTap: _pickYear,
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: Divider(color: AppColors.clinicalLine),
+            ),
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final type = MedicalEventType.values[index];
+                return CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _selected.contains(type),
+                  title: Text(type.label(l10n)),
+                  controlAffinity: ListTileControlAffinity.trailing,
+                  onChanged: (value) => setState(
+                    () => value == true
+                        ? _selected.add(type)
+                        : _selected.remove(type),
+                  ),
+                );
+              }, childCount: MedicalEventType.values.length),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+            SliverToBoxAdapter(
+              child: FilledButton(
+                onPressed: () => Navigator.pop(
+                  context,
+                  widget.initial.copyWith(
+                    types: _selected,
+                    from: _year == null ? null : DateTime(_year!.year),
+                    to: _year == null ? null : DateTime(_year!.year, 12, 31),
+                  ),
+                ),
+                child: Text(l10n.timelineApplyFiltersAction),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+            SliverToBoxAdapter(
+              child: TextButton(
+                onPressed: () =>
+                    Navigator.pop(context, const TimelineFilters()),
+                child: Text(l10n.timelineClearFiltersAction),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Future<void> _pickYear(BuildContext context, TimelineFilters filters) async {
+  Future<void> _pickYear() async {
     final today = DateTime.now();
     final selected = await showDatePicker(
       context: context,
-      initialDate: filters.from ?? today,
+      initialDate: _year ?? today,
       firstDate: DateTime(1900),
       lastDate: today,
       helpText: context.l10n.timelineYear,
     );
-    if (selected == null) return;
-    onChanged(filters.copyWith(
-      from: DateTime(selected.year),
-      to: DateTime(selected.year, 12, 31),
-    ));
+    if (selected != null && mounted) setState(() => _year = selected);
   }
-}
-
-class _StoryShortcuts extends StatelessWidget {
-  const _StoryShortcuts({required this.onDocuments, required this.onReview, required this.onTypes});
-  final VoidCallback onDocuments;
-  final VoidCallback onReview;
-  final ValueChanged<Set<MedicalEventType>> onTypes;
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Wrap(spacing: AppSpacing.sm, runSpacing: AppSpacing.sm, children: [
-      ActionChip(label: Text(l10n.summarySectionMedications), onPressed: () => onTypes({MedicalEventType.medication, MedicalEventType.treatmentOutcome})),
-      ActionChip(label: Text(l10n.summarySectionTestResults), onPressed: () => onTypes({MedicalEventType.examination, MedicalEventType.procedure})),
-      ActionChip(label: Text(l10n.summarySectionKeySymptoms), onPressed: () => onTypes({MedicalEventType.symptom})),
-      ActionChip(label: Text(l10n.documentDetailTitle), onPressed: onDocuments),
-      ActionChip(label: Text(l10n.eventUnconfirmedBadge), onPressed: onReview),
-      ActionChip(label: Text(l10n.medicationsTitle), onPressed: () => context.push('/medications')),
-    ]);
-  }
-}
-
-class _TypeFilterSheet extends StatefulWidget {
-  const _TypeFilterSheet({required this.initial});
-  final Set<MedicalEventType> initial;
-  @override State<_TypeFilterSheet> createState() => _TypeFilterSheetState();
-}
-class _TypeFilterSheetState extends State<_TypeFilterSheet> {
-  late final Set<MedicalEventType> _selected = {...widget.initial};
-  @override Widget build(BuildContext context) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
-    for (final type in MedicalEventType.values) CheckboxListTile(
-      value: _selected.contains(type), title: Text(type.label(context.l10n)),
-      onChanged: (value) => setState(() => value == true ? _selected.add(type) : _selected.remove(type)),
-    ),
-    Padding(padding: const EdgeInsets.all(AppSpacing.lg), child: FilledButton(
-      onPressed: () => Navigator.pop(context, _selected), child: Text(context.l10n.timelineFiltersAction),
-    )),
-  ]));
 }
 
 class _TimelineEventRow extends ConsumerWidget {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -41,24 +42,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final l10n = context.l10n;
-    final uploadState = ref.watch(documentUploadControllerProvider);
-    final voiceState = ref.watch(voiceCaptureControllerProvider);
-    final uploadStage = uploadState.maybeWhen(
-      data: (state) => state.stage,
-      orElse: () => null,
-    );
-    final isUploadBusy =
-        uploadStage == DocumentUploadStage.uploading ||
-        uploadStage == DocumentUploadStage.processing;
-    final isVoiceBusy = voiceState.maybeWhen(
-      data: (state) =>
-          state.stage == VoiceCaptureStage.requestingPermission ||
-          state.stage == VoiceCaptureStage.recording,
-      orElse: () => false,
-    );
-    final activeVoiceState = voiceState.hasValue
-        ? voiceState.requireValue
-        : null;
     return Material(
       color: AppColors.clinicalWhite,
       child: SafeArea(
@@ -89,108 +72,47 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            MedStoryActionRow(
-              icon: Icons.document_scanner_outlined,
-              title: l10n.scanDocumentTitle,
-              description: l10n.scanDocumentDescription,
-              isPrimary: true,
-              semanticHint: l10n.scanDocumentSemanticHint,
-              onTap: () {
-                if (!isUploadBusy) {
-                  _pickCameraImage();
-                }
-              },
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            MedStoryActionRow(
-              icon: Icons.add_photo_alternate_outlined,
-              title: l10n.addPhotoTitle,
-              description: l10n.addPhotoDescription,
-              semanticHint: l10n.addPhotoSemanticHint,
-              onTap: () {
-                if (!isUploadBusy) {
-                  _pickGalleryImage();
-                }
-              },
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            MedStoryActionRow(
-              icon: Icons.attach_file_rounded,
-              title: l10n.chooseFileTitle,
-              description: l10n.chooseFileDescription,
-              semanticHint: l10n.chooseFileSemanticHint,
-              onTap: () {
-                if (!isUploadBusy) {
-                  _pickFile();
-                }
-              },
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            MedStoryActionRow(
-              icon: Icons.mic_none_rounded,
-              title: l10n.recordVoiceTitle,
-              description: l10n.recordVoiceDescription,
-              semanticHint: l10n.recordVoiceSemanticHint,
-              onTap: () {
-                if (!isUploadBusy && !isVoiceBusy) {
-                  _startVoiceRecording();
-                }
-              },
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            if (voiceState.hasError)
-              _VoiceErrorPanel(
-                message: _voiceErrorMessage(context, voiceState.error!),
-                onRetry: _startVoiceRecording,
-              )
-            else if (activeVoiceState?.stage == VoiceCaptureStage.recording ||
-                activeVoiceState?.stage ==
-                    VoiceCaptureStage.requestingPermission)
-              _VoiceRecordingPanel(
-                state: activeVoiceState!,
-                onStop: _stopVoiceRecording,
-                onDiscard: _discardVoiceRecording,
-              )
-            else if (activeVoiceState?.stage == VoiceCaptureStage.recorded)
-              _RecordedVoicePanel(
-                state: activeVoiceState!,
-                isUploadBusy: isUploadBusy,
-                onUpload: _uploadRecordedVoice,
-                onDiscard: _discardVoiceRecording,
-                onRecordAgain: _restartVoiceRecording,
-              )
-            else if (_selectedFile == null)
-              _EmptySelectionPanel(message: l10n.documentSelectionEmpty)
-            else
-              _SelectedFilePanel(selectedFile: _selectedFile!),
-            const SizedBox(height: AppSpacing.md),
-            uploadState.when(
-              data: (state) => _UploadStatusPanelView(
-                state: state,
-                onViewResult: () => _viewProcessedDocument(state),
-              ),
-              loading: () => const _UploadStatusPanelView(
-                state: DocumentUploadState(
-                  stage: DocumentUploadStage.uploading,
+            _CaptureActionGroup(
+              actions: [
+                _CaptureAction(
+                  icon: Icons.add_photo_alternate_outlined,
+                  title: l10n.addPhotoTitle,
+                  description: l10n.addPhotoDescription,
+                  semanticHint: l10n.addPhotoSemanticHint,
+                  onTap: _pickGalleryImage,
                 ),
-              ),
-              error: (error, _) => _UploadErrorPanel(
-                message: _documentErrorMessage(context, error),
-                onRetry: _retrySelectedFile,
-              ),
+                _CaptureAction(
+                  icon: Icons.document_scanner_outlined,
+                  title: l10n.scanDocumentTitle,
+                  description: l10n.scanDocumentDescription,
+                  semanticHint: l10n.scanDocumentSemanticHint,
+                  onTap: _pickCameraImage,
+                ),
+                _CaptureAction(
+                  icon: Icons.attach_file_rounded,
+                  title: l10n.chooseFileTitle,
+                  description: l10n.chooseFileDescription,
+                  semanticHint: l10n.chooseFileSemanticHint,
+                  onTap: _pickFile,
+                ),
+                _CaptureAction(
+                  icon: Icons.edit_note_rounded,
+                  title: l10n.writeNoteTitle,
+                  description: l10n.writeNoteDescription,
+                  semanticHint: l10n.writeNoteSemanticHint,
+                  onTap: () => context.push('/notes/new'),
+                ),
+                _CaptureAction(
+                  icon: Icons.mic_none_rounded,
+                  title: l10n.recordVoiceTitle,
+                  description: l10n.recordVoiceDescription,
+                  semanticHint: l10n.recordVoiceSemanticHint,
+                  onTap: _startVoiceRecording,
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.xl),
-            MedStoryActionRow(
-              icon: Icons.edit_note_rounded,
-              title: l10n.writeNoteTitle,
-              description: l10n.writeNoteDescription,
-              semanticHint: l10n.writeNoteSemanticHint,
-              onTap: () => context.push('/notes/new'),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            const _PrivacyPanel(),
-            const SizedBox(height: AppSpacing.lg),
-            const _BoundaryNote(),
+            const _PrivacyNotice(),
           ],
         ),
       ),
@@ -293,7 +215,10 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         sizeBytes: resolvedSize,
       );
     });
-    await _uploadSelectedFile();
+    unawaited(_uploadSelectedFile());
+    if (mounted) {
+      await _openProcessingFlow(fileName: fileName);
+    }
   }
 
   Future<void> _uploadSelectedFile() async {
@@ -330,48 +255,24 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     }
   }
 
-  void _retrySelectedFile() {
-    final voiceState = ref.read(voiceCaptureControllerProvider);
-    final voice = voiceState.hasValue ? voiceState.requireValue : null;
-    if (voice?.stage == VoiceCaptureStage.recorded) {
-      _uploadRecordedVoice();
-      return;
-    }
-    _uploadSelectedFile();
-  }
-
-  void _viewProcessedDocument(DocumentUploadState state) {
-    final documentId = state.document?.id ?? state.documentId;
-    if (documentId == null) {
-      return;
-    }
-    context.push('/documents/$documentId');
-  }
-
   Future<void> _startVoiceRecording() async {
     setState(() {
       _selectedFile = null;
     });
     ref.read(documentUploadControllerProvider.notifier).reset();
     await ref.read(voiceCaptureControllerProvider.notifier).startRecording();
-  }
-
-  Future<void> _stopVoiceRecording() async {
-    await ref.read(voiceCaptureControllerProvider.notifier).stopRecording();
-    final voiceState = ref.read(voiceCaptureControllerProvider);
-    final voice = voiceState.hasValue ? voiceState.requireValue : null;
-    if (voice?.maxDurationReached == true && mounted) {
-      _showSnack(context.l10n.voiceRecordingMaxDurationMessage);
+    if (mounted) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) =>
+              _VoiceCaptureFlowScreen(onUpload: _beginVoiceUploadFlow),
+        ),
+      );
     }
   }
 
   Future<void> _discardVoiceRecording() {
     return ref.read(voiceCaptureControllerProvider.notifier).discardRecording();
-  }
-
-  Future<void> _restartVoiceRecording() async {
-    await _discardVoiceRecording();
-    await _startVoiceRecording();
   }
 
   Future<void> _uploadRecordedVoice() async {
@@ -410,67 +311,28 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     }
   }
 
+  void _beginVoiceUploadFlow() {
+    final voiceState = ref.read(voiceCaptureControllerProvider);
+    final recorded = voiceState.hasValue ? voiceState.requireValue : null;
+    Navigator.of(context).pop();
+    if (recorded?.fileName == null) {
+      return;
+    }
+    unawaited(_uploadRecordedVoice());
+    unawaited(_openProcessingFlow(fileName: recorded!.fileName!));
+  }
+
+  Future<void> _openProcessingFlow({required String fileName}) {
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => _ProcessingFlowScreen(fileName: fileName),
+      ),
+    );
+  }
+
   void _showSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
-  }
-}
-
-class _SelectedFilePanel extends StatelessWidget {
-  const _SelectedFilePanel({required this.selectedFile});
-
-  final _SelectedDocumentFile selectedFile;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return _Panel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.documentReviewTitle,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColors.patientInk,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              const Icon(
-                Icons.description_outlined,
-                color: AppColors.deepClinicalBlue,
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      selectedFile.fileName,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      l10n.documentFileMetadata(
-                        selectedFile.mimeType,
-                        _formatBytes(selectedFile.sizeBytes),
-                      ),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.secondaryInk,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }
@@ -757,10 +619,15 @@ class _UploadStatusPanelView extends StatelessWidget {
 }
 
 class _UploadErrorPanel extends StatelessWidget {
-  const _UploadErrorPanel({required this.message, required this.onRetry});
+  const _UploadErrorPanel({
+    required this.message,
+    required this.onRetry,
+    this.actionLabel,
+  });
 
   final String message;
   final VoidCallback onRetry;
+  final String? actionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -784,7 +651,7 @@ class _UploadErrorPanel extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(l10n.documentRetryAction),
+            label: Text(actionLabel ?? l10n.documentRetryAction),
           ),
         ],
       ),
@@ -792,31 +659,59 @@ class _UploadErrorPanel extends StatelessWidget {
   }
 }
 
-class _EmptySelectionPanel extends StatelessWidget {
-  const _EmptySelectionPanel({required this.message});
+class _CaptureAction {
+  const _CaptureAction({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.semanticHint,
+    required this.onTap,
+  });
 
-  final String message;
+  final IconData icon;
+  final String title;
+  final String description;
+  final String semanticHint;
+  final VoidCallback onTap;
+}
+
+class _CaptureActionGroup extends StatelessWidget {
+  const _CaptureActionGroup({required this.actions});
+
+  final List<_CaptureAction> actions;
 
   @override
   Widget build(BuildContext context) {
-    return _Panel(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.upload_file_outlined,
-            color: AppColors.deepClinicalBlue,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(child: Text(message)),
-        ],
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.clinicalLine),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(13),
+        child: Column(
+          children: [
+            for (var index = 0; index < actions.length; index++) ...[
+              MedStoryActionRow(
+                icon: actions[index].icon,
+                title: actions[index].title,
+                description: actions[index].description,
+                semanticHint: actions[index].semanticHint,
+                onTap: actions[index].onTap,
+                isGrouped: true,
+              ),
+              if (index != actions.length - 1)
+                const Divider(height: 1, color: AppColors.clinicalLine),
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _PrivacyPanel extends StatelessWidget {
-  const _PrivacyPanel();
+class _PrivacyNotice extends StatelessWidget {
+  const _PrivacyNotice();
 
   @override
   Widget build(BuildContext context) {
@@ -825,73 +720,197 @@ class _PrivacyPanel extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: l10n.privacyPanelSemanticLabel,
-      child: _Panel(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(
-              Icons.lock_outline_rounded,
-              color: AppColors.deepClinicalBlue,
-              size: 32,
+      label: l10n.capturePrivacyNotice,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.shield_outlined,
+            color: AppColors.deepClinicalBlue,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              l10n.capturePrivacyNotice,
+              style: textTheme.bodyMedium?.copyWith(
+                color: AppColors.secondaryInk,
+                height: 1.35,
+              ),
             ),
-            const SizedBox(width: AppSpacing.lg),
-            Expanded(
-              child: Column(
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProcessingFlowScreen extends ConsumerWidget {
+  const _ProcessingFlowScreen({required this.fileName});
+
+  final String fileName;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final uploadState = ref.watch(documentUploadControllerProvider);
+    return Scaffold(
+      backgroundColor: AppColors.clinicalWhite,
+      appBar: AppBar(title: Text(l10n.documentProcessingTitle)),
+      body: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.lg,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _Panel(
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.description_outlined,
+                      color: AppColors.deepClinicalBlue,
+                      size: 28,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Text(
+                        fileName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              uploadState.when(
+                loading: () => const _UploadStatusPanelView(
+                  state: DocumentUploadState(
+                    stage: DocumentUploadStage.uploading,
+                  ),
+                ),
+                error: (error, _) => _UploadErrorPanel(
+                  message: _documentErrorMessage(context, error),
+                  onRetry: () => Navigator.of(context).pop(),
+                  actionLabel: l10n.documentProcessingDoneAction,
+                ),
+                data: (state) => _UploadStatusPanelView(
+                  state: state,
+                  onViewResult: state.stage == DocumentUploadStage.processed
+                      ? () {
+                          final id = state.document?.id ?? state.documentId;
+                          if (id != null) {
+                            context.push('/documents/$id');
+                          }
+                        }
+                      : null,
+                ),
+              ),
+              const Spacer(),
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    l10n.privacyPanelTitle,
-                    style: textTheme.titleMedium?.copyWith(
-                      color: AppColors.patientInk,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: AppColors.deepClinicalBlue,
+                    size: 20,
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    l10n.privacyPanelDescription,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.secondaryInk,
-                      height: 1.35,
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      l10n.documentProcessingBackgroundMessage,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.secondaryInk,
+                        height: 1.35,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.lg),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.documentProcessingDoneAction),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _BoundaryNote extends StatelessWidget {
-  const _BoundaryNote();
+class _VoiceCaptureFlowScreen extends ConsumerWidget {
+  const _VoiceCaptureFlowScreen({required this.onUpload});
+
+  final VoidCallback onUpload;
 
   @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(
-          Icons.shield_outlined,
-          color: AppColors.deepClinicalBlue,
-          size: 20,
+    final voiceState = ref.watch(voiceCaptureControllerProvider);
+    final voice = voiceState.hasValue ? voiceState.requireValue : null;
+    return Scaffold(
+      backgroundColor: AppColors.clinicalWhite,
+      appBar: AppBar(title: Text(l10n.voiceCaptureTitle)),
+      body: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: voiceState.hasError
+              ? _VoiceErrorPanel(
+                  message: _voiceErrorMessage(context, voiceState.error!),
+                  onRetry: () => ref
+                      .read(voiceCaptureControllerProvider.notifier)
+                      .startRecording(),
+                )
+              : voice == null
+              ? const Center(child: CircularProgressIndicator())
+              : switch (voice.stage) {
+                  VoiceCaptureStage.requestingPermission ||
+                  VoiceCaptureStage.recording => _VoiceRecordingPanel(
+                    state: voice,
+                    onStop: () => ref
+                        .read(voiceCaptureControllerProvider.notifier)
+                        .stopRecording(),
+                    onDiscard: () async {
+                      await ref
+                          .read(voiceCaptureControllerProvider.notifier)
+                          .discardRecording();
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                  ),
+                  VoiceCaptureStage.recorded => _RecordedVoicePanel(
+                    state: voice,
+                    isUploadBusy: false,
+                    onUpload: onUpload,
+                    onDiscard: () async {
+                      await ref
+                          .read(voiceCaptureControllerProvider.notifier)
+                          .discardRecording();
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                    onRecordAgain: () async {
+                      await ref
+                          .read(voiceCaptureControllerProvider.notifier)
+                          .discardRecording();
+                      await ref
+                          .read(voiceCaptureControllerProvider.notifier)
+                          .startRecording();
+                    },
+                  ),
+                  VoiceCaptureStage.idle => const SizedBox.shrink(),
+                },
         ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Text(
-            l10n.boundaryNote,
-            style: textTheme.bodyMedium?.copyWith(
-              color: AppColors.secondaryInk,
-              height: 1.35,
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

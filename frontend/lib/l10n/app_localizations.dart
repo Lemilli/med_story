@@ -596,6 +596,12 @@ abstract class AppLocalizations {
   /// **'Choose how you want to add something. You can review it before it becomes part of your story.'**
   String get captureSubtitle;
 
+  /// No description provided for @capturePrivacyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Private to you. You review suggestions before they join your story. MedStory organizes your information; it does not diagnose.'**
+  String get capturePrivacyNotice;
+
   /// No description provided for @recordVoiceTitle.
   ///
   /// In en, this message translates to:
@@ -805,6 +811,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Processing upload'**
   String get documentProcessingTitle;
+
+  /// No description provided for @documentProcessingBackgroundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You can leave this screen while processing continues. Your document will be ready to review here when it finishes.'**
+  String get documentProcessingBackgroundMessage;
+
+  /// No description provided for @documentProcessingDoneAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get documentProcessingDoneAction;
 
   /// No description provided for @documentReviewTitle.
   ///
@@ -1433,7 +1451,7 @@ abstract class AppLocalizations {
   /// No description provided for @timelineHeadline.
   ///
   /// In en, this message translates to:
-  /// **'Your medical story'**
+  /// **'MedStory'**
   String get timelineHeadline;
 
   /// No description provided for @timelineSubtitle.
@@ -1484,11 +1502,41 @@ abstract class AppLocalizations {
   /// **'Filters'**
   String get timelineFiltersAction;
 
+  /// No description provided for @timelineApplyFiltersAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Show results'**
+  String get timelineApplyFiltersAction;
+
+  /// No description provided for @timelineClearFiltersAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all filters'**
+  String get timelineClearFiltersAction;
+
+  /// No description provided for @timelineClearSearchAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get timelineClearSearchAction;
+
+  /// No description provided for @timelineFiltersActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters are applied'**
+  String get timelineFiltersActive;
+
   /// No description provided for @timelineAllTypes.
   ///
   /// In en, this message translates to:
   /// **'All types'**
   String get timelineAllTypes;
+
+  /// No description provided for @timelineAllYears.
+  ///
+  /// In en, this message translates to:
+  /// **'All years'**
+  String get timelineAllYears;
 
   /// No description provided for @timelineOfflineNotice.
   ///
