@@ -39,6 +39,7 @@ class MockLLMProvider:
         normalized = user.casefold()
         if "c-reactive protein" in normalized or "crp" in normalized:
             return {
+                "is_medical_document": True,
                 "document_date": "2026-05-12",
                 "suggested_title": "CBC and CRP lab results",
                 "events": [
@@ -64,6 +65,7 @@ class MockLLMProvider:
             }
         if "mesalazine" in normalized:
             return {
+                "is_medical_document": True,
                 "document_date": "2026-05-13",
                 "suggested_title": "Gastroenterology prescription",
                 "events": [
@@ -85,6 +87,7 @@ class MockLLMProvider:
                 ],
             }
         return {
+            "is_medical_document": False,
             "document_date": None,
             "suggested_title": None,
             "events": [],

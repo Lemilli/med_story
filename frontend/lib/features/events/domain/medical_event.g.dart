@@ -21,6 +21,7 @@ _MedicalEvent _$MedicalEventFromJson(Map<String, dynamic> json) =>
           $enumDecodeNullable(_$EventSourceEnumMap, json['source']) ??
           EventSource.userManual,
       sourceDocumentId: json['source_document_id'] as String?,
+      sourceText: json['source_text'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble(),
       isConfirmed: json['is_confirmed'] as bool? ?? true,
       tags:
@@ -42,6 +43,7 @@ Map<String, dynamic> _$MedicalEventToJson(_MedicalEvent instance) =>
       'attributes': instance.attributes,
       'source': _$EventSourceEnumMap[instance.source]!,
       'source_document_id': instance.sourceDocumentId,
+      'source_text': instance.sourceText,
       'confidence': instance.confidence,
       'is_confirmed': instance.isConfirmed,
       'tags': instance.tags,

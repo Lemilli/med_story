@@ -51,10 +51,16 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
           Expanded(child: FutureBuilder<DocumentPage>(
             future: _page,
             builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) return const Center(child: CircularProgressIndicator());
-              if (snapshot.hasError) return Center(child: Text(snapshot.error.toString()));
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text(snapshot.error.toString()));
+              }
               final documents = snapshot.data?.results ?? const <MedicalDocument>[];
-              if (documents.isEmpty) return Center(child: Text(l10n.documentSelectionEmpty));
+              if (documents.isEmpty) {
+                return Center(child: Text(l10n.documentSelectionEmpty));
+              }
               return ListView.separated(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.xxxl),
                 itemCount: documents.length,
@@ -67,7 +73,6 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
                     leading: Icon(document.docType == DocumentType.audio ? Icons.mic_none_rounded : Icons.description_outlined),
                     title: Text(document.title),
                     subtitle: Text('${document.status.apiName} · ${document.eventCount}'),
-                    trailing: document.explanationAvailable ? const Icon(Icons.lightbulb_outline_rounded) : null,
                     onTap: () => context.push('/documents/${document.id}'),
                   );
                 },

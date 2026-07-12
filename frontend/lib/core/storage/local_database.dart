@@ -68,7 +68,37 @@ class CachedMedicalSummaries extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Subjects, CachedMedicalEvents, CachedMedicalSummaries])
+class UploadQueueItems extends Table {
+  TextColumn get id => text()();
+  TextColumn get displayName => text()();
+  TextColumn get fingerprint => text()();
+  TextColumn get localPath => text()();
+  TextColumn get storedFileName => text()();
+  TextColumn get mimeType => text()();
+  IntColumn get sizeBytes => integer()();
+  TextColumn get docType => text()();
+  TextColumn get title => text()();
+  TextColumn get subjectId => text().nullable()();
+  TextColumn get language => text().nullable()();
+  TextColumn get status => text()();
+  TextColumn get documentId => text().nullable()();
+  TextColumn get errorMessage => text().nullable()();
+  BoolColumn get isDismissed => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+@DriftDatabase(
+  tables: [
+    Subjects,
+    CachedMedicalEvents,
+    CachedMedicalSummaries,
+    UploadQueueItems,
+  ],
+)
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase() : super(_openConnection());
 
@@ -76,7 +106,7 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -85,6 +115,15 @@ class LocalDatabase extends _$LocalDatabase {
       onUpgrade: (migrator, from, to) async {
         if (from < 2) {
           await migrator.createTable(cachedMedicalSummaries);
+        }
+        if (from < 3) {
+          await migrator.createTable(uploadQueueItems);
+        }
+        if (from < 4) {
+          await migrator.addColumn(
+            uploadQueueItems,
+            uploadQueueItems.isDismissed,
+          );
         }
       },
     );
@@ -95,6 +134,7 @@ class LocalDatabase extends _$LocalDatabase {
       await delete(cachedMedicalSummaries).go();
       await delete(cachedMedicalEvents).go();
       await delete(subjects).go();
+      await delete(uploadQueueItems).go();
     });
   }
 

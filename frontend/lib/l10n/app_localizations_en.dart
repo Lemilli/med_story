@@ -431,7 +431,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentProcessingBackgroundMessage =>
-      'You can leave this screen while processing continues. Your document will be ready to review here when it finishes.';
+      'Processing status is shown in the Add tab.';
 
   @override
   String get documentProcessingDoneAction => 'Done';
@@ -491,7 +491,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentUploadProcessing =>
-      'Extracting text and suggested events. You can leave this screen after it finishes.';
+      'Extracting text and suggested events.';
 
   @override
   String get documentUploadProcessed =>
@@ -502,12 +502,53 @@ class AppLocalizationsEn extends AppLocalizations {
       'We could not process this document. Check the file and try again.';
 
   @override
+  String get documentNotMedicalMessage =>
+      'This doesn’t appear to be a medical document.';
+
+  @override
+  String get documentUnreadableMessage =>
+      'We couldn’t read this document. Try a clearer photo or file.';
+
+  @override
   String get documentFileTooLargeMessage =>
       'Choose a file that is 5 MB or smaller.';
 
   @override
   String get documentUnsupportedFileMessage =>
       'Phase 2 supports PDFs and images only.';
+
+  @override
+  String get uploadQueueTitle => 'Processing uploads';
+
+  @override
+  String get uploadQueueUploading => 'Uploading';
+
+  @override
+  String uploadQueueUploadingProgress(int progress) {
+    return 'Uploading $progress%';
+  }
+
+  @override
+  String get uploadQueueProcessing => 'Processing';
+
+  @override
+  String get uploadQueueCompleted => 'Completed';
+
+  @override
+  String get uploadQueueFailed => 'Couldn’t finish — retry';
+
+  @override
+  String get uploadQueueDuplicateMessage =>
+      'This file is already being processed or was added before.';
+
+  @override
+  String get uploadQueuePhotoLabel => 'Photo upload';
+
+  @override
+  String get uploadQueueFileLabel => 'File upload';
+
+  @override
+  String get uploadQueueDismissAction => 'Dismiss';
 
   @override
   String get documentProcessingFailedMessage =>
@@ -576,58 +617,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get documentDetailPrivacyNote =>
       'The original document stays in the app sandbox. The backend processes uploaded bytes transiently and returns only metadata and suggested events.';
-
-  @override
-  String get documentExplanationTitle => 'Plain-language explanation';
-
-  @override
-  String get documentExplanationSummaryTitle => 'Summary';
-
-  @override
-  String get documentExplanationKeyPointsTitle => 'Key points';
-
-  @override
-  String get documentExplanationGlossaryTitle => 'Glossary';
-
-  @override
-  String get documentExplanationLoading => 'Loading the explanation...';
-
-  @override
-  String get documentExplanationNotReadyMessage =>
-      'No explanation is ready yet. MedStory can generate a plain-language version from the extracted text.';
-
-  @override
-  String get documentExplanationBoundaryNote =>
-      'This explanation helps you understand the document. It does not diagnose or recommend treatment.';
-
-  @override
-  String get documentExplanationGenerateAction => 'Generate explanation';
-
-  @override
-  String get documentExplanationRegenerateAction => 'Regenerate explanation';
-
-  @override
-  String get documentExplanationQueuedAction => 'Queued';
-
-  @override
-  String get documentExplanationRetryAction => 'Try again';
-
-  @override
-  String get documentExplanationQueuedMessage =>
-      'Explanation generation has started. Pull to refresh this document in a moment.';
-
-  @override
-  String get documentExplanationLoadFailed =>
-      'We could not load this explanation. Check your connection and try again.';
-
-  @override
-  String get documentExplanationRegenerateFailed =>
-      'We could not start explanation generation. Check your connection and try again.';
-
-  @override
-  String documentExplanationGeneratedAt(String date) {
-    return 'Generated $date';
-  }
 
   @override
   String get documentDeleteAction => 'Delete document';
@@ -976,6 +965,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventAiConfirmedNote => 'You confirmed this AI-suggested event.';
+
+  @override
+  String get eventOriginalSourceTitle => 'Original note';
+
+  @override
+  String get eventOriginalTranscriptTitle => 'Original transcript';
+
+  @override
+  String get eventAiAnalysisTitle => 'AI analysis';
 
   @override
   String get eventResultTitle => 'Result';

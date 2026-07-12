@@ -302,83 +302,99 @@ class _TimelineFilterSheetState extends State<_TimelineFilterSheet> {
 
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.78,
-      minChildSize: 0.5,
+      initialChildSize: 0.7,
+      minChildSize: 0.45,
       maxChildSize: 0.92,
-      builder: (context, scrollController) => Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xl,
-          AppSpacing.sm,
-          AppSpacing.xl,
-          AppSpacing.xl,
-        ),
+      builder: (context, scrollController) => Scrollbar(
+        controller: scrollController,
+        thumbVisibility: true,
         child: CustomScrollView(
           controller: scrollController,
           slivers: [
-            SliverToBoxAdapter(
-              child: Text(
-                l10n.timelineFiltersAction,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.xs,
+                AppSpacing.xl,
+                AppSpacing.md,
               ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
-            SliverToBoxAdapter(
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.calendar_month_outlined),
-                title: Text(l10n.timelineYear),
-                subtitle: Text(selectedYear ?? l10n.timelineAllYears),
-                trailing: selectedYear == null
-                    ? const Icon(Icons.chevron_right_rounded)
-                    : IconButton(
-                        tooltip: l10n.timelineAllYears,
-                        onPressed: () => setState(() => _year = null),
-                        icon: const Icon(Icons.close_rounded),
+              sliver: SliverMainAxisGroup(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Text(
+                      l10n.timelineFiltersAction,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
                       ),
-                onTap: _pickYear,
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: Divider(color: AppColors.clinicalLine),
-            ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final type = MedicalEventType.values[index];
-                return CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _selected.contains(type),
-                  title: Text(type.label(l10n)),
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  onChanged: (value) => setState(
-                    () => value == true
-                        ? _selected.add(type)
-                        : _selected.remove(type),
+                    ),
                   ),
-                );
-              }, childCount: MedicalEventType.values.length),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
-            SliverToBoxAdapter(
-              child: FilledButton(
-                onPressed: () => Navigator.pop(
-                  context,
-                  widget.initial.copyWith(
-                    types: _selected,
-                    from: _year == null ? null : DateTime(_year!.year),
-                    to: _year == null ? null : DateTime(_year!.year, 12, 31),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.xs),
                   ),
-                ),
-                child: Text(l10n.timelineApplyFiltersAction),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
-            SliverToBoxAdapter(
-              child: TextButton(
-                onPressed: () =>
-                    Navigator.pop(context, const TimelineFilters()),
-                child: Text(l10n.timelineClearFiltersAction),
+                  SliverToBoxAdapter(
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.calendar_month_outlined),
+                      title: Text(l10n.timelineYear),
+                      subtitle: Text(selectedYear ?? l10n.timelineAllYears),
+                      trailing: selectedYear == null
+                          ? const Icon(Icons.chevron_right_rounded)
+                          : IconButton(
+                              tooltip: l10n.timelineAllYears,
+                              onPressed: () => setState(() => _year = null),
+                              icon: const Icon(Icons.close_rounded),
+                            ),
+                      onTap: _pickYear,
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: Divider(color: AppColors.clinicalLine),
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final type = MedicalEventType.values[index];
+                      return CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: _selected.contains(type),
+                        title: Text(type.label(l10n)),
+                        controlAffinity: ListTileControlAffinity.trailing,
+                        onChanged: (value) => setState(
+                          () => value == true
+                              ? _selected.add(type)
+                              : _selected.remove(type),
+                        ),
+                      );
+                    }, childCount: MedicalEventType.values.length),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.xs),
+                  ),
+                  SliverToBoxAdapter(
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(
+                        context,
+                        widget.initial.copyWith(
+                          types: _selected,
+                          from: _year == null ? null : DateTime(_year!.year),
+                          to: _year == null
+                              ? null
+                              : DateTime(_year!.year, 12, 31),
+                        ),
+                      ),
+                      child: Text(l10n.timelineApplyFiltersAction),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.xs),
+                  ),
+                  SliverToBoxAdapter(
+                    child: TextButton(
+                      onPressed: () =>
+                          Navigator.pop(context, const TimelineFilters()),
+                      child: Text(l10n.timelineClearFiltersAction),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

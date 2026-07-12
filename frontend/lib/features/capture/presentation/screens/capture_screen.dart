@@ -30,7 +30,6 @@ class CaptureScreen extends ConsumerStatefulWidget {
 
 class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   final _imagePicker = ImagePicker();
-  _SelectedDocumentFile? _selectedFile;
 
   @override
   void initState() {
@@ -42,6 +41,12 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final l10n = context.l10n;
+    final uploads = ref.watch(documentUploadControllerProvider);
+    final hasUploads = uploads.when(
+      data: (items) => items.isNotEmpty,
+      loading: () => false,
+      error: (_, _) => false,
+    );
     return Material(
       color: AppColors.clinicalWhite,
       child: SafeArea(
@@ -53,6 +58,22 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             AppSpacing.xxxl,
           ),
           children: [
+            uploads.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+              data: (items) => items.isEmpty
+                  ? const SizedBox.shrink()
+                  : _UploadQueue(
+                      items: items,
+                      onRetry: (id) => ref
+                          .read(documentUploadControllerProvider.notifier)
+                          .retry(id),
+                      onDismiss: (id) => ref
+                          .read(documentUploadControllerProvider.notifier)
+                          .dismiss(id),
+                    ),
+            ),
+            if (hasUploads) const SizedBox(height: AppSpacing.xl),
             Text(
               l10n.captureHeadline,
               style: textTheme.headlineLarge?.copyWith(
@@ -195,6 +216,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     int? sizeBytes,
   }) async {
     final l10n = context.l10n;
+    final language = Localizations.localeOf(context).languageCode;
     if (!_isSupportedMimeType(mimeType)) {
       _showSnack(l10n.documentUnsupportedFileMessage);
       return;
@@ -207,59 +229,33 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     }
 
     await _discardVoiceRecording();
-    setState(() {
-      _selectedFile = _SelectedDocumentFile(
-        path: path,
-        fileName: fileName,
-        mimeType: mimeType,
-        sizeBytes: resolvedSize,
-      );
-    });
-    unawaited(_uploadSelectedFile());
-    if (mounted) {
-      await _openProcessingFlow(fileName: fileName);
-    }
-  }
-
-  Future<void> _uploadSelectedFile() async {
-    final selectedFile = _selectedFile;
-    if (selectedFile == null) {
-      return;
-    }
-
-    ref.read(documentUploadControllerProvider.notifier).reset();
     final subjectState = ref
         .read(subjectControllerProvider)
         .maybeWhen(data: (state) => state, orElse: () => null);
-    try {
-      await ref
-          .read(documentUploadControllerProvider.notifier)
-          .upload(
-            DocumentUploadDraft(
-              title: _titleFromFileName(
-                selectedFile.fileName,
-                fallback: context.l10n.documentUntitledTitle,
-              ),
-              docType: DocumentType.medicalRecord,
-              subjectId: subjectState?.selectedSubjectId,
-              source: DocumentSourceFile(
-                path: selectedFile.path,
-                fileName: selectedFile.fileName,
-                mimeType: selectedFile.mimeType,
-              ),
-              language: Localizations.localeOf(context).languageCode,
+    final result = await ref
+        .read(documentUploadControllerProvider.notifier)
+        .enqueue(
+          DocumentUploadDraft(
+            title: _titleFromFileName(
+              fileName,
+              fallback: l10n.documentUntitledTitle,
             ),
-          );
-    } on Object {
-      // Keep the selected source available so retry can re-upload it.
+            docType: DocumentType.medicalRecord,
+            subjectId: subjectState?.selectedSubjectId,
+            source: DocumentSourceFile(
+              path: path,
+              fileName: fileName,
+              mimeType: mimeType,
+            ),
+            language: language,
+          ),
+        );
+    if (result == UploadEnqueueResult.duplicate && mounted) {
+      _showSnack(l10n.uploadQueueDuplicateMessage);
     }
   }
 
   Future<void> _startVoiceRecording() async {
-    setState(() {
-      _selectedFile = null;
-    });
-    ref.read(documentUploadControllerProvider.notifier).reset();
     await ref.read(voiceCaptureControllerProvider.notifier).startRecording();
     if (mounted) {
       await Navigator.of(context).push<void>(
@@ -285,29 +281,28 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       return;
     }
 
-    ref.read(documentUploadControllerProvider.notifier).reset();
     final subjectState = ref
         .read(subjectControllerProvider)
         .maybeWhen(data: (state) => state, orElse: () => null);
-    try {
-      await ref
-          .read(documentUploadControllerProvider.notifier)
-          .upload(
-            DocumentUploadDraft(
-              title: context.l10n.voiceNoteTitle,
-              docType: DocumentType.audio,
-              subjectId: subjectState?.selectedSubjectId,
-              source: DocumentSourceFile(
-                path: recorded.path!,
-                fileName: recorded.fileName!,
-                mimeType: voiceCaptureMimeType,
-              ),
-              language: Localizations.localeOf(context).languageCode,
+    final result = await ref
+        .read(documentUploadControllerProvider.notifier)
+        .enqueue(
+          DocumentUploadDraft(
+            title: context.l10n.voiceNoteTitle,
+            docType: DocumentType.audio,
+            subjectId: subjectState?.selectedSubjectId,
+            source: DocumentSourceFile(
+              path: recorded.path!,
+              fileName: recorded.fileName!,
+              mimeType: voiceCaptureMimeType,
             ),
-          );
+            language: Localizations.localeOf(context).languageCode,
+          ),
+        );
+    if (result == UploadEnqueueResult.enqueued) {
       await _discardVoiceRecording();
-    } on Object {
-      // Keep the recorded source available so retry can re-upload it.
+    } else if (mounted) {
+      _showSnack(context.l10n.uploadQueueDuplicateMessage);
     }
   }
 
@@ -319,15 +314,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       return;
     }
     unawaited(_uploadRecordedVoice());
-    unawaited(_openProcessingFlow(fileName: recorded!.fileName!));
-  }
-
-  Future<void> _openProcessingFlow({required String fileName}) {
-    return Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => _ProcessingFlowScreen(fileName: fileName),
-      ),
-    );
   }
 
   void _showSnack(String message) {
@@ -565,98 +551,190 @@ class _VoiceErrorPanel extends StatelessWidget {
   }
 }
 
-class _UploadStatusPanelView extends StatelessWidget {
-  const _UploadStatusPanelView({required this.state, this.onViewResult});
+class _UploadQueue extends StatelessWidget {
+  const _UploadQueue({
+    required this.items,
+    required this.onRetry,
+    required this.onDismiss,
+  });
 
-  final DocumentUploadState state;
-  final VoidCallback? onViewResult;
+  final List<QueuedUpload> items;
+  final ValueChanged<String> onRetry;
+  final ValueChanged<String> onDismiss;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final stage = state.stage;
-    final message = switch (stage) {
-      DocumentUploadStage.idle => l10n.documentUploadIdle,
-      DocumentUploadStage.uploading => l10n.documentUploadUploading,
-      DocumentUploadStage.processing => l10n.documentUploadProcessing,
-      DocumentUploadStage.processed => l10n.documentUploadProcessed,
-    };
-    return _Panel(
+    return Semantics(
+      container: true,
+      label: l10n.uploadQueueTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                stage == DocumentUploadStage.processed
-                    ? Icons.check_circle_outline_rounded
-                    : Icons.info_outline_rounded,
-                color: AppColors.deepClinicalBlue,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(child: Text(message)),
-            ],
-          ),
-          if (stage == DocumentUploadStage.uploading ||
-              stage == DocumentUploadStage.processing) ...[
-            const SizedBox(height: AppSpacing.md),
-            const LinearProgressIndicator(),
-          ],
-          if (stage == DocumentUploadStage.processed &&
-              onViewResult != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            FilledButton.icon(
-              onPressed: onViewResult,
-              icon: const Icon(Icons.open_in_new_rounded),
-              label: Text(l10n.documentViewResultAction),
+          Text(
+            l10n.uploadQueueTitle,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.patientInk,
+              fontWeight: FontWeight.w800,
             ),
-          ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.clinicalLine),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(13),
+              child: Column(
+                children: [
+                  for (var index = 0; index < items.length; index++) ...[
+                    _UploadQueueRow(
+                      item: items[index],
+                      onRetry: onRetry,
+                      onDismiss: onDismiss,
+                    ),
+                    if (index != items.length - 1)
+                      const Divider(height: 1, color: AppColors.clinicalLine),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _UploadErrorPanel extends StatelessWidget {
-  const _UploadErrorPanel({
-    required this.message,
+class _UploadQueueRow extends StatelessWidget {
+  const _UploadQueueRow({
+    required this.item,
     required this.onRetry,
-    this.actionLabel,
+    required this.onDismiss,
   });
 
-  final String message;
-  final VoidCallback onRetry;
-  final String? actionLabel;
+  final QueuedUpload item;
+  final ValueChanged<String> onRetry;
+  final ValueChanged<String> onDismiss;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return _Panel(
-      child: Column(
+    final isFailed = item.stage == UploadQueueStage.failed;
+    final isPhoto = item.localFile.mimeType.startsWith('image/');
+    final isActive =
+        item.stage == UploadQueueStage.uploading ||
+        item.stage == UploadQueueStage.processing;
+    final stageLabel = switch (item.stage) {
+      UploadQueueStage.uploading when item.uploadProgress != null =>
+        l10n.uploadQueueUploadingProgress((item.uploadProgress! * 100).round()),
+      UploadQueueStage.uploading => l10n.uploadQueueUploading,
+      UploadQueueStage.processing => l10n.uploadQueueProcessing,
+      UploadQueueStage.completed => l10n.uploadQueueCompleted,
+      UploadQueueStage.failed => l10n.uploadQueueFailed,
+    };
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                color: AppColors.deepClinicalBlue,
+          Semantics(
+            label: isPhoto
+                ? l10n.uploadQueuePhotoLabel
+                : l10n.uploadQueueFileLabel,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: isPhoto
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        File(item.localFile.path),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const _QueueFileIcon(),
+                      ),
+                    )
+                  : const _QueueFileIcon(),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColors.patientInk,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  stageLabel,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isFailed
+                        ? AppColors.controlledCrimson
+                        : AppColors.secondaryInk,
+                    fontWeight: isFailed ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+                if (isActive) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  LinearProgressIndicator(
+                    value: item.stage == UploadQueueStage.uploading
+                        ? item.uploadProgress
+                        : null,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (isFailed)
+            TextButton.icon(
+              onPressed: () => onRetry(item.id),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(l10n.documentRetryAction),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.controlledCrimson,
+                minimumSize: const Size(48, 48),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(child: Text(message)),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          OutlinedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
-            label: Text(actionLabel ?? l10n.documentRetryAction),
-          ),
+            ),
+          if (item.stage == UploadQueueStage.completed)
+            TextButton.icon(
+              onPressed: () => onDismiss(item.id),
+              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+              label: Text(l10n.uploadQueueDismissAction),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.deepClinicalBlue,
+                minimumSize: const Size(48, 48),
+              ),
+            ),
         ],
       ),
     );
   }
+}
+
+class _QueueFileIcon extends StatelessWidget {
+  const _QueueFileIcon();
+
+  @override
+  Widget build(BuildContext context) => const DecoratedBox(
+    decoration: BoxDecoration(
+      color: AppColors.quietSurface,
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+    ),
+    child: Center(
+      child: Icon(
+        Icons.insert_drive_file_outlined,
+        color: AppColors.deepClinicalBlue,
+      ),
+    ),
+  );
 }
 
 class _CaptureAction {
@@ -740,109 +818,6 @@ class _PrivacyNotice extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ProcessingFlowScreen extends ConsumerWidget {
-  const _ProcessingFlowScreen({required this.fileName});
-
-  final String fileName;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final uploadState = ref.watch(documentUploadControllerProvider);
-    return Scaffold(
-      backgroundColor: AppColors.clinicalWhite,
-      appBar: AppBar(title: Text(l10n.documentProcessingTitle)),
-      body: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.lg,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _Panel(
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.description_outlined,
-                      color: AppColors.deepClinicalBlue,
-                      size: 28,
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Text(
-                        fileName,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              uploadState.when(
-                loading: () => const _UploadStatusPanelView(
-                  state: DocumentUploadState(
-                    stage: DocumentUploadStage.uploading,
-                  ),
-                ),
-                error: (error, _) => _UploadErrorPanel(
-                  message: _documentErrorMessage(context, error),
-                  onRetry: () => Navigator.of(context).pop(),
-                  actionLabel: l10n.documentProcessingDoneAction,
-                ),
-                data: (state) => _UploadStatusPanelView(
-                  state: state,
-                  onViewResult: state.stage == DocumentUploadStage.processed
-                      ? () {
-                          final id = state.document?.id ?? state.documentId;
-                          if (id != null) {
-                            context.push('/documents/$id');
-                          }
-                        }
-                      : null,
-                ),
-              ),
-              const Spacer(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    color: AppColors.deepClinicalBlue,
-                    size: 20,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      l10n.documentProcessingBackgroundMessage,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.secondaryInk,
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.documentProcessingDoneAction),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -936,20 +911,6 @@ class _Panel extends StatelessWidget {
   }
 }
 
-class _SelectedDocumentFile {
-  const _SelectedDocumentFile({
-    required this.path,
-    required this.fileName,
-    required this.mimeType,
-    required this.sizeBytes,
-  });
-
-  final String path;
-  final String fileName;
-  final String mimeType;
-  final int sizeBytes;
-}
-
 String _mimeTypeForName(String fileName) {
   final extension = p.extension(fileName).toLowerCase();
   return switch (extension) {
@@ -986,26 +947,6 @@ String _formatDuration(Duration duration) {
   final minutes = duration.inMinutes;
   final seconds = duration.inSeconds.remainder(60);
   return '$minutes:${seconds.toString().padLeft(2, '0')}';
-}
-
-String _documentErrorMessage(BuildContext context, Object error) {
-  final l10n = context.l10n;
-  final message = error is AppFailure ? error.message : error.toString();
-  final mapped = switch (message) {
-    'document_file_too_large' => l10n.documentFileTooLargeMessage,
-    'document_unsupported_mime_type' => l10n.documentUnsupportedFileMessage,
-    'document_processing_failed' => l10n.documentProcessingFailedMessage,
-    'document_processing_timeout' => l10n.documentProcessingTimeoutMessage,
-    'document_source_file_missing' => l10n.documentSourceMissingMessage,
-    _ => null,
-  };
-  if (mapped != null) {
-    return mapped;
-  }
-  if (message.trim().isNotEmpty && !message.contains('_')) {
-    return message;
-  }
-  return l10n.documentUploadFailedMessage;
 }
 
 String _voiceErrorMessage(BuildContext context, Object error) {

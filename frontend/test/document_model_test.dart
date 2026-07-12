@@ -19,7 +19,6 @@ void main() {
           'language': 'en',
           'local_only': true,
           'extracted_text_available': true,
-          'explanation_available': false,
           'event_count': 1,
           'error_message': '',
           'created_at': '2026-06-01T10:00:00Z',
@@ -37,28 +36,5 @@ void main() {
     expect(page.results.single.eventCount, 1);
     expect(page.nextCursor, 'doc-cursor');
     expect(page.previousCursor, isNull);
-  });
-
-  test('parses document explanation and regeneration response', () {
-    final explanation = DocumentExplanation.fromJson({
-      'document_id': 'document-1',
-      'summary_text': 'This lab result is mostly within the expected range.',
-      'key_points': ['CRP is mildly elevated', 'Hemoglobin is normal'],
-      'glossary': {'CRP': 'A marker that can rise with inflammation'},
-      'language': 'en',
-      'created_at': '2026-06-01T10:00:00Z',
-    });
-    final regenerate = ExplanationRegenerateResult.fromJson({
-      'job_id': 'job-1',
-      'status': 'queued',
-    });
-
-    expect(explanation.documentId, 'document-1');
-    expect(explanation.summaryText, contains('lab result'));
-    expect(explanation.keyPoints, hasLength(2));
-    expect(explanation.glossary['CRP'], contains('inflammation'));
-    expect(explanation.createdAt, DateTime.utc(2026, 6, 1, 10));
-    expect(regenerate.jobId, 'job-1');
-    expect(regenerate.status, 'queued');
   });
 }

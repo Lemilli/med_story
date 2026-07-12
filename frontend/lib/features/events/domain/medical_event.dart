@@ -15,6 +15,7 @@ abstract class MedicalEvent with _$MedicalEvent {
     @Default(<String, dynamic>{}) Map<String, dynamic> attributes,
     @Default(EventSource.userManual) EventSource source,
     @JsonKey(name: 'source_document_id') String? sourceDocumentId,
+    @JsonKey(name: 'source_text') String? sourceText,
     double? confidence,
     @JsonKey(name: 'is_confirmed') @Default(true) bool isConfirmed,
     @Default(<String>[]) List<String> tags,

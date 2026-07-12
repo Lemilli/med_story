@@ -70,8 +70,8 @@ remain for deterministic local tests.
 - Backend: `Document` model (metadata only), `/documents/{id}/ingest`, status polling;
   transient ingestion path (no file persistence); Celery ingestion task; **OCR** + **LLM
   structuring** via provider abstraction; events created as AI-suggested (`is_confirmed=false`).
-- Frontend: capture flow (scan/photo/file), local file persistence, ingest state machine,
-  document list/detail,
+- Frontend: capture flow (scan/photo/file), local file persistence, a persistent Add-tab
+  processing queue with retry and duplicate-file protection, document list/detail,
   "confirm AI event" UX.
 - **Exit:** upload a document → see extracted, confirmable events on the timeline (Scenario A).
 - **Provider notes:** set `AI_LLM_PROVIDER=openai`, `AI_OCR_PROVIDER=openai`, and

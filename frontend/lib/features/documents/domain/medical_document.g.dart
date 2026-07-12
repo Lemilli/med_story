@@ -25,7 +25,6 @@ _MedicalDocument _$MedicalDocumentFromJson(Map<String, dynamic> json) =>
       localOnly: json['local_only'] as bool? ?? true,
       extractedTextAvailable:
           json['extracted_text_available'] as bool? ?? false,
-      explanationAvailable: json['explanation_available'] as bool? ?? false,
       eventCount: (json['event_count'] as num?)?.toInt() ?? 0,
       errorMessage: json['error_message'] as String? ?? '',
       createdAt: json['created_at'] == null
@@ -50,7 +49,6 @@ Map<String, dynamic> _$MedicalDocumentToJson(_MedicalDocument instance) =>
       'language': instance.language,
       'local_only': instance.localOnly,
       'extracted_text_available': instance.extractedTextAvailable,
-      'explanation_available': instance.explanationAvailable,
       'event_count': instance.eventCount,
       'error_message': instance.errorMessage,
       'created_at': instance.createdAt?.toIso8601String(),
@@ -115,45 +113,3 @@ Map<String, dynamic> _$DocumentStatusUpdateToJson(
   'id': instance.id,
   'status': _$DocumentStatusEnumMap[instance.status]!,
 };
-
-_DocumentExplanation _$DocumentExplanationFromJson(Map<String, dynamic> json) =>
-    _DocumentExplanation(
-      documentId: json['document_id'] as String,
-      summaryText: json['summary_text'] as String? ?? '',
-      keyPoints:
-          (json['key_points'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const <String>[],
-      glossary:
-          (json['glossary'] as Map<String, dynamic>?)?.map(
-            (k, e) => MapEntry(k, e as String),
-          ) ??
-          const <String, String>{},
-      language: json['language'] as String? ?? '',
-      createdAt: json['created_at'] == null
-          ? null
-          : DateTime.parse(json['created_at'] as String),
-    );
-
-Map<String, dynamic> _$DocumentExplanationToJson(
-  _DocumentExplanation instance,
-) => <String, dynamic>{
-  'document_id': instance.documentId,
-  'summary_text': instance.summaryText,
-  'key_points': instance.keyPoints,
-  'glossary': instance.glossary,
-  'language': instance.language,
-  'created_at': instance.createdAt?.toIso8601String(),
-};
-
-_ExplanationRegenerateResult _$ExplanationRegenerateResultFromJson(
-  Map<String, dynamic> json,
-) => _ExplanationRegenerateResult(
-  jobId: json['job_id'] as String,
-  status: json['status'] as String? ?? '',
-);
-
-Map<String, dynamic> _$ExplanationRegenerateResultToJson(
-  _ExplanationRegenerateResult instance,
-) => <String, dynamic>{'job_id': instance.jobId, 'status': instance.status};

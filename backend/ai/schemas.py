@@ -86,8 +86,9 @@ EVENT_ATTRIBUTES_JSON_SCHEMA = {
 EVENT_EXTRACTION_JSON_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["document_date", "suggested_title", "events"],
+    "required": ["is_medical_document", "document_date", "suggested_title", "events"],
     "properties": {
+        "is_medical_document": {"type": "boolean"},
         "document_date": {"type": ["string", "null"], "format": "date"},
         "suggested_title": {"type": ["string", "null"]},
         "events": {
@@ -210,7 +211,15 @@ def validate_event_extraction(payload: dict[str, Any], *, default_date: date | N
         except SchemaValidationError:
             continue
 
+    # Older provider responses may not include the relevance flag. Treat a
+    # response containing events as medical so rolling provider upgrades do not
+    # discard valid historical uploads.
+    is_medical_document = payload.get("is_medical_document")
+    if not isinstance(is_medical_document, bool):
+        is_medical_document = bool(events)
+
     return {
+        "is_medical_document": is_medical_document,
         "document_date": document_date,
         "suggested_title": _truncate_text(suggested_title.strip(), 255) if isinstance(suggested_title, str) else None,
         "events": events,

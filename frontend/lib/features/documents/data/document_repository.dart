@@ -30,6 +30,14 @@ class DocumentRepository {
     DocumentUploadDraft draft,
   ) async {
     final localFile = await localFileStore.save(draft.source);
+    return createAndUploadStored(draft, localFile);
+  }
+
+  Future<DocumentIngestionResult> createAndUploadStored(
+    DocumentUploadDraft draft,
+    StoredDocumentFile localFile, {
+    void Function(int sent, int total)? onUploadProgress,
+  }) async {
     if (draft.docType == DocumentType.audio) {
       final uploaded = await api.uploadAudio(
         filePath: localFile.path,
@@ -40,6 +48,7 @@ class DocumentRepository {
         language: draft.language,
         localUriHint: localFile.localUriHint,
         documentDate: draft.documentDate,
+        onSendProgress: onUploadProgress,
       );
       return DocumentIngestionResult(
         documentId: uploaded.id,
@@ -67,6 +76,7 @@ class DocumentRepository {
         filePath: localFile.path,
         fileName: localFile.fileName,
         mimeType: localFile.mimeType,
+        onSendProgress: onUploadProgress,
       );
     } on Object {
       await _deleteCreatedDocument(created.id);
@@ -99,16 +109,6 @@ class DocumentRepository {
 
   Future<MedicalDocument> getDocument(String id) {
     return api.getDocument(id);
-  }
-
-  Future<DocumentExplanation> getDocumentExplanation(String documentId) {
-    return api.getDocumentExplanation(documentId);
-  }
-
-  Future<ExplanationRegenerateResult> regenerateDocumentExplanation(
-    String documentId,
-  ) {
-    return api.regenerateDocumentExplanation(documentId);
   }
 
   Future<void> deleteDocument(String id) {

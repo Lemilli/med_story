@@ -33,7 +33,9 @@ from medical.models import (
 
 STRUCTURING_SYSTEM_PROMPT = (
     "You are MedStory's assistant. You organize medical information for a non-medical reader. "
-    "Do not diagnose, recommend treatments, or invent values that are not present in the source."
+    "Do not diagnose, recommend treatments, or invent values that are not present in the source. "
+    "Set is_medical_document to false for content that is not a medical document or medical "
+    "record, such as personal photos, household objects, animals, scenery, or unrelated text."
 )
 
 EXPLANATION_SYSTEM_PROMPT = (
@@ -77,6 +79,10 @@ Use only the confirmed timeline events below. Return JSON using the provided sch
 Do not give medical advice, interpret risk, recommend actions, or draw conclusions beyond the events."""
 
 logger = logging.getLogger(__name__)
+
+
+class DocumentRejectionError(ValueError):
+    """A safe, user-facing reason an upload cannot become medical history."""
 
 
 def get_or_create_default_subject(user):
@@ -150,6 +156,8 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
                 len(extracted_text or ""),
                 extracted_language,
             )
+            if not extracted_text or not extracted_text.strip():
+                raise DocumentRejectionError("document_unreadable")
         structured_payload = get_llm_provider().complete_json(
             system=STRUCTURING_SYSTEM_PROMPT,
             user=extracted_text,
@@ -162,6 +170,8 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
             sorted(structured_payload.keys()) if isinstance(structured_payload, dict) else type(structured_payload).__name__,
         )
         extraction = validate_event_extraction(structured_payload, default_date=timezone.localdate())
+        if not is_audio and not extraction["is_medical_document"]:
+            raise DocumentRejectionError("document_not_medical")
         logger.info(
             "Document ingestion phase=validation_complete document_id=%s job_id=%s event_count=%s document_date=%s",
             document.id,

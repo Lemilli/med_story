@@ -430,7 +430,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get documentProcessingBackgroundMessage =>
-      'Вы можете уйти с этого экрана, пока обработка продолжается. Когда она завершится, документ будет готов к проверке здесь.';
+      'Статус обработки показан на вкладке «Добавить».';
 
   @override
   String get documentProcessingDoneAction => 'Готово';
@@ -490,7 +490,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get documentUploadProcessing =>
-      'Извлекаем текст и предложенные события. После завершения можно уйти с экрана.';
+      'Извлекаем текст и предложенные события.';
 
   @override
   String get documentUploadProcessed =>
@@ -501,12 +501,53 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось обработать документ. Проверьте файл и попробуйте снова.';
 
   @override
+  String get documentNotMedicalMessage =>
+      'Похоже, это не медицинский документ.';
+
+  @override
+  String get documentUnreadableMessage =>
+      'Не удалось прочитать документ. Попробуйте более чёткое фото или файл.';
+
+  @override
   String get documentFileTooLargeMessage =>
       'Выберите файл размером не более 5 МБ.';
 
   @override
   String get documentUnsupportedFileMessage =>
       'На этапе 2 поддерживаются только PDF и изображения.';
+
+  @override
+  String get uploadQueueTitle => 'Обработка загрузок';
+
+  @override
+  String get uploadQueueUploading => 'Загрузка';
+
+  @override
+  String uploadQueueUploadingProgress(int progress) {
+    return 'Загрузка: $progress%';
+  }
+
+  @override
+  String get uploadQueueProcessing => 'Обработка';
+
+  @override
+  String get uploadQueueCompleted => 'Готово';
+
+  @override
+  String get uploadQueueFailed => 'Не удалось завершить — повторите';
+
+  @override
+  String get uploadQueueDuplicateMessage =>
+      'Этот файл уже обрабатывается или был добавлен ранее.';
+
+  @override
+  String get uploadQueuePhotoLabel => 'Загрузка фото';
+
+  @override
+  String get uploadQueueFileLabel => 'Загрузка файла';
+
+  @override
+  String get uploadQueueDismissAction => 'Скрыть';
 
   @override
   String get documentProcessingFailedMessage =>
@@ -576,58 +617,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get documentDetailPrivacyNote =>
       'Оригинал документа остаётся в песочнице приложения. Бэкенд обрабатывает загруженные байты временно и возвращает только метаданные и предложенные события.';
-
-  @override
-  String get documentExplanationTitle => 'Объяснение простым языком';
-
-  @override
-  String get documentExplanationSummaryTitle => 'Кратко';
-
-  @override
-  String get documentExplanationKeyPointsTitle => 'Ключевые моменты';
-
-  @override
-  String get documentExplanationGlossaryTitle => 'Словарь';
-
-  @override
-  String get documentExplanationLoading => 'Загружаем объяснение...';
-
-  @override
-  String get documentExplanationNotReadyMessage =>
-      'Объяснение ещё не готово. MedStory может создать версию простым языком из извлечённого текста.';
-
-  @override
-  String get documentExplanationBoundaryNote =>
-      'Это объяснение помогает понять документ. Оно не ставит диагнозы и не рекомендует лечение.';
-
-  @override
-  String get documentExplanationGenerateAction => 'Создать объяснение';
-
-  @override
-  String get documentExplanationRegenerateAction => 'Создать заново';
-
-  @override
-  String get documentExplanationQueuedAction => 'В очереди';
-
-  @override
-  String get documentExplanationRetryAction => 'Попробовать снова';
-
-  @override
-  String get documentExplanationQueuedMessage =>
-      'Создание объяснения началось. Потяните документ вниз для обновления через несколько секунд.';
-
-  @override
-  String get documentExplanationLoadFailed =>
-      'Не удалось загрузить объяснение. Проверьте подключение и попробуйте снова.';
-
-  @override
-  String get documentExplanationRegenerateFailed =>
-      'Не удалось начать создание объяснения. Проверьте подключение и попробуйте снова.';
-
-  @override
-  String documentExplanationGeneratedAt(String date) {
-    return 'Создано: $date';
-  }
 
   @override
   String get documentDeleteAction => 'Удалить документ';
@@ -976,6 +965,15 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get eventAiConfirmedNote =>
       'Вы подтвердили это событие, предложенное ИИ.';
+
+  @override
+  String get eventOriginalSourceTitle => 'Исходная заметка';
+
+  @override
+  String get eventOriginalTranscriptTitle => 'Исходная расшифровка';
+
+  @override
+  String get eventAiAnalysisTitle => 'Анализ ИИ';
 
   @override
   String get eventResultTitle => 'Результат';

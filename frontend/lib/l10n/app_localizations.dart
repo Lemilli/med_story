@@ -815,7 +815,7 @@ abstract class AppLocalizations {
   /// No description provided for @documentProcessingBackgroundMessage.
   ///
   /// In en, this message translates to:
-  /// **'You can leave this screen while processing continues. Your document will be ready to review here when it finishes.'**
+  /// **'Processing status is shown in the Add tab.'**
   String get documentProcessingBackgroundMessage;
 
   /// No description provided for @documentProcessingDoneAction.
@@ -917,7 +917,7 @@ abstract class AppLocalizations {
   /// No description provided for @documentUploadProcessing.
   ///
   /// In en, this message translates to:
-  /// **'Extracting text and suggested events. You can leave this screen after it finishes.'**
+  /// **'Extracting text and suggested events.'**
   String get documentUploadProcessing;
 
   /// No description provided for @documentUploadProcessed.
@@ -932,6 +932,18 @@ abstract class AppLocalizations {
   /// **'We could not process this document. Check the file and try again.'**
   String get documentUploadFailedMessage;
 
+  /// No description provided for @documentNotMedicalMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This doesn’t appear to be a medical document.'**
+  String get documentNotMedicalMessage;
+
+  /// No description provided for @documentUnreadableMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t read this document. Try a clearer photo or file.'**
+  String get documentUnreadableMessage;
+
   /// No description provided for @documentFileTooLargeMessage.
   ///
   /// In en, this message translates to:
@@ -943,6 +955,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Phase 2 supports PDFs and images only.'**
   String get documentUnsupportedFileMessage;
+
+  /// No description provided for @uploadQueueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing uploads'**
+  String get uploadQueueTitle;
+
+  /// No description provided for @uploadQueueUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading'**
+  String get uploadQueueUploading;
+
+  /// No description provided for @uploadQueueUploadingProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading {progress}%'**
+  String uploadQueueUploadingProgress(int progress);
+
+  /// No description provided for @uploadQueueProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing'**
+  String get uploadQueueProcessing;
+
+  /// No description provided for @uploadQueueCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get uploadQueueCompleted;
+
+  /// No description provided for @uploadQueueFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t finish — retry'**
+  String get uploadQueueFailed;
+
+  /// No description provided for @uploadQueueDuplicateMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is already being processed or was added before.'**
+  String get uploadQueueDuplicateMessage;
+
+  /// No description provided for @uploadQueuePhotoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo upload'**
+  String get uploadQueuePhotoLabel;
+
+  /// No description provided for @uploadQueueFileLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'File upload'**
+  String get uploadQueueFileLabel;
+
+  /// No description provided for @uploadQueueDismissAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get uploadQueueDismissAction;
 
   /// No description provided for @documentProcessingFailedMessage.
   ///
@@ -1051,96 +1123,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The original document stays in the app sandbox. The backend processes uploaded bytes transiently and returns only metadata and suggested events.'**
   String get documentDetailPrivacyNote;
-
-  /// No description provided for @documentExplanationTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Plain-language explanation'**
-  String get documentExplanationTitle;
-
-  /// No description provided for @documentExplanationSummaryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Summary'**
-  String get documentExplanationSummaryTitle;
-
-  /// No description provided for @documentExplanationKeyPointsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Key points'**
-  String get documentExplanationKeyPointsTitle;
-
-  /// No description provided for @documentExplanationGlossaryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Glossary'**
-  String get documentExplanationGlossaryTitle;
-
-  /// No description provided for @documentExplanationLoading.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading the explanation...'**
-  String get documentExplanationLoading;
-
-  /// No description provided for @documentExplanationNotReadyMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'No explanation is ready yet. MedStory can generate a plain-language version from the extracted text.'**
-  String get documentExplanationNotReadyMessage;
-
-  /// No description provided for @documentExplanationBoundaryNote.
-  ///
-  /// In en, this message translates to:
-  /// **'This explanation helps you understand the document. It does not diagnose or recommend treatment.'**
-  String get documentExplanationBoundaryNote;
-
-  /// No description provided for @documentExplanationGenerateAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Generate explanation'**
-  String get documentExplanationGenerateAction;
-
-  /// No description provided for @documentExplanationRegenerateAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Regenerate explanation'**
-  String get documentExplanationRegenerateAction;
-
-  /// No description provided for @documentExplanationQueuedAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Queued'**
-  String get documentExplanationQueuedAction;
-
-  /// No description provided for @documentExplanationRetryAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Try again'**
-  String get documentExplanationRetryAction;
-
-  /// No description provided for @documentExplanationQueuedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Explanation generation has started. Pull to refresh this document in a moment.'**
-  String get documentExplanationQueuedMessage;
-
-  /// No description provided for @documentExplanationLoadFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'We could not load this explanation. Check your connection and try again.'**
-  String get documentExplanationLoadFailed;
-
-  /// No description provided for @documentExplanationRegenerateFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'We could not start explanation generation. Check your connection and try again.'**
-  String get documentExplanationRegenerateFailed;
-
-  /// No description provided for @documentExplanationGeneratedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'Generated {date}'**
-  String documentExplanationGeneratedAt(String date);
 
   /// No description provided for @documentDeleteAction.
   ///
@@ -1783,6 +1765,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You confirmed this AI-suggested event.'**
   String get eventAiConfirmedNote;
+
+  /// No description provided for @eventOriginalSourceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Original note'**
+  String get eventOriginalSourceTitle;
+
+  /// No description provided for @eventOriginalTranscriptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Original transcript'**
+  String get eventOriginalTranscriptTitle;
+
+  /// No description provided for @eventAiAnalysisTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI analysis'**
+  String get eventAiAnalysisTitle;
 
   /// No description provided for @eventResultTitle.
   ///

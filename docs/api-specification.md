@@ -118,6 +118,10 @@ Constraints:
 
 → `202 { "id": "uuid", "status": "processing" }`
 
+If an image/PDF has no readable text, processing finishes with `status: "failed"` and
+`error_message: "document_unreadable"`. If the extracted content is not a medical document,
+it finishes with `error_message: "document_not_medical"`. Neither outcome creates timeline events.
+
 ### GET /documents
 List documents. Filters: `subject_id`, `doc_type`, `status`, and `q`. `q` searches document
 titles and extracted text while list responses continue to return metadata only. Cursor paginated.
@@ -186,6 +190,8 @@ Cursor paginated, default newest-first.
   ],
   "next": "cursor...", "previous": null }
 ```
+For an `ai_voice` event, the event detail response also includes `source_text`: the authenticated
+user's transcription, so clients can distinguish the original words from the AI-organized summary.
 
 ### POST /events
 Manually create an event.

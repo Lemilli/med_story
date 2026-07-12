@@ -73,28 +73,37 @@ class _EventDetailBody extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          _Panel(
-            child: _DetailSection(
-              title: l10n.eventResultTitle,
-              child: Text(
-                event.description.isEmpty
-                    ? l10n.eventDetailsEmptyDescription
-                    : event.description,
-                style: textTheme.bodyLarge?.copyWith(height: 1.45),
+          if (_showOriginalSource(event))
+            _Panel(
+              child: _DetailSection(
+                title: event.source == EventSource.aiVoice
+                    ? l10n.eventOriginalTranscriptTitle
+                    : l10n.eventOriginalSourceTitle,
+                child: Text(
+                  event.source == EventSource.aiVoice
+                      ? event.sourceText ?? l10n.eventDetailsEmptyDescription
+                      : event.description,
+                  style: textTheme.bodyLarge?.copyWith(height: 1.45),
+                ),
               ),
             ),
-          ),
-          if (event.tags.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.md),
-            Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
-              children: event.tags
-                  .map((tag) => Chip(label: Text(tag)))
-                  .toList(),
+          if (_showAiAnalysis(event)) ...[
+            if (_showOriginalSource(event))
+              const SizedBox(height: AppSpacing.md),
+            _Panel(
+              child: _DetailSection(
+                title: l10n.eventAiAnalysisTitle,
+                child: Text(
+                  event.description.isEmpty
+                      ? l10n.eventDetailsEmptyDescription
+                      : event.description,
+                  style: textTheme.bodyLarge?.copyWith(height: 1.45),
+                ),
+              ),
             ),
           ],
-          if (_detailAttributes(event.attributes).isNotEmpty) ...[
+          if (event.source == EventSource.aiDocument &&
+              _detailAttributes(event.attributes).isNotEmpty) ...[
             const SizedBox(height: AppSpacing.md),
             _Panel(
               child: _DetailSection(
@@ -133,24 +142,10 @@ class _EventDetailBody extends ConsumerWidget {
               ),
             ],
           ),
-          ..._bottomAttributePanels(context, event.attributes),
           if (event.source == EventSource.aiDocument) ...[
             const SizedBox(height: AppSpacing.md),
             _AiSourcePanel(event: event),
           ],
-          const SizedBox(height: AppSpacing.lg),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(
-                Icons.shield_outlined,
-                color: AppColors.deepClinicalBlue,
-                size: 20,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(child: Text(l10n.eventBoundaryNote)),
-            ],
-          ),
         ],
       ),
     );
@@ -197,38 +192,12 @@ class _EventDetailBody extends ConsumerWidget {
   }
 }
 
-List<Widget> _bottomAttributePanels(
-  BuildContext context,
-  Map<String, dynamic> attributes,
-) {
-  final l10n = context.l10n;
-  final panels = <Widget>[];
-  final result = attributes['result'];
-  final notes = attributes['notes'];
-  if (_hasAttributeValue(result)) {
-    panels.addAll([
-      const SizedBox(height: AppSpacing.md),
-      _Panel(
-        child: _DetailSection(
-          title: l10n.eventResultTitle,
-          child: Text(_formatAttributeValue(result)),
-        ),
-      ),
-    ]);
-  }
-  if (_hasAttributeValue(notes)) {
-    panels.addAll([
-      const SizedBox(height: AppSpacing.md),
-      _Panel(
-        child: _DetailSection(
-          title: l10n.eventNotesTitle,
-          child: Text(_formatAttributeValue(notes)),
-        ),
-      ),
-    ]);
-  }
-  return panels;
-}
+bool _showOriginalSource(MedicalEvent event) =>
+    event.source == EventSource.userManual ||
+    event.source == EventSource.aiVoice;
+
+bool _showAiAnalysis(MedicalEvent event) =>
+    event.source != EventSource.userManual;
 
 class _DetailSection extends StatelessWidget {
   const _DetailSection({required this.title, required this.child});

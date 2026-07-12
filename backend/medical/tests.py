@@ -823,6 +823,53 @@ class MedicalApiTests(APITestCase):
         self.assertTrue(job.error_message)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_non_medical_upload_is_rejected_without_creating_events(self):
+        document = self._create_document(Document.DocumentType.IMAGE, mime_type="image/jpeg")
+
+        class NonMedicalLLMProvider:
+            def complete_json(self, **_kwargs):
+                return {
+                    "is_medical_document": False,
+                    "document_date": None,
+                    "suggested_title": None,
+                    "events": [],
+                }
+
+        with patch("medical.services.get_llm_provider", return_value=NonMedicalLLMProvider()):
+            response = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {"file": self._upload("dog.jpg", b"a photo of a dog", "image/jpeg")},
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.FAILED)
+        self.assertEqual(document.error_message, "document_not_medical")
+        self.assertEqual(document.medical_events.count(), 0)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_unreadable_upload_is_rejected_without_creating_events(self):
+        document = self._create_document(Document.DocumentType.IMAGE, mime_type="image/jpeg")
+
+        class EmptyOCRProvider:
+            def extract_text(self, **_kwargs):
+                return OCRResult(text="", language="")
+
+        with patch("medical.services.get_ocr_provider", return_value=EmptyOCRProvider()):
+            response = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {"file": self._upload("blurry.jpg", b"", "image/jpeg")},
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.FAILED)
+        self.assertEqual(document.error_message, "document_unreadable")
+        self.assertEqual(document.medical_events.count(), 0)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_failed_stt_marks_audio_document_and_job_failed_without_events(self):
         document = self._create_document(Document.DocumentType.AUDIO, mime_type="audio/mpeg")
 

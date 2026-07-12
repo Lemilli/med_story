@@ -79,6 +79,7 @@ class SubjectSerializer(serializers.ModelSerializer):
 class MedicalEventSerializer(serializers.ModelSerializer):
     subject_id = serializers.UUIDField(required=False, write_only=True)
     source_document_id = serializers.SerializerMethodField()
+    source_text = serializers.SerializerMethodField()
     tags = TagNamesField(required=False)
 
     class Meta:
@@ -93,6 +94,7 @@ class MedicalEventSerializer(serializers.ModelSerializer):
             "attributes",
             "source",
             "source_document_id",
+            "source_text",
             "confidence",
             "is_confirmed",
             "tags",
@@ -100,13 +102,27 @@ class MedicalEventSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "source_document_id", "created_at", "updated_at")
+        read_only_fields = ("id", "source_document_id", "source_text", "created_at", "updated_at")
 
     @extend_schema_field(serializers.UUIDField(allow_null=True))
     def get_source_document_id(self, obj):
         if obj.source_document_id is None:
             return None
         return str(obj.source_document_id)
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_source_text(self, obj):
+        # Voice events can show the user's own words alongside the concise AI
+        # organization. Keep transcripts off timeline/list payloads.
+        request = self.context.get("request")
+        if (
+            obj.source != MedicalEvent.Source.AI_VOICE
+            or not obj.source_document_id
+            or not request
+            or getattr(request.resolver_match, "url_name", None) != "event-detail"
+        ):
+            return None
+        return obj.source_document.extracted_text or None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

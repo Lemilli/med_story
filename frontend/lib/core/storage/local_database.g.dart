@@ -2155,6 +2155,978 @@ class CachedMedicalSummariesCompanion
   }
 }
 
+class $UploadQueueItemsTable extends UploadQueueItems
+    with TableInfo<$UploadQueueItemsTable, UploadQueueItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UploadQueueItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fingerprintMeta = const VerificationMeta(
+    'fingerprint',
+  );
+  @override
+  late final GeneratedColumn<String> fingerprint = GeneratedColumn<String>(
+    'fingerprint',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localPathMeta = const VerificationMeta(
+    'localPath',
+  );
+  @override
+  late final GeneratedColumn<String> localPath = GeneratedColumn<String>(
+    'local_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _storedFileNameMeta = const VerificationMeta(
+    'storedFileName',
+  );
+  @override
+  late final GeneratedColumn<String> storedFileName = GeneratedColumn<String>(
+    'stored_file_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mimeTypeMeta = const VerificationMeta(
+    'mimeType',
+  );
+  @override
+  late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
+    'mime_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeBytesMeta = const VerificationMeta(
+    'sizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> sizeBytes = GeneratedColumn<int>(
+    'size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _docTypeMeta = const VerificationMeta(
+    'docType',
+  );
+  @override
+  late final GeneratedColumn<String> docType = GeneratedColumn<String>(
+    'doc_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _languageMeta = const VerificationMeta(
+    'language',
+  );
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+    'language',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _documentIdMeta = const VerificationMeta(
+    'documentId',
+  );
+  @override
+  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
+    'document_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _errorMessageMeta = const VerificationMeta(
+    'errorMessage',
+  );
+  @override
+  late final GeneratedColumn<String> errorMessage = GeneratedColumn<String>(
+    'error_message',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isDismissedMeta = const VerificationMeta(
+    'isDismissed',
+  );
+  @override
+  late final GeneratedColumn<bool> isDismissed = GeneratedColumn<bool>(
+    'is_dismissed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_dismissed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    displayName,
+    fingerprint,
+    localPath,
+    storedFileName,
+    mimeType,
+    sizeBytes,
+    docType,
+    title,
+    subjectId,
+    language,
+    status,
+    documentId,
+    errorMessage,
+    isDismissed,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'upload_queue_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UploadQueueItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('fingerprint')) {
+      context.handle(
+        _fingerprintMeta,
+        fingerprint.isAcceptableOrUnknown(
+          data['fingerprint']!,
+          _fingerprintMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fingerprintMeta);
+    }
+    if (data.containsKey('local_path')) {
+      context.handle(
+        _localPathMeta,
+        localPath.isAcceptableOrUnknown(data['local_path']!, _localPathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_localPathMeta);
+    }
+    if (data.containsKey('stored_file_name')) {
+      context.handle(
+        _storedFileNameMeta,
+        storedFileName.isAcceptableOrUnknown(
+          data['stored_file_name']!,
+          _storedFileNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_storedFileNameMeta);
+    }
+    if (data.containsKey('mime_type')) {
+      context.handle(
+        _mimeTypeMeta,
+        mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mimeTypeMeta);
+    }
+    if (data.containsKey('size_bytes')) {
+      context.handle(
+        _sizeBytesMeta,
+        sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeBytesMeta);
+    }
+    if (data.containsKey('doc_type')) {
+      context.handle(
+        _docTypeMeta,
+        docType.isAcceptableOrUnknown(data['doc_type']!, _docTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_docTypeMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    }
+    if (data.containsKey('language')) {
+      context.handle(
+        _languageMeta,
+        language.isAcceptableOrUnknown(data['language']!, _languageMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('document_id')) {
+      context.handle(
+        _documentIdMeta,
+        documentId.isAcceptableOrUnknown(data['document_id']!, _documentIdMeta),
+      );
+    }
+    if (data.containsKey('error_message')) {
+      context.handle(
+        _errorMessageMeta,
+        errorMessage.isAcceptableOrUnknown(
+          data['error_message']!,
+          _errorMessageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_dismissed')) {
+      context.handle(
+        _isDismissedMeta,
+        isDismissed.isAcceptableOrUnknown(
+          data['is_dismissed']!,
+          _isDismissedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UploadQueueItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UploadQueueItem(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      )!,
+      fingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fingerprint'],
+      )!,
+      localPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_path'],
+      )!,
+      storedFileName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stored_file_name'],
+      )!,
+      mimeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime_type'],
+      )!,
+      sizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_bytes'],
+      )!,
+      docType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}doc_type'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      ),
+      language: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}language'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      documentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_id'],
+      ),
+      errorMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error_message'],
+      ),
+      isDismissed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_dismissed'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $UploadQueueItemsTable createAlias(String alias) {
+    return $UploadQueueItemsTable(attachedDatabase, alias);
+  }
+}
+
+class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
+  final String id;
+  final String displayName;
+  final String fingerprint;
+  final String localPath;
+  final String storedFileName;
+  final String mimeType;
+  final int sizeBytes;
+  final String docType;
+  final String title;
+  final String? subjectId;
+  final String? language;
+  final String status;
+  final String? documentId;
+  final String? errorMessage;
+  final bool isDismissed;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const UploadQueueItem({
+    required this.id,
+    required this.displayName,
+    required this.fingerprint,
+    required this.localPath,
+    required this.storedFileName,
+    required this.mimeType,
+    required this.sizeBytes,
+    required this.docType,
+    required this.title,
+    this.subjectId,
+    this.language,
+    required this.status,
+    this.documentId,
+    this.errorMessage,
+    required this.isDismissed,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['display_name'] = Variable<String>(displayName);
+    map['fingerprint'] = Variable<String>(fingerprint);
+    map['local_path'] = Variable<String>(localPath);
+    map['stored_file_name'] = Variable<String>(storedFileName);
+    map['mime_type'] = Variable<String>(mimeType);
+    map['size_bytes'] = Variable<int>(sizeBytes);
+    map['doc_type'] = Variable<String>(docType);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || subjectId != null) {
+      map['subject_id'] = Variable<String>(subjectId);
+    }
+    if (!nullToAbsent || language != null) {
+      map['language'] = Variable<String>(language);
+    }
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || documentId != null) {
+      map['document_id'] = Variable<String>(documentId);
+    }
+    if (!nullToAbsent || errorMessage != null) {
+      map['error_message'] = Variable<String>(errorMessage);
+    }
+    map['is_dismissed'] = Variable<bool>(isDismissed);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  UploadQueueItemsCompanion toCompanion(bool nullToAbsent) {
+    return UploadQueueItemsCompanion(
+      id: Value(id),
+      displayName: Value(displayName),
+      fingerprint: Value(fingerprint),
+      localPath: Value(localPath),
+      storedFileName: Value(storedFileName),
+      mimeType: Value(mimeType),
+      sizeBytes: Value(sizeBytes),
+      docType: Value(docType),
+      title: Value(title),
+      subjectId: subjectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectId),
+      language: language == null && nullToAbsent
+          ? const Value.absent()
+          : Value(language),
+      status: Value(status),
+      documentId: documentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(documentId),
+      errorMessage: errorMessage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(errorMessage),
+      isDismissed: Value(isDismissed),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory UploadQueueItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UploadQueueItem(
+      id: serializer.fromJson<String>(json['id']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      fingerprint: serializer.fromJson<String>(json['fingerprint']),
+      localPath: serializer.fromJson<String>(json['localPath']),
+      storedFileName: serializer.fromJson<String>(json['storedFileName']),
+      mimeType: serializer.fromJson<String>(json['mimeType']),
+      sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
+      docType: serializer.fromJson<String>(json['docType']),
+      title: serializer.fromJson<String>(json['title']),
+      subjectId: serializer.fromJson<String?>(json['subjectId']),
+      language: serializer.fromJson<String?>(json['language']),
+      status: serializer.fromJson<String>(json['status']),
+      documentId: serializer.fromJson<String?>(json['documentId']),
+      errorMessage: serializer.fromJson<String?>(json['errorMessage']),
+      isDismissed: serializer.fromJson<bool>(json['isDismissed']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'displayName': serializer.toJson<String>(displayName),
+      'fingerprint': serializer.toJson<String>(fingerprint),
+      'localPath': serializer.toJson<String>(localPath),
+      'storedFileName': serializer.toJson<String>(storedFileName),
+      'mimeType': serializer.toJson<String>(mimeType),
+      'sizeBytes': serializer.toJson<int>(sizeBytes),
+      'docType': serializer.toJson<String>(docType),
+      'title': serializer.toJson<String>(title),
+      'subjectId': serializer.toJson<String?>(subjectId),
+      'language': serializer.toJson<String?>(language),
+      'status': serializer.toJson<String>(status),
+      'documentId': serializer.toJson<String?>(documentId),
+      'errorMessage': serializer.toJson<String?>(errorMessage),
+      'isDismissed': serializer.toJson<bool>(isDismissed),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  UploadQueueItem copyWith({
+    String? id,
+    String? displayName,
+    String? fingerprint,
+    String? localPath,
+    String? storedFileName,
+    String? mimeType,
+    int? sizeBytes,
+    String? docType,
+    String? title,
+    Value<String?> subjectId = const Value.absent(),
+    Value<String?> language = const Value.absent(),
+    String? status,
+    Value<String?> documentId = const Value.absent(),
+    Value<String?> errorMessage = const Value.absent(),
+    bool? isDismissed,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => UploadQueueItem(
+    id: id ?? this.id,
+    displayName: displayName ?? this.displayName,
+    fingerprint: fingerprint ?? this.fingerprint,
+    localPath: localPath ?? this.localPath,
+    storedFileName: storedFileName ?? this.storedFileName,
+    mimeType: mimeType ?? this.mimeType,
+    sizeBytes: sizeBytes ?? this.sizeBytes,
+    docType: docType ?? this.docType,
+    title: title ?? this.title,
+    subjectId: subjectId.present ? subjectId.value : this.subjectId,
+    language: language.present ? language.value : this.language,
+    status: status ?? this.status,
+    documentId: documentId.present ? documentId.value : this.documentId,
+    errorMessage: errorMessage.present ? errorMessage.value : this.errorMessage,
+    isDismissed: isDismissed ?? this.isDismissed,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  UploadQueueItem copyWithCompanion(UploadQueueItemsCompanion data) {
+    return UploadQueueItem(
+      id: data.id.present ? data.id.value : this.id,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      fingerprint: data.fingerprint.present
+          ? data.fingerprint.value
+          : this.fingerprint,
+      localPath: data.localPath.present ? data.localPath.value : this.localPath,
+      storedFileName: data.storedFileName.present
+          ? data.storedFileName.value
+          : this.storedFileName,
+      mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
+      sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+      docType: data.docType.present ? data.docType.value : this.docType,
+      title: data.title.present ? data.title.value : this.title,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      language: data.language.present ? data.language.value : this.language,
+      status: data.status.present ? data.status.value : this.status,
+      documentId: data.documentId.present
+          ? data.documentId.value
+          : this.documentId,
+      errorMessage: data.errorMessage.present
+          ? data.errorMessage.value
+          : this.errorMessage,
+      isDismissed: data.isDismissed.present
+          ? data.isDismissed.value
+          : this.isDismissed,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UploadQueueItem(')
+          ..write('id: $id, ')
+          ..write('displayName: $displayName, ')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('localPath: $localPath, ')
+          ..write('storedFileName: $storedFileName, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('docType: $docType, ')
+          ..write('title: $title, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('language: $language, ')
+          ..write('status: $status, ')
+          ..write('documentId: $documentId, ')
+          ..write('errorMessage: $errorMessage, ')
+          ..write('isDismissed: $isDismissed, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    displayName,
+    fingerprint,
+    localPath,
+    storedFileName,
+    mimeType,
+    sizeBytes,
+    docType,
+    title,
+    subjectId,
+    language,
+    status,
+    documentId,
+    errorMessage,
+    isDismissed,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UploadQueueItem &&
+          other.id == this.id &&
+          other.displayName == this.displayName &&
+          other.fingerprint == this.fingerprint &&
+          other.localPath == this.localPath &&
+          other.storedFileName == this.storedFileName &&
+          other.mimeType == this.mimeType &&
+          other.sizeBytes == this.sizeBytes &&
+          other.docType == this.docType &&
+          other.title == this.title &&
+          other.subjectId == this.subjectId &&
+          other.language == this.language &&
+          other.status == this.status &&
+          other.documentId == this.documentId &&
+          other.errorMessage == this.errorMessage &&
+          other.isDismissed == this.isDismissed &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
+  final Value<String> id;
+  final Value<String> displayName;
+  final Value<String> fingerprint;
+  final Value<String> localPath;
+  final Value<String> storedFileName;
+  final Value<String> mimeType;
+  final Value<int> sizeBytes;
+  final Value<String> docType;
+  final Value<String> title;
+  final Value<String?> subjectId;
+  final Value<String?> language;
+  final Value<String> status;
+  final Value<String?> documentId;
+  final Value<String?> errorMessage;
+  final Value<bool> isDismissed;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const UploadQueueItemsCompanion({
+    this.id = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.fingerprint = const Value.absent(),
+    this.localPath = const Value.absent(),
+    this.storedFileName = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.docType = const Value.absent(),
+    this.title = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.language = const Value.absent(),
+    this.status = const Value.absent(),
+    this.documentId = const Value.absent(),
+    this.errorMessage = const Value.absent(),
+    this.isDismissed = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UploadQueueItemsCompanion.insert({
+    required String id,
+    required String displayName,
+    required String fingerprint,
+    required String localPath,
+    required String storedFileName,
+    required String mimeType,
+    required int sizeBytes,
+    required String docType,
+    required String title,
+    this.subjectId = const Value.absent(),
+    this.language = const Value.absent(),
+    required String status,
+    this.documentId = const Value.absent(),
+    this.errorMessage = const Value.absent(),
+    this.isDismissed = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       displayName = Value(displayName),
+       fingerprint = Value(fingerprint),
+       localPath = Value(localPath),
+       storedFileName = Value(storedFileName),
+       mimeType = Value(mimeType),
+       sizeBytes = Value(sizeBytes),
+       docType = Value(docType),
+       title = Value(title),
+       status = Value(status),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<UploadQueueItem> custom({
+    Expression<String>? id,
+    Expression<String>? displayName,
+    Expression<String>? fingerprint,
+    Expression<String>? localPath,
+    Expression<String>? storedFileName,
+    Expression<String>? mimeType,
+    Expression<int>? sizeBytes,
+    Expression<String>? docType,
+    Expression<String>? title,
+    Expression<String>? subjectId,
+    Expression<String>? language,
+    Expression<String>? status,
+    Expression<String>? documentId,
+    Expression<String>? errorMessage,
+    Expression<bool>? isDismissed,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (displayName != null) 'display_name': displayName,
+      if (fingerprint != null) 'fingerprint': fingerprint,
+      if (localPath != null) 'local_path': localPath,
+      if (storedFileName != null) 'stored_file_name': storedFileName,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (docType != null) 'doc_type': docType,
+      if (title != null) 'title': title,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (language != null) 'language': language,
+      if (status != null) 'status': status,
+      if (documentId != null) 'document_id': documentId,
+      if (errorMessage != null) 'error_message': errorMessage,
+      if (isDismissed != null) 'is_dismissed': isDismissed,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UploadQueueItemsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? displayName,
+    Value<String>? fingerprint,
+    Value<String>? localPath,
+    Value<String>? storedFileName,
+    Value<String>? mimeType,
+    Value<int>? sizeBytes,
+    Value<String>? docType,
+    Value<String>? title,
+    Value<String?>? subjectId,
+    Value<String?>? language,
+    Value<String>? status,
+    Value<String?>? documentId,
+    Value<String?>? errorMessage,
+    Value<bool>? isDismissed,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return UploadQueueItemsCompanion(
+      id: id ?? this.id,
+      displayName: displayName ?? this.displayName,
+      fingerprint: fingerprint ?? this.fingerprint,
+      localPath: localPath ?? this.localPath,
+      storedFileName: storedFileName ?? this.storedFileName,
+      mimeType: mimeType ?? this.mimeType,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      docType: docType ?? this.docType,
+      title: title ?? this.title,
+      subjectId: subjectId ?? this.subjectId,
+      language: language ?? this.language,
+      status: status ?? this.status,
+      documentId: documentId ?? this.documentId,
+      errorMessage: errorMessage ?? this.errorMessage,
+      isDismissed: isDismissed ?? this.isDismissed,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (fingerprint.present) {
+      map['fingerprint'] = Variable<String>(fingerprint.value);
+    }
+    if (localPath.present) {
+      map['local_path'] = Variable<String>(localPath.value);
+    }
+    if (storedFileName.present) {
+      map['stored_file_name'] = Variable<String>(storedFileName.value);
+    }
+    if (mimeType.present) {
+      map['mime_type'] = Variable<String>(mimeType.value);
+    }
+    if (sizeBytes.present) {
+      map['size_bytes'] = Variable<int>(sizeBytes.value);
+    }
+    if (docType.present) {
+      map['doc_type'] = Variable<String>(docType.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (documentId.present) {
+      map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (errorMessage.present) {
+      map['error_message'] = Variable<String>(errorMessage.value);
+    }
+    if (isDismissed.present) {
+      map['is_dismissed'] = Variable<bool>(isDismissed.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UploadQueueItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('displayName: $displayName, ')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('localPath: $localPath, ')
+          ..write('storedFileName: $storedFileName, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('docType: $docType, ')
+          ..write('title: $title, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('language: $language, ')
+          ..write('status: $status, ')
+          ..write('documentId: $documentId, ')
+          ..write('errorMessage: $errorMessage, ')
+          ..write('isDismissed: $isDismissed, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$LocalDatabase extends GeneratedDatabase {
   _$LocalDatabase(QueryExecutor e) : super(e);
   $LocalDatabaseManager get managers => $LocalDatabaseManager(this);
@@ -2163,6 +3135,9 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
       $CachedMedicalEventsTable(this);
   late final $CachedMedicalSummariesTable cachedMedicalSummaries =
       $CachedMedicalSummariesTable(this);
+  late final $UploadQueueItemsTable uploadQueueItems = $UploadQueueItemsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2171,6 +3146,7 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
     subjects,
     cachedMedicalEvents,
     cachedMedicalSummaries,
+    uploadQueueItems,
   ];
 }
 
@@ -3209,6 +4185,456 @@ typedef $$CachedMedicalSummariesTableProcessedTableManager =
       CachedMedicalSummary,
       PrefetchHooks Function()
     >;
+typedef $$UploadQueueItemsTableCreateCompanionBuilder =
+    UploadQueueItemsCompanion Function({
+      required String id,
+      required String displayName,
+      required String fingerprint,
+      required String localPath,
+      required String storedFileName,
+      required String mimeType,
+      required int sizeBytes,
+      required String docType,
+      required String title,
+      Value<String?> subjectId,
+      Value<String?> language,
+      required String status,
+      Value<String?> documentId,
+      Value<String?> errorMessage,
+      Value<bool> isDismissed,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$UploadQueueItemsTableUpdateCompanionBuilder =
+    UploadQueueItemsCompanion Function({
+      Value<String> id,
+      Value<String> displayName,
+      Value<String> fingerprint,
+      Value<String> localPath,
+      Value<String> storedFileName,
+      Value<String> mimeType,
+      Value<int> sizeBytes,
+      Value<String> docType,
+      Value<String> title,
+      Value<String?> subjectId,
+      Value<String?> language,
+      Value<String> status,
+      Value<String?> documentId,
+      Value<String?> errorMessage,
+      Value<bool> isDismissed,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$UploadQueueItemsTableFilterComposer
+    extends Composer<_$LocalDatabase, $UploadQueueItemsTable> {
+  $$UploadQueueItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localPath => $composableBuilder(
+    column: $table.localPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get storedFileName => $composableBuilder(
+    column: $table.storedFileName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get docType => $composableBuilder(
+    column: $table.docType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get language => $composableBuilder(
+    column: $table.language,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDismissed => $composableBuilder(
+    column: $table.isDismissed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UploadQueueItemsTableOrderingComposer
+    extends Composer<_$LocalDatabase, $UploadQueueItemsTable> {
+  $$UploadQueueItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localPath => $composableBuilder(
+    column: $table.localPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get storedFileName => $composableBuilder(
+    column: $table.storedFileName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get docType => $composableBuilder(
+    column: $table.docType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get language => $composableBuilder(
+    column: $table.language,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isDismissed => $composableBuilder(
+    column: $table.isDismissed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UploadQueueItemsTableAnnotationComposer
+    extends Composer<_$LocalDatabase, $UploadQueueItemsTable> {
+  $$UploadQueueItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get localPath =>
+      $composableBuilder(column: $table.localPath, builder: (column) => column);
+
+  GeneratedColumn<String> get storedFileName => $composableBuilder(
+    column: $table.storedFileName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mimeType =>
+      $composableBuilder(column: $table.mimeType, builder: (column) => column);
+
+  GeneratedColumn<int> get sizeBytes =>
+      $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+
+  GeneratedColumn<String> get docType =>
+      $composableBuilder(column: $table.docType, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isDismissed => $composableBuilder(
+    column: $table.isDismissed,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$UploadQueueItemsTableTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          $UploadQueueItemsTable,
+          UploadQueueItem,
+          $$UploadQueueItemsTableFilterComposer,
+          $$UploadQueueItemsTableOrderingComposer,
+          $$UploadQueueItemsTableAnnotationComposer,
+          $$UploadQueueItemsTableCreateCompanionBuilder,
+          $$UploadQueueItemsTableUpdateCompanionBuilder,
+          (
+            UploadQueueItem,
+            BaseReferences<
+              _$LocalDatabase,
+              $UploadQueueItemsTable,
+              UploadQueueItem
+            >,
+          ),
+          UploadQueueItem,
+          PrefetchHooks Function()
+        > {
+  $$UploadQueueItemsTableTableManager(
+    _$LocalDatabase db,
+    $UploadQueueItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UploadQueueItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UploadQueueItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UploadQueueItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> displayName = const Value.absent(),
+                Value<String> fingerprint = const Value.absent(),
+                Value<String> localPath = const Value.absent(),
+                Value<String> storedFileName = const Value.absent(),
+                Value<String> mimeType = const Value.absent(),
+                Value<int> sizeBytes = const Value.absent(),
+                Value<String> docType = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String?> subjectId = const Value.absent(),
+                Value<String?> language = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> documentId = const Value.absent(),
+                Value<String?> errorMessage = const Value.absent(),
+                Value<bool> isDismissed = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UploadQueueItemsCompanion(
+                id: id,
+                displayName: displayName,
+                fingerprint: fingerprint,
+                localPath: localPath,
+                storedFileName: storedFileName,
+                mimeType: mimeType,
+                sizeBytes: sizeBytes,
+                docType: docType,
+                title: title,
+                subjectId: subjectId,
+                language: language,
+                status: status,
+                documentId: documentId,
+                errorMessage: errorMessage,
+                isDismissed: isDismissed,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String displayName,
+                required String fingerprint,
+                required String localPath,
+                required String storedFileName,
+                required String mimeType,
+                required int sizeBytes,
+                required String docType,
+                required String title,
+                Value<String?> subjectId = const Value.absent(),
+                Value<String?> language = const Value.absent(),
+                required String status,
+                Value<String?> documentId = const Value.absent(),
+                Value<String?> errorMessage = const Value.absent(),
+                Value<bool> isDismissed = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => UploadQueueItemsCompanion.insert(
+                id: id,
+                displayName: displayName,
+                fingerprint: fingerprint,
+                localPath: localPath,
+                storedFileName: storedFileName,
+                mimeType: mimeType,
+                sizeBytes: sizeBytes,
+                docType: docType,
+                title: title,
+                subjectId: subjectId,
+                language: language,
+                status: status,
+                documentId: documentId,
+                errorMessage: errorMessage,
+                isDismissed: isDismissed,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UploadQueueItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      $UploadQueueItemsTable,
+      UploadQueueItem,
+      $$UploadQueueItemsTableFilterComposer,
+      $$UploadQueueItemsTableOrderingComposer,
+      $$UploadQueueItemsTableAnnotationComposer,
+      $$UploadQueueItemsTableCreateCompanionBuilder,
+      $$UploadQueueItemsTableUpdateCompanionBuilder,
+      (
+        UploadQueueItem,
+        BaseReferences<
+          _$LocalDatabase,
+          $UploadQueueItemsTable,
+          UploadQueueItem
+        >,
+      ),
+      UploadQueueItem,
+      PrefetchHooks Function()
+    >;
 
 class $LocalDatabaseManager {
   final _$LocalDatabase _db;
@@ -3222,4 +4648,6 @@ class $LocalDatabaseManager {
         _db,
         _db.cachedMedicalSummaries,
       );
+  $$UploadQueueItemsTableTableManager get uploadQueueItems =>
+      $$UploadQueueItemsTableTableManager(_db, _db.uploadQueueItems);
 }
