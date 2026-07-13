@@ -17,7 +17,6 @@ void main() {
           'source': 'user_manual',
           'source_document_id': null,
           'confidence': null,
-          'is_confirmed': true,
           'tags': <String>[],
           'subject_id': 'subject-1',
           'created_at': '2026-06-01T10:00:00Z',

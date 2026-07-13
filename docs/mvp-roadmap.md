@@ -22,7 +22,7 @@ The MVP is successful if a user can:
 4. Prepare for doctor visits with less effort.
 5. Stop reconstructing their history from memory.
 
-Tracked via: # documents ingested, # confirmed events, explanation usage, summary/export
+Tracked via: # documents ingested, # timeline events, explanation usage, summary/export
 generation, and retention over time.
 
 ## 3. Phases
@@ -69,7 +69,7 @@ remain for deterministic local tests.
 **Goal:** upload documents and extract text + structured events automatically.
 - Backend: `Document` model (metadata only), `/documents/{id}/ingest`, status polling;
   transient ingestion path (no file persistence); Celery ingestion task; **OCR** + **LLM
-  structuring** via provider abstraction; events created as AI-suggested (`is_confirmed=false`).
+  structuring** via provider abstraction; events are added to the timeline with an AI source.
 - Frontend: capture flow (scan/photo/file), local file persistence, a persistent Add-tab
   processing queue with retry and duplicate-file protection, document list/detail,
   "confirm AI event" UX.
@@ -88,7 +88,7 @@ remain for deterministic local tests.
 ### Phase 4 — Medical Memory & Doctor Summary
 **Status:** Backend and frontend implemented.
 **Goal:** continuously-updated summary + doctor-ready export (Scenarios C & D).
-- Backend: `MedicalSummary` (versioned), summary task, immediate regen on confirmed event changes,
+- Backend: `MedicalSummary` (versioned), summary task, immediate regeneration on event changes,
   `/summary`, `/summary/regenerate`, `/summary/versions`, `/summary/export` (PDF/JSON).
 - Frontend: subject-aware summary screen, version history, "Prepare for visit" PDF share,
   cached current summary, and timeline-backed history search.
@@ -122,7 +122,7 @@ legal/operations launch hardening remains in progress.
 **Status:** Implemented; launch hardening remains separate.
 - Capture navigation starts the selected scan, photo, file, voice, note, or manual-event flow directly.
 - AI suggestions have a dedicated review inbox with confirm, edit, and dismiss actions.
-- Timeline has year filtering, history search, and a derived confirmed medication/treatment-history view.
+- Timeline has year filtering and history search.
 - A per-subject visit-preparation note is appended to the doctor-summary PDF only when the user writes one.
 - First-use onboarding reinforces the organizer-only boundary; reminders, caregiver mode, bulk import, and semantic search remain deferred.
 

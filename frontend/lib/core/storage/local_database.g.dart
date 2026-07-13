@@ -710,20 +710,6 @@ class $CachedMedicalEventsTable extends CachedMedicalEvents
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _isConfirmedMeta = const VerificationMeta(
-    'isConfirmed',
-  );
-  @override
-  late final GeneratedColumn<bool> isConfirmed = GeneratedColumn<bool>(
-    'is_confirmed',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_confirmed" IN (0, 1))',
-    ),
-  );
   static const VerificationMeta _tagsJsonMeta = const VerificationMeta(
     'tagsJson',
   );
@@ -781,7 +767,6 @@ class $CachedMedicalEventsTable extends CachedMedicalEvents
     source,
     sourceDocumentId,
     confidence,
-    isConfirmed,
     tagsJson,
     createdAt,
     updatedAt,
@@ -890,17 +875,6 @@ class $CachedMedicalEventsTable extends CachedMedicalEvents
         confidence.isAcceptableOrUnknown(data['confidence']!, _confidenceMeta),
       );
     }
-    if (data.containsKey('is_confirmed')) {
-      context.handle(
-        _isConfirmedMeta,
-        isConfirmed.isAcceptableOrUnknown(
-          data['is_confirmed']!,
-          _isConfirmedMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_isConfirmedMeta);
-    }
     if (data.containsKey('tags_json')) {
       context.handle(
         _tagsJsonMeta,
@@ -986,10 +960,6 @@ class $CachedMedicalEventsTable extends CachedMedicalEvents
         DriftSqlType.double,
         data['${effectivePrefix}confidence'],
       ),
-      isConfirmed: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_confirmed'],
-      )!,
       tagsJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}tags_json'],
@@ -1028,7 +998,6 @@ class CachedMedicalEvent extends DataClass
   final String source;
   final String? sourceDocumentId;
   final double? confidence;
-  final bool isConfirmed;
   final String tagsJson;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -1045,7 +1014,6 @@ class CachedMedicalEvent extends DataClass
     required this.source,
     this.sourceDocumentId,
     this.confidence,
-    required this.isConfirmed,
     required this.tagsJson,
     required this.createdAt,
     required this.updatedAt,
@@ -1071,7 +1039,6 @@ class CachedMedicalEvent extends DataClass
     if (!nullToAbsent || confidence != null) {
       map['confidence'] = Variable<double>(confidence);
     }
-    map['is_confirmed'] = Variable<bool>(isConfirmed);
     map['tags_json'] = Variable<String>(tagsJson);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -1098,7 +1065,6 @@ class CachedMedicalEvent extends DataClass
       confidence: confidence == null && nullToAbsent
           ? const Value.absent()
           : Value(confidence),
-      isConfirmed: Value(isConfirmed),
       tagsJson: Value(tagsJson),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -1123,7 +1089,6 @@ class CachedMedicalEvent extends DataClass
       source: serializer.fromJson<String>(json['source']),
       sourceDocumentId: serializer.fromJson<String?>(json['sourceDocumentId']),
       confidence: serializer.fromJson<double?>(json['confidence']),
-      isConfirmed: serializer.fromJson<bool>(json['isConfirmed']),
       tagsJson: serializer.fromJson<String>(json['tagsJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -1145,7 +1110,6 @@ class CachedMedicalEvent extends DataClass
       'source': serializer.toJson<String>(source),
       'sourceDocumentId': serializer.toJson<String?>(sourceDocumentId),
       'confidence': serializer.toJson<double?>(confidence),
-      'isConfirmed': serializer.toJson<bool>(isConfirmed),
       'tagsJson': serializer.toJson<String>(tagsJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -1165,7 +1129,6 @@ class CachedMedicalEvent extends DataClass
     String? source,
     Value<String?> sourceDocumentId = const Value.absent(),
     Value<double?> confidence = const Value.absent(),
-    bool? isConfirmed,
     String? tagsJson,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -1184,7 +1147,6 @@ class CachedMedicalEvent extends DataClass
         ? sourceDocumentId.value
         : this.sourceDocumentId,
     confidence: confidence.present ? confidence.value : this.confidence,
-    isConfirmed: isConfirmed ?? this.isConfirmed,
     tagsJson: tagsJson ?? this.tagsJson,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -1213,9 +1175,6 @@ class CachedMedicalEvent extends DataClass
       confidence: data.confidence.present
           ? data.confidence.value
           : this.confidence,
-      isConfirmed: data.isConfirmed.present
-          ? data.isConfirmed.value
-          : this.isConfirmed,
       tagsJson: data.tagsJson.present ? data.tagsJson.value : this.tagsJson,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -1237,7 +1196,6 @@ class CachedMedicalEvent extends DataClass
           ..write('source: $source, ')
           ..write('sourceDocumentId: $sourceDocumentId, ')
           ..write('confidence: $confidence, ')
-          ..write('isConfirmed: $isConfirmed, ')
           ..write('tagsJson: $tagsJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1259,7 +1217,6 @@ class CachedMedicalEvent extends DataClass
     source,
     sourceDocumentId,
     confidence,
-    isConfirmed,
     tagsJson,
     createdAt,
     updatedAt,
@@ -1280,7 +1237,6 @@ class CachedMedicalEvent extends DataClass
           other.source == this.source &&
           other.sourceDocumentId == this.sourceDocumentId &&
           other.confidence == this.confidence &&
-          other.isConfirmed == this.isConfirmed &&
           other.tagsJson == this.tagsJson &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -1299,7 +1255,6 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
   final Value<String> source;
   final Value<String?> sourceDocumentId;
   final Value<double?> confidence;
-  final Value<bool> isConfirmed;
   final Value<String> tagsJson;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -1317,7 +1272,6 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
     this.source = const Value.absent(),
     this.sourceDocumentId = const Value.absent(),
     this.confidence = const Value.absent(),
-    this.isConfirmed = const Value.absent(),
     this.tagsJson = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1336,7 +1290,6 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
     required String source,
     this.sourceDocumentId = const Value.absent(),
     this.confidence = const Value.absent(),
-    required bool isConfirmed,
     required String tagsJson,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -1350,7 +1303,6 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
        eventDate = Value(eventDate),
        attributesJson = Value(attributesJson),
        source = Value(source),
-       isConfirmed = Value(isConfirmed),
        tagsJson = Value(tagsJson),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt),
@@ -1367,7 +1319,6 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
     Expression<String>? source,
     Expression<String>? sourceDocumentId,
     Expression<double>? confidence,
-    Expression<bool>? isConfirmed,
     Expression<String>? tagsJson,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1386,7 +1337,6 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
       if (source != null) 'source': source,
       if (sourceDocumentId != null) 'source_document_id': sourceDocumentId,
       if (confidence != null) 'confidence': confidence,
-      if (isConfirmed != null) 'is_confirmed': isConfirmed,
       if (tagsJson != null) 'tags_json': tagsJson,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -1407,7 +1357,6 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
     Value<String>? source,
     Value<String?>? sourceDocumentId,
     Value<double?>? confidence,
-    Value<bool>? isConfirmed,
     Value<String>? tagsJson,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -1426,7 +1375,6 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
       source: source ?? this.source,
       sourceDocumentId: sourceDocumentId ?? this.sourceDocumentId,
       confidence: confidence ?? this.confidence,
-      isConfirmed: isConfirmed ?? this.isConfirmed,
       tagsJson: tagsJson ?? this.tagsJson,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1471,9 +1419,6 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
     if (confidence.present) {
       map['confidence'] = Variable<double>(confidence.value);
     }
-    if (isConfirmed.present) {
-      map['is_confirmed'] = Variable<bool>(isConfirmed.value);
-    }
     if (tagsJson.present) {
       map['tags_json'] = Variable<String>(tagsJson.value);
     }
@@ -1506,7 +1451,6 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
           ..write('source: $source, ')
           ..write('sourceDocumentId: $sourceDocumentId, ')
           ..write('confidence: $confidence, ')
-          ..write('isConfirmed: $isConfirmed, ')
           ..write('tagsJson: $tagsJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -3441,7 +3385,6 @@ typedef $$CachedMedicalEventsTableCreateCompanionBuilder =
       required String source,
       Value<String?> sourceDocumentId,
       Value<double?> confidence,
-      required bool isConfirmed,
       required String tagsJson,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -3461,7 +3404,6 @@ typedef $$CachedMedicalEventsTableUpdateCompanionBuilder =
       Value<String> source,
       Value<String?> sourceDocumentId,
       Value<double?> confidence,
-      Value<bool> isConfirmed,
       Value<String> tagsJson,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -3530,11 +3472,6 @@ class $$CachedMedicalEventsTableFilterComposer
 
   ColumnFilters<double> get confidence => $composableBuilder(
     column: $table.confidence,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isConfirmed => $composableBuilder(
-    column: $table.isConfirmed,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3623,11 +3560,6 @@ class $$CachedMedicalEventsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get isConfirmed => $composableBuilder(
-    column: $table.isConfirmed,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get tagsJson => $composableBuilder(
     column: $table.tagsJson,
     builder: (column) => ColumnOrderings(column),
@@ -3701,11 +3633,6 @@ class $$CachedMedicalEventsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<bool> get isConfirmed => $composableBuilder(
-    column: $table.isConfirmed,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<String> get tagsJson =>
       $composableBuilder(column: $table.tagsJson, builder: (column) => column);
 
@@ -3773,7 +3700,6 @@ class $$CachedMedicalEventsTableTableManager
                 Value<String> source = const Value.absent(),
                 Value<String?> sourceDocumentId = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
-                Value<bool> isConfirmed = const Value.absent(),
                 Value<String> tagsJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -3791,7 +3717,6 @@ class $$CachedMedicalEventsTableTableManager
                 source: source,
                 sourceDocumentId: sourceDocumentId,
                 confidence: confidence,
-                isConfirmed: isConfirmed,
                 tagsJson: tagsJson,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -3811,7 +3736,6 @@ class $$CachedMedicalEventsTableTableManager
                 required String source,
                 Value<String?> sourceDocumentId = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
-                required bool isConfirmed,
                 required String tagsJson,
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -3829,7 +3753,6 @@ class $$CachedMedicalEventsTableTableManager
                 source: source,
                 sourceDocumentId: sourceDocumentId,
                 confidence: confidence,
-                isConfirmed: isConfirmed,
                 tagsJson: tagsJson,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

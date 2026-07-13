@@ -61,20 +61,20 @@ Do not give medical advice, interpret risk, recommend actions, or draw conclusio
 source text."""
 
 SUMMARY_SYSTEM_PROMPT = (
-    "You are MedStory's assistant. You organize confirmed medical timeline events into a concise "
+    "You are MedStory's assistant. You organize medical timeline events into a concise "
     "doctor-ready summary. Do not diagnose, recommend treatments, rank options, prescribe, or infer "
     "facts that are not present in the provided events."
 )
 
 SUMMARY_USER_PROMPT = """Create a concise medical history summary in {language}.
 
-Use only the confirmed timeline events below. Return JSON using the provided schema:
+Use only the timeline events below. Return JSON using the provided schema:
 - content.key_symptoms: important symptoms explicitly recorded
 - content.major_diagnoses: diagnoses explicitly recorded
 - content.treatment_history: treatments/procedures/outcomes explicitly recorded
 - content.important_examinations: tests, imaging, labs, and notable results explicitly recorded
 - content.relevant_medications: medications, doses, dates, and duration when explicitly recorded
-- narrative_text: short doctor-ready prose that states this is based on confirmed MedStory events
+- narrative_text: short doctor-ready prose that states this is based on MedStory timeline events
 
 Do not give medical advice, interpret risk, recommend actions, or draw conclusions beyond the events."""
 
@@ -210,7 +210,6 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
 
             document.medical_events.filter(
                 source=event_source,
-                is_confirmed=False,
                 deleted_at__isnull=True,
             ).update(deleted_at=timezone.now())
 
@@ -229,7 +228,6 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
                     attributes=event_data["attributes"],
                     source=event_source,
                     confidence=event_data["confidence"],
-                    is_confirmed=False,
                 )
 
             if explanation is not None:
@@ -352,7 +350,6 @@ def process_medical_summary(*, subject, job=None, language=None):
                 user=subject.user,
                 subject=subject,
                 deleted_at__isnull=True,
-                is_confirmed=True,
             )
             .select_related("source_document")
             .prefetch_related("tags")
@@ -429,7 +426,7 @@ def build_summary_export_pdf(summary, *, visit_note=""):
                 for item in items:
                     story.append(Paragraph(f"- {item}", styles["BodyText"]))
             else:
-                story.append(Paragraph("No confirmed events recorded.", styles["BodyText"]))
+                story.append(Paragraph("No timeline events recorded.", styles["BodyText"]))
         if visit_note.strip():
             story.extend(
                 [
@@ -600,7 +597,6 @@ def _medical_event_export(event):
         "attributes": event.attributes,
         "source": event.source,
         "confidence": event.confidence,
-        "is_confirmed": event.is_confirmed,
         "tags": [tag.name for tag in event.tags.all()],
         "created_at": _json_timestamp(event.created_at),
         "updated_at": _json_timestamp(event.updated_at),
@@ -691,7 +687,7 @@ def _empty_medical_summary(*, language):
     return {
         "content": {section: [] for section in SUMMARY_CONTENT_SECTIONS},
         "narrative_text": (
-            "No confirmed MedStory timeline events are available for this subject yet. "
+            "No MedStory timeline events are available for this subject yet. "
             "This summary is an organizer view and does not provide medical advice."
         ),
         "model_name": "none",
@@ -800,7 +796,7 @@ def _build_minimal_pdf(summary, *, visit_note=""):
     for section in SUMMARY_CONTENT_SECTIONS:
         lines.append(_humanize_summary_section(section))
         items = summary.content.get(section, [])
-        lines.extend([f"- {item}" for item in items] or ["No confirmed events recorded."])
+        lines.extend([f"- {item}" for item in items] or ["No timeline events recorded."])
         lines.append("")
     if visit_note.strip():
         lines.extend(["Questions and concerns to discuss", visit_note.strip(), ""])

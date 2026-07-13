@@ -9,13 +9,18 @@ final visitPreparationApiProvider = Provider<VisitPreparationApi>((ref) {
 });
 
 class VisitPreparation {
-  const VisitPreparation({required this.id, required this.subjectId, required this.note});
+  const VisitPreparation({
+    required this.id,
+    required this.subjectId,
+    required this.note,
+  });
 
-  factory VisitPreparation.fromJson(Map<String, dynamic> json) => VisitPreparation(
-    id: json['id'] as String,
-    subjectId: json['subject_id'] as String,
-    note: json['note'] as String? ?? '',
-  );
+  factory VisitPreparation.fromJson(Map<String, dynamic> json) =>
+      VisitPreparation(
+        id: json['id'] as String,
+        subjectId: json['subject_id'] as String,
+        note: json['note'] as String? ?? '',
+      );
 
   final String id;
   final String subjectId;
@@ -29,7 +34,8 @@ class VisitPreparationApi {
   Future<VisitPreparation> get(String subjectId) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
-        '/visit-preparation', queryParameters: {'subject_id': subjectId},
+        '/visit-preparation',
+        queryParameters: {'subject_id': subjectId},
       );
       return VisitPreparation.fromJson(response.data ?? const {});
     } on DioException catch (error) {

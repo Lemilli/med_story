@@ -128,7 +128,7 @@ idle → selecting → saving_local → creating(POST /documents) → ingesting(
 - The user can leave the screen; files remain on-device, and processing surfaces via the
   documents list / timeline once `processed`.
 - Newly extracted events show an **"AI-suggested, tap to confirm"** badge
-  (`is_confirmed=false`) to keep the user in control.
+  with edit and deletion controls to keep the user in control.
 
 ### 7.2 Voice-First Capture
 Record → save locally → transient ingest as `doc_type=audio` → poll → review extracted events.
@@ -143,7 +143,6 @@ Same machine as 7.1.
 - `summary` screen shows the structured memory + narrative.
 - "Prepare for visit" → `GET /summary/export?format=pdf` → share sheet.
 - The prepare-for-visit flow saves a per-subject note before export; the note is user-authored and is not AI input.
-- Review inbox reads unconfirmed timeline events; medication history is a confirmed-event filter, not a separate medication store.
 
 ## 8. Offline & Caching
 

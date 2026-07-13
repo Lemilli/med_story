@@ -96,7 +96,6 @@ class MedicalEventSerializer(serializers.ModelSerializer):
             "source_document_id",
             "source_text",
             "confidence",
-            "is_confirmed",
             "tags",
             "subject_id",
             "created_at",

@@ -34,8 +34,6 @@ class TimelineApi {
           if (filters.to != null) 'to': _dateOnly(filters.to!),
           if (filters.tag.trim().isNotEmpty) 'tag': filters.tag.trim(),
           if (filters.query.trim().isNotEmpty) 'q': filters.query.trim(),
-          if (filters.confirmed != null)
-            'confirmed': filters.confirmed! ? 'true' : 'false',
         },
       );
       return TimelinePage.fromJson(response.data ?? <String, dynamic>{});

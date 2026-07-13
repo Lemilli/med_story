@@ -48,20 +48,4 @@ class EventFormController extends AsyncNotifier<void> {
       () => ref.read(eventRepositoryProvider).deleteEvent(id),
     );
   }
-
-  Future<MedicalEvent> confirm(String id) async {
-    state = const AsyncValue.loading();
-    final result = await AsyncValue.guard(
-      () => ref.read(eventRepositoryProvider).confirmEvent(id),
-    );
-    state = result.when(
-      data: (_) => const AsyncValue.data(null),
-      error: (error, stackTrace) => AsyncValue.error(error, stackTrace),
-      loading: () => const AsyncValue.loading(),
-    );
-    if (result.hasValue) {
-      ref.invalidate(eventDetailProvider(id));
-    }
-    return result.requireValue;
-  }
 }

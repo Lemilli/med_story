@@ -178,7 +178,6 @@ Re-runs explanation (e.g. different language). → `202`.
 ### GET /timeline
 The primary chronological read model (Scenario E).
 Filters: `subject_id`, `types` (comma list), `from`, `to` (dates), `tag`, `q` (text search),
-and `confirmed=true|false` for the review queue.
 Cursor paginated, default newest-first.
 ```jsonc
 { "results": [
@@ -186,7 +185,7 @@ Cursor paginated, default newest-first.
       "description": "...", "event_date": "2025-03-10", "event_end_date": null,
       "attributes": { "name": "Mesalazine", "dose": "800mg", "frequency": "3x/day" },
       "source": "ai_document", "source_document_id": "uuid",
-      "confidence": 0.92, "is_confirmed": false, "tags": ["IBS"] }
+      "confidence": 0.92, "tags": ["IBS"] }
   ],
   "next": "cursor...", "previous": null }
 ```
@@ -203,9 +202,6 @@ Manually create an event.
 
 ### GET /events/{id} · PATCH /events/{id} · DELETE /events/{id}
 Retrieve / update / soft-delete a single event.
-
-### POST /events/{id}/confirm
-Marks an AI-extracted event as reviewed/confirmed. → `200`.
 
 ### GET /events/search
 Full-text + attribute search across history. Params: `q`, `types`, `subject_id`.
@@ -226,7 +222,7 @@ returns `404 { "error": { "code": "not_ready", ... } }`.
 ```
 
 ### POST /summary/regenerate
-Enqueues a fresh summary build from confirmed current events.
+Enqueues a fresh summary build from current events.
 → `202 { "job_id": "uuid", "status": "queued" }`.
 
 ### GET /summary/versions
@@ -311,7 +307,6 @@ Throttled responses include a `Retry-After` header and
 | GET | /timeline | Chronological events |
 | POST | /events | Create event |
 | GET/PATCH/DELETE | /events/{id} | Manage event |
-| POST | /events/{id}/confirm | Confirm AI event |
 | GET | /events/search | Search history |
 | GET | /summary | Current medical memory |
 | POST | /summary/regenerate | Rebuild summary |

@@ -1,7 +1,6 @@
 from django.urls import path
 
 from medical.views import (
-    ConfirmEventView,
     DocumentAudioUploadView,
     DocumentDetailView,
     DocumentExplanationRegenerateView,
@@ -39,7 +38,6 @@ urlpatterns = [
     path("events", EventListCreateView.as_view(), name="event-list"),
     path("events/search", EventSearchView.as_view(), name="event-search"),
     path("events/<uuid:id>", EventDetailView.as_view(), name="event-detail"),
-    path("events/<uuid:id>/confirm", ConfirmEventView.as_view(), name="event-confirm"),
     path("timeline", TimelineView.as_view(), name="timeline"),
     path("summary", SummaryCurrentView.as_view(), name="summary-current"),
     path("summary/regenerate", SummaryRegenerateView.as_view(), name="summary-regenerate"),

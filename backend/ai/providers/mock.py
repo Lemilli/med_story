@@ -25,13 +25,13 @@ class MockLLMProvider:
             return {
                 "content": {
                     "key_symptoms": ["Abdominal pain was recorded on the timeline."],
-                    "major_diagnoses": ["Ulcerative colitis appears in confirmed history."],
+                    "major_diagnoses": ["Ulcerative colitis appears in the timeline history."],
                     "treatment_history": ["Mesalazine treatment was recorded."],
                     "important_examinations": ["CRP result of 12 mg/L was recorded."],
                     "relevant_medications": ["Mesalazine 800 mg was recorded."],
                 },
                 "narrative_text": (
-                    "This summary organizes confirmed MedStory timeline events for a healthcare visit. "
+                    "This summary organizes MedStory timeline events for a healthcare visit. "
                     "It does not diagnose or recommend treatment."
                 ),
             }

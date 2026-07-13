@@ -54,17 +54,6 @@ class EventApi {
       throw mapDioException(error);
     }
   }
-
-  Future<MedicalEvent> confirmEvent(String id) async {
-    try {
-      final response = await _dio.post<Map<String, dynamic>>(
-        '/events/$id/confirm',
-      );
-      return MedicalEvent.fromJson(response.data ?? <String, dynamic>{});
-    } on DioException catch (error) {
-      throw mapDioException(error);
-    }
-  }
 }
 
 class EventWriteRequest {
@@ -99,7 +88,6 @@ class EventWriteRequest {
       'tags': tags,
       'subject_id': subjectId,
       'source': 'user_manual',
-      'is_confirmed': true,
     };
   }
 }

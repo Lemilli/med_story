@@ -122,7 +122,6 @@ The core timeline item. One row per discrete medical fact.
 | attributes | JSONB | Type-specific structured fields (see §4) |
 | source | enum | user_manual, ai_document, ai_voice |
 | confidence | float (nullable) | AI extraction confidence (0–1) |
-| is_confirmed | bool | User has reviewed/confirmed AI-extracted event |
 | created_at / updated_at | timestamptz | |
 | deleted_at | timestamptz (nullable) | Soft delete |
 
@@ -259,9 +258,9 @@ flexibly so the schema can evolve without migrations.
 
 ## 6. Data Lifecycle
 
-- **Create**: events come from manual entry or the AI pipeline (with `is_confirmed=false`
+- **Create**: events come from manual entry or the AI pipeline
   until the user reviews them).
-- **Update**: users can edit/confirm AI-extracted events; summaries regenerate on change.
+- **Update**: users can edit AI-extracted events; summaries regenerate on change.
 - **Soft delete**: `deleted_at` hides records while preserving referential history.
 - **Hard delete / export (GDPR)**: account deletion purges DB rows;
   backend export returns immediate JSON metadata/history (original files are user-managed on-device). See

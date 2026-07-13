@@ -115,14 +115,6 @@ class _EventDetailBody extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: AppSpacing.lg),
-          if (event.source == EventSource.aiDocument && !event.isConfirmed) ...[
-            FilledButton.icon(
-              onPressed: () => _confirmEvent(context, ref),
-              icon: const Icon(Icons.check_circle_outline_rounded),
-              label: Text(l10n.eventConfirmAction),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
           Row(
             children: [
               Expanded(
@@ -176,18 +168,6 @@ class _EventDetailBody extends ConsumerWidget {
     await ref.read(eventFormControllerProvider.notifier).delete(event.id);
     if (context.mounted) {
       context.go('/timeline');
-    }
-  }
-
-  Future<void> _confirmEvent(BuildContext context, WidgetRef ref) async {
-    await ref.read(eventFormControllerProvider.notifier).confirm(event.id);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.eventConfirmedMessage),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
     }
   }
 }
@@ -306,9 +286,7 @@ class _AiSourcePanel extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  event.isConfirmed
-                      ? l10n.eventAiConfirmedNote
-                      : l10n.eventAiSuggestedNote,
+                  l10n.eventAiSuggestedNote,
                   style: textTheme.bodyMedium?.copyWith(height: 1.35),
                 ),
               ),

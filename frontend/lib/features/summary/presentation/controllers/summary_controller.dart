@@ -1,10 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../events/domain/medical_event.dart';
 import '../../../subjects/domain/subject.dart';
 import '../../../subjects/presentation/controllers/subject_controller.dart';
-import '../../../timeline/data/timeline_repository.dart';
-import '../../../timeline/domain/timeline_filters.dart';
 import '../../data/summary_api.dart';
 import '../../data/summary_repository.dart';
 import '../../domain/medical_summary.dart';
@@ -13,22 +10,6 @@ final summaryControllerProvider =
     AsyncNotifierProvider<SummaryController, SummaryState>(
       SummaryController.new,
     );
-
-final summarySearchEventsProvider =
-    StreamProvider.autoDispose<List<MedicalEvent>>((ref) {
-      final summaryValue = ref.watch(summaryControllerProvider);
-      final state = summaryValue.hasValue ? summaryValue.value : null;
-      final subjectId = state?.subject?.id;
-      if (subjectId == null || state == null || state.searchQuery.isEmpty) {
-        return Stream.value(const <MedicalEvent>[]);
-      }
-      return ref
-          .watch(timelineRepositoryProvider)
-          .watchTimeline(
-            subjectId: subjectId,
-            filters: TimelineFilters(query: state.searchQuery),
-          );
-    });
 
 class SummaryController extends AsyncNotifier<SummaryState> {
   @override
@@ -109,37 +90,6 @@ class SummaryController extends AsyncNotifier<SummaryState> {
     }
   }
 
-  Future<void> updateSearchQuery(String query) async {
-    final current = state.hasValue ? state.value : null;
-    final subject = current?.subject;
-    if (current == null) {
-      return;
-    }
-    final trimmed = query.trim();
-    state = AsyncValue.data(current.copyWith(searchQuery: trimmed));
-    if (subject == null || trimmed.isEmpty) {
-      return;
-    }
-    try {
-      await ref
-          .read(timelineRepositoryProvider)
-          .refreshTimeline(
-            subjectId: subject.id,
-            filters: TimelineFilters(query: trimmed),
-          );
-    } on Object {
-      // Cached timeline results are still useful for summary search.
-    }
-  }
-
-  void previewVersion(MedicalSummary? summary) {
-    final current = state.hasValue ? state.value : null;
-    if (current == null) {
-      return;
-    }
-    state = AsyncValue.data(current.copyWith(previewSummary: summary));
-  }
-
   void consumeActionMessages() {
     final current = state.hasValue ? state.value : null;
     if (current == null) {
@@ -161,26 +111,20 @@ class SummaryController extends AsyncNotifier<SummaryState> {
     }
     final repository = ref.read(summaryRepositoryProvider);
     final result = await repository.getCurrentSummary(subjectId: subject.id);
-    final versions = result.isReady
-        ? await repository.listVersions(subjectId: subject.id)
-        : const <MedicalSummary>[];
     return current.copyWith(
       loadResult: result,
-      versions: versions,
-      previewSummary: null,
       isRefreshing: false,
       actionError: null,
     );
   }
 }
 
+const _unchanged = Object();
+
 class SummaryState {
   const SummaryState({
     required this.subject,
     this.loadResult = const SummaryLoadResult.notReady(),
-    this.versions = const <MedicalSummary>[],
-    this.previewSummary,
-    this.searchQuery = '',
     this.isRefreshing = false,
     this.isRegenerating = false,
     this.isExporting = false,
@@ -191,9 +135,6 @@ class SummaryState {
 
   final Subject? subject;
   final SummaryLoadResult loadResult;
-  final List<MedicalSummary> versions;
-  final MedicalSummary? previewSummary;
-  final String searchQuery;
   final bool isRefreshing;
   final bool isRegenerating;
   final bool isExporting;
@@ -203,16 +144,11 @@ class SummaryState {
 
   MedicalSummary? get currentSummary => loadResult.summary;
 
-  MedicalSummary? get visibleSummary => previewSummary ?? currentSummary;
-
-  bool get isPreviewingVersion => previewSummary != null;
+  MedicalSummary? get visibleSummary => currentSummary;
 
   SummaryState copyWith({
     Subject? subject,
     SummaryLoadResult? loadResult,
-    List<MedicalSummary>? versions,
-    Object? previewSummary = _unchanged,
-    String? searchQuery,
     bool? isRefreshing,
     bool? isRegenerating,
     bool? isExporting,
@@ -223,11 +159,6 @@ class SummaryState {
     return SummaryState(
       subject: subject ?? this.subject,
       loadResult: loadResult ?? this.loadResult,
-      versions: versions ?? this.versions,
-      previewSummary: previewSummary == _unchanged
-          ? this.previewSummary
-          : previewSummary as MedicalSummary?,
-      searchQuery: searchQuery ?? this.searchQuery,
       isRefreshing: isRefreshing ?? this.isRefreshing,
       isRegenerating: isRegenerating ?? this.isRegenerating,
       isExporting: isExporting ?? this.isExporting,
@@ -241,5 +172,3 @@ class SummaryState {
     );
   }
 }
-
-const _unchanged = Object();

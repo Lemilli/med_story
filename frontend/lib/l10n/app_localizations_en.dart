@@ -27,8 +27,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timelineTitle => 'Timeline';
 
   @override
-  String get timelineMessage =>
-      'Your confirmed medical story will appear here.';
+  String get timelineMessage => 'Your medical story will appear here.';
 
   @override
   String get summaryTitle => 'Summary';
@@ -74,7 +73,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get summaryNotReadyMessage =>
-      'Generate a doctor-ready summary from your confirmed timeline events when you need to prepare for a visit.';
+      'Generate a doctor-ready summary from your timeline events when you need to prepare for a visit.';
 
   @override
   String get summaryNarrativeTitle => 'Doctor-ready narrative';
@@ -98,9 +97,9 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count confirmed events',
-      one: '1 confirmed event',
-      zero: 'No confirmed events',
+      other: '$count events',
+      one: '1 event',
+      zero: 'No events',
     );
     return '$_temp0';
   }
@@ -948,23 +947,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'MedStory organizes your information; it does not diagnose or recommend treatment.';
 
   @override
-  String get eventUnconfirmedBadge => 'Needs review';
-
-  @override
-  String get eventConfirmedBadge => 'Confirmed';
-
-  @override
-  String get eventConfirmAction => 'Confirm event';
-
-  @override
-  String get eventConfirmedMessage => 'Event confirmed.';
-
-  @override
   String get eventAiSuggestedNote =>
-      'AI suggested this event from a document. Review it before relying on it.';
-
-  @override
-  String get eventAiConfirmedNote => 'You confirmed this AI-suggested event.';
+      'AI extracted this event from a document. You can edit it if needed.';
 
   @override
   String get eventOriginalSourceTitle => 'Original note';
@@ -998,37 +982,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get eventNetworkRequired =>
       'Saving changes requires a connection to MedStory.';
-
-  @override
-  String get reviewTitle => 'Review suggestions';
-
-  @override
-  String get reviewEmpty => 'Nothing needs your review right now.';
-
-  @override
-  String get reviewDismiss => 'Dismiss';
-
-  @override
-  String get reviewEdit => 'Edit before confirming';
-
-  @override
-  String get medicationsTitle => 'Medication history';
-
-  @override
-  String get medicationsEmpty =>
-      'Confirmed medications and treatment outcomes will appear here.';
-
-  @override
-  String get searchTitle => 'Search your history';
-
-  @override
-  String get searchHint => 'Search events, tags, and documents';
-
-  @override
-  String get searchEvents => 'Events';
-
-  @override
-  String get searchDocuments => 'Documents';
 
   @override
   String get visitPrepTitle => 'Prepare for a visit';

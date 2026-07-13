@@ -42,7 +42,6 @@ class CachedMedicalEvents extends Table {
   TextColumn get source => text()();
   TextColumn get sourceDocumentId => text().nullable()();
   RealColumn get confidence => real().nullable()();
-  BoolColumn get isConfirmed => boolean()();
   TextColumn get tagsJson => text()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -106,7 +105,7 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -124,6 +123,9 @@ class LocalDatabase extends _$LocalDatabase {
             uploadQueueItems,
             uploadQueueItems.isDismissed,
           );
+        }
+        if (from < 5) {
+          await migrator.dropColumn(cachedMedicalEvents, 'is_confirmed');
         }
       },
     );

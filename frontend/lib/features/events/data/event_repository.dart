@@ -40,10 +40,4 @@ class EventRepository {
     await api.deleteEvent(id);
     await database.removeEvent(id);
   }
-
-  Future<MedicalEvent> confirmEvent(String id) async {
-    final event = await api.confirmEvent(id);
-    await database.upsertEvents([event.toCacheCompanion()]);
-    return event;
-  }
 }

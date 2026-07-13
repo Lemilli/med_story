@@ -17,7 +17,6 @@ abstract class MedicalEvent with _$MedicalEvent {
     @JsonKey(name: 'source_document_id') String? sourceDocumentId,
     @JsonKey(name: 'source_text') String? sourceText,
     double? confidence,
-    @JsonKey(name: 'is_confirmed') @Default(true) bool isConfirmed,
     @Default(<String>[]) List<String> tags,
     @JsonKey(name: 'subject_id') required String subjectId,
     @JsonKey(name: 'created_at') required DateTime createdAt,

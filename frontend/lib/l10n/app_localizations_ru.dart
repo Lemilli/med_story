@@ -27,8 +27,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get timelineTitle => 'Хронология';
 
   @override
-  String get timelineMessage =>
-      'Здесь появится ваша подтверждённая медицинская история.';
+  String get timelineMessage => 'Здесь появится ваша медицинская история.';
 
   @override
   String get summaryTitle => 'Сводка';
@@ -73,7 +72,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get summaryNotReadyMessage =>
-      'Создайте сводку для врача из подтвержденных событий, когда нужно подготовиться к визиту.';
+      'Создайте сводку для врача из событий хронологии, когда нужно подготовиться к визиту.';
 
   @override
   String get summaryNarrativeTitle => 'Краткий текст для врача';
@@ -97,9 +96,9 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count подтвержденных событий',
-      one: '1 подтвержденное событие',
-      zero: 'Нет подтвержденных событий',
+      other: '$count событий',
+      one: '1 событие',
+      zero: 'Нет событий',
     );
     return '$_temp0';
   }
@@ -947,24 +946,8 @@ class AppLocalizationsRu extends AppLocalizations {
       'MedStory упорядочивает вашу информацию; он не ставит диагнозы и не рекомендует лечение.';
 
   @override
-  String get eventUnconfirmedBadge => 'Нужно проверить';
-
-  @override
-  String get eventConfirmedBadge => 'Подтверждено';
-
-  @override
-  String get eventConfirmAction => 'Подтвердить событие';
-
-  @override
-  String get eventConfirmedMessage => 'Событие подтверждено.';
-
-  @override
   String get eventAiSuggestedNote =>
-      'ИИ предложил это событие из документа. Проверьте его, прежде чем полагаться на него.';
-
-  @override
-  String get eventAiConfirmedNote =>
-      'Вы подтвердили это событие, предложенное ИИ.';
+      'ИИ извлёк это событие из документа. При необходимости его можно изменить.';
 
   @override
   String get eventOriginalSourceTitle => 'Исходная заметка';
@@ -998,37 +981,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get eventNetworkRequired =>
       'Для сохранения изменений нужно подключение к MedStory.';
-
-  @override
-  String get reviewTitle => 'Проверить предложения';
-
-  @override
-  String get reviewEmpty => 'Сейчас нет предложений, которые нужно проверить.';
-
-  @override
-  String get reviewDismiss => 'Отклонить';
-
-  @override
-  String get reviewEdit => 'Изменить перед подтверждением';
-
-  @override
-  String get medicationsTitle => 'История лекарств';
-
-  @override
-  String get medicationsEmpty =>
-      'Подтверждённые лекарства и результаты лечения появятся здесь.';
-
-  @override
-  String get searchTitle => 'Поиск по истории';
-
-  @override
-  String get searchHint => 'Ищите события, теги и документы';
-
-  @override
-  String get searchEvents => 'События';
-
-  @override
-  String get searchDocuments => 'Документы';
 
   @override
   String get visitPrepTitle => 'Подготовка к визиту';

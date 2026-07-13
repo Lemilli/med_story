@@ -7,7 +7,6 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../events/domain/medical_event.dart';
-import '../../../events/presentation/controllers/event_controllers.dart';
 import '../../../events/presentation/event_type_l10n.dart';
 import '../../domain/timeline_filters.dart';
 import '../controllers/timeline_controller.dart';
@@ -278,8 +277,7 @@ extension on TimelineFilters {
       from != null ||
       to != null ||
       tag.trim().isNotEmpty ||
-      query.trim().isNotEmpty ||
-      confirmed != null;
+      query.trim().isNotEmpty;
 }
 
 class _TimelineFilterSheet extends StatefulWidget {
@@ -456,8 +454,6 @@ class _TimelineEventRow extends ConsumerWidget {
                     ),
                   ),
                   const Spacer(),
-                  if (!event.isConfirmed)
-                    _StatusBadge(label: l10n.eventUnconfirmedBadge),
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -486,65 +482,9 @@ class _TimelineEventRow extends ConsumerWidget {
                       .toList(growable: false),
                 ),
               ],
-              if (event.source == EventSource.aiDocument &&
-                  !event.isConfirmed) ...[
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  l10n.eventAiSuggestedNote,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.secondaryInk,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilledButton.icon(
-                    onPressed: () => _confirmEvent(context, ref),
-                    icon: const Icon(Icons.check_circle_outline_rounded),
-                    label: Text(l10n.eventConfirmAction),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Future<void> _confirmEvent(BuildContext context, WidgetRef ref) async {
-    await ref.read(eventFormControllerProvider.notifier).confirm(event.id);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.eventConfirmedMessage),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.quietSurface,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.clinicalLine),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
-        ),
-        child: Text(label),
       ),
     );
   }

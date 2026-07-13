@@ -11,7 +11,6 @@ import '../features/documents/presentation/screens/document_detail_screen.dart';
 import '../features/documents/presentation/screens/document_list_screen.dart';
 import '../features/events/presentation/screens/event_detail_screen.dart';
 import '../features/events/presentation/screens/event_form_screen.dart';
-import '../features/organize/presentation/screens/organize_screens.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
 import '../features/shell/presentation/screens/app_shell.dart';
 import '../features/summary/presentation/screens/summary_screen.dart';
@@ -90,18 +89,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/documents',
         builder: (context, state) => const DocumentListScreen(),
-      ),
-      GoRoute(
-        path: '/review',
-        builder: (context, state) => const ReviewInboxScreen(),
-      ),
-      GoRoute(
-        path: '/medications',
-        builder: (context, state) => const MedicationHistoryScreen(),
-      ),
-      GoRoute(
-        path: '/search',
-        builder: (context, state) => const HistorySearchScreen(),
       ),
       GoRoute(
         path: '/visit-preparation',

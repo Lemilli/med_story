@@ -46,7 +46,9 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
                   maxLines: null,
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
-                  decoration: InputDecoration(labelText: l10n.eventDescriptionLabel),
+                  decoration: InputDecoration(
+                    labelText: l10n.eventDescriptionLabel,
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -61,13 +63,18 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
                   if (picked != null) setState(() => _date = picked);
                 },
                 icon: const Icon(Icons.calendar_today_rounded),
-                label: Text('${l10n.eventDateLabel}: ${_date.toIso8601String().substring(0, 10)}'),
+                label: Text(
+                  '${l10n.eventDateLabel}: ${_date.toIso8601String().substring(0, 10)}',
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               FilledButton(
                 onPressed: saving ? null : _save,
                 child: saving
-                    ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : Text(l10n.eventCreateAction),
               ),
             ],
@@ -84,20 +91,24 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
         ? subjectState.value?.selectedSubjectId
         : null;
     if (text.isEmpty || subjectId == null) return;
-    final firstLine = text.split(RegExp(r'\r?\n')).firstWhere(
-      (line) => line.trim().isNotEmpty,
-      orElse: () => '',
-    ).trim();
-    final title = firstLine.isEmpty ? context.l10n.documentUntitledTitle : firstLine;
-    final event = await ref.read(eventFormControllerProvider.notifier).create(
-      EventWriteRequest(
-        eventType: MedicalEventType.note,
-        title: title.length > 255 ? title.substring(0, 255) : title,
-        description: text,
-        eventDate: _date.toIso8601String().substring(0, 10),
-        subjectId: subjectId,
-      ),
-    );
+    final firstLine = text
+        .split(RegExp(r'\r?\n'))
+        .firstWhere((line) => line.trim().isNotEmpty, orElse: () => '')
+        .trim();
+    final title = firstLine.isEmpty
+        ? context.l10n.documentUntitledTitle
+        : firstLine;
+    final event = await ref
+        .read(eventFormControllerProvider.notifier)
+        .create(
+          EventWriteRequest(
+            eventType: MedicalEventType.note,
+            title: title.length > 255 ? title.substring(0, 255) : title,
+            description: text,
+            eventDate: _date.toIso8601String().substring(0, 10),
+            subjectId: subjectId,
+          ),
+        );
     if (mounted) context.go('/events/${event.id}');
   }
 }

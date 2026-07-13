@@ -137,7 +137,7 @@ abstract class AppLocalizations {
   /// No description provided for @timelineMessage.
   ///
   /// In en, this message translates to:
-  /// **'Your confirmed medical story will appear here.'**
+  /// **'Your medical story will appear here.'**
   String get timelineMessage;
 
   /// No description provided for @summaryTitle.
@@ -215,7 +215,7 @@ abstract class AppLocalizations {
   /// No description provided for @summaryNotReadyMessage.
   ///
   /// In en, this message translates to:
-  /// **'Generate a doctor-ready summary from your confirmed timeline events when you need to prepare for a visit.'**
+  /// **'Generate a doctor-ready summary from your timeline events when you need to prepare for a visit.'**
   String get summaryNotReadyMessage;
 
   /// No description provided for @summaryNarrativeTitle.
@@ -245,7 +245,7 @@ abstract class AppLocalizations {
   /// No description provided for @summaryEventCountLabel.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =0{No confirmed events} =1{1 confirmed event} other{{count} confirmed events}}'**
+  /// **'{count, plural, =0{No events} =1{1 event} other{{count} events}}'**
   String summaryEventCountLabel(int count);
 
   /// No description provided for @summaryReturnToCurrentAction.
@@ -1730,41 +1730,11 @@ abstract class AppLocalizations {
   /// **'MedStory organizes your information; it does not diagnose or recommend treatment.'**
   String get eventBoundaryNote;
 
-  /// No description provided for @eventUnconfirmedBadge.
-  ///
-  /// In en, this message translates to:
-  /// **'Needs review'**
-  String get eventUnconfirmedBadge;
-
-  /// No description provided for @eventConfirmedBadge.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirmed'**
-  String get eventConfirmedBadge;
-
-  /// No description provided for @eventConfirmAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm event'**
-  String get eventConfirmAction;
-
-  /// No description provided for @eventConfirmedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Event confirmed.'**
-  String get eventConfirmedMessage;
-
   /// No description provided for @eventAiSuggestedNote.
   ///
   /// In en, this message translates to:
-  /// **'AI suggested this event from a document. Review it before relying on it.'**
+  /// **'AI extracted this event from a document. You can edit it if needed.'**
   String get eventAiSuggestedNote;
-
-  /// No description provided for @eventAiConfirmedNote.
-  ///
-  /// In en, this message translates to:
-  /// **'You confirmed this AI-suggested event.'**
-  String get eventAiConfirmedNote;
 
   /// No description provided for @eventOriginalSourceTitle.
   ///
@@ -1825,66 +1795,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saving changes requires a connection to MedStory.'**
   String get eventNetworkRequired;
-
-  /// No description provided for @reviewTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Review suggestions'**
-  String get reviewTitle;
-
-  /// No description provided for @reviewEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'Nothing needs your review right now.'**
-  String get reviewEmpty;
-
-  /// No description provided for @reviewDismiss.
-  ///
-  /// In en, this message translates to:
-  /// **'Dismiss'**
-  String get reviewDismiss;
-
-  /// No description provided for @reviewEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit before confirming'**
-  String get reviewEdit;
-
-  /// No description provided for @medicationsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Medication history'**
-  String get medicationsTitle;
-
-  /// No description provided for @medicationsEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirmed medications and treatment outcomes will appear here.'**
-  String get medicationsEmpty;
-
-  /// No description provided for @searchTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Search your history'**
-  String get searchTitle;
-
-  /// No description provided for @searchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search events, tags, and documents'**
-  String get searchHint;
-
-  /// No description provided for @searchEvents.
-  ///
-  /// In en, this message translates to:
-  /// **'Events'**
-  String get searchEvents;
-
-  /// No description provided for @searchDocuments.
-  ///
-  /// In en, this message translates to:
-  /// **'Documents'**
-  String get searchDocuments;
 
   /// No description provided for @visitPrepTitle.
   ///

@@ -139,13 +139,6 @@ class MedicalEventQuerysetMixin:
                 | Q(tags__name__icontains=query)
             )
 
-        confirmed = self.request.query_params.get("confirmed")
-        if confirmed:
-            normalized = confirmed.strip().lower()
-            if normalized not in {"true", "false"}:
-                raise ValidationError({"confirmed": ["Use true or false."]})
-            queryset = queryset.filter(is_confirmed=normalized == "true")
-
         return queryset.distinct()
 
 
@@ -158,8 +151,7 @@ class EventListCreateView(MedicalEventQuerysetMixin, generics.ListCreateAPIView)
 
     def perform_create(self, serializer):
         event = serializer.save()
-        if event.is_confirmed:
-            enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_created")
+        enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_created")
 
 
 class EventDetailView(MedicalEventQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
@@ -171,15 +163,12 @@ class EventDetailView(MedicalEventQuerysetMixin, generics.RetrieveUpdateDestroyA
 
     def perform_update(self, serializer):
         event = serializer.save()
-        if event.is_confirmed:
-            enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_updated")
+        enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_updated")
 
     def perform_destroy(self, instance):
-        should_refresh_summary = instance.is_confirmed
         instance.deleted_at = timezone.now()
         instance.save(update_fields=("deleted_at", "updated_at"))
-        if should_refresh_summary:
-            enqueue_summary_regeneration(user=instance.user, subject=instance.subject, reason="event_deleted")
+        enqueue_summary_regeneration(user=instance.user, subject=instance.subject, reason="event_deleted")
 
 
 class TimelineView(MedicalEventQuerysetMixin, generics.ListAPIView):
@@ -192,21 +181,6 @@ class TimelineView(MedicalEventQuerysetMixin, generics.ListAPIView):
 
 class EventSearchView(TimelineView):
     pass
-
-
-class ConfirmEventView(MedicalEventQuerysetMixin, generics.GenericAPIView):
-    serializer_class = MedicalEventSerializer
-    lookup_url_kwarg = "id"
-
-    def get_queryset(self):
-        return self.get_base_queryset()
-
-    def post(self, request, *args, **kwargs):
-        event = self.get_object()
-        event.is_confirmed = True
-        event.save(update_fields=("is_confirmed", "updated_at"))
-        enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_confirmed")
-        return Response(MedicalEventSerializer(event, context={"request": request}).data, status=status.HTTP_200_OK)
 
 
 class DocumentQuerysetMixin:

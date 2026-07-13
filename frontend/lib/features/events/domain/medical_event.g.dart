@@ -23,7 +23,6 @@ _MedicalEvent _$MedicalEventFromJson(Map<String, dynamic> json) =>
       sourceDocumentId: json['source_document_id'] as String?,
       sourceText: json['source_text'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble(),
-      isConfirmed: json['is_confirmed'] as bool? ?? true,
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           const <String>[],
@@ -45,7 +44,6 @@ Map<String, dynamic> _$MedicalEventToJson(_MedicalEvent instance) =>
       'source_document_id': instance.sourceDocumentId,
       'source_text': instance.sourceText,
       'confidence': instance.confidence,
-      'is_confirmed': instance.isConfirmed,
       'tags': instance.tags,
       'subject_id': instance.subjectId,
       'created_at': instance.createdAt.toIso8601String(),

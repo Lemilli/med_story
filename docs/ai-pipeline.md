@@ -13,7 +13,7 @@ The AI features serve BRD §8: **Document Explanation**, **Structuring into even
 - The AI is **explanatory and organizational only**. It must **not** diagnose, recommend
   treatments, or generate prescriptions.
 - Output must be understandable by non-medical users (plain language).
-- Users stay in control: AI-extracted events are **suggestions** until confirmed.
+- Users stay in control: AI-extracted events remain editable and removable from their timeline.
 
 All AI work runs **asynchronously in Celery workers** and calls external providers through a
 **provider-abstraction layer**, so vendors (LLM/OCR/STT) can be swapped freely.
@@ -67,7 +67,7 @@ Triggered by `POST /documents/{id}/ingest` (transient multipart upload, max 5 MB
 (3) LLM Structuring  (structured JSON output, schema-validated)
      input: extracted_text (chunked if large)
      output: list of candidate MedicalEvents + document_date + suggested title
-     → create MedicalEvent rows (is_confirmed=false, source=ai_document, confidence)
+     → create MedicalEvent rows (source=ai_document, confidence)
    │
    ▼
 (4) LLM Explanation  (parallel to or after structuring)
@@ -86,7 +86,7 @@ Triggered by `POST /documents/{id}/ingest` (transient multipart upload, max 5 MB
 [Audio bytes received transiently] → (1) STT transcribe → (2) LLM structuring → events → (3) summary refresh
 ```
 Implemented in the backend through `POST /documents/upload-audio` and `doc_type=audio`
-ingestion. Voice-derived events use `source=ai_voice`, remain unconfirmed until user review,
+ingestion. Voice-derived events use `source=ai_voice` and can be edited or removed by the user,
 and store only the transcript/extracted text, not the raw audio.
 
 ### 3.3 On-Demand Explanation
@@ -95,7 +95,7 @@ and store only the transcript/extracted text, not the raw audio.
 ### 3.4 Summary (Medical Memory) Pipeline
 Triggered on meaningful change (debounced) or via `POST /summary/regenerate`.
 ```
-input: current confirmed (+ optionally unconfirmed) MedicalEvents for the subject
+input: current MedicalEvents for the subject
 process: LLM consolidates into structured sections + narrative
 output: new MedicalSummary version (is_current=true; previous → is_current=false)
 sections: key_symptoms, major_diagnoses, treatment_history,
@@ -160,7 +160,7 @@ Use plain, simple language. Never invent values that are not present in the sour
 
 - **No-advice filter**: post-process to strip/forbid recommendation phrasing.
 - **Uncertainty surfaced**: low-confidence events are visually flagged and require user
-  confirmation before counting as "confirmed" history.
+  editing and removal controls within the timeline.
 - **Disclaimers**: the app consistently frames output as organizational, per BRD trust NFR.
 - **Human-in-the-loop**: nothing AI-derived is treated as authoritative without user review.
 - **Hallucination guardrails**: schema validation + "never invent values" instruction +

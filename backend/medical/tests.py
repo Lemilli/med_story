@@ -122,7 +122,6 @@ class MedicalApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["source"], MedicalEvent.Source.USER_MANUAL)
-        self.assertTrue(response.data["is_confirmed"])
         self.assertEqual(response.data["tags"], ["IBS", "flare"])
         self.assertEqual(MedicalEvent.objects.get(id=response.data["id"]).subject.display_name, "Jane Doe")
 
@@ -182,26 +181,6 @@ class MedicalApiTests(APITestCase):
         search_response = self.client.get("/api/v1/events/search?q=Mesalazine&types=medication")
         self.assertEqual(search_response.status_code, status.HTTP_200_OK)
         self.assertEqual(search_response.data["results"][0]["id"], str(older.id))
-
-    def test_timeline_confirmed_filter_limits_review_queue(self):
-        subject = Subject.objects.create(
-            user=self.user,
-            display_name="Jane Doe",
-            relationship=Subject.Relationship.SELF,
-            is_default=True,
-        )
-        confirmed = MedicalEvent.objects.create(
-            user=self.user, subject=subject, event_type=MedicalEvent.EventType.NOTE,
-            title="Confirmed", event_date=date(2026, 6, 1), is_confirmed=True,
-        )
-        suggested = MedicalEvent.objects.create(
-            user=self.user, subject=subject, event_type=MedicalEvent.EventType.NOTE,
-            title="Suggested", event_date=date(2026, 6, 2), is_confirmed=False,
-        )
-        response = self.client.get("/api/v1/timeline?confirmed=false")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual([item["id"] for item in response.data["results"]], [str(suggested.id)])
-        self.assertNotEqual(response.data["results"][0]["id"], str(confirmed.id))
 
     def test_soft_delete_hides_event_from_detail_and_timeline(self):
         subject = Subject.objects.create(
@@ -312,7 +291,6 @@ class MedicalApiTests(APITestCase):
             title="Derived lab",
             event_date=date(2026, 5, 12),
             source=MedicalEvent.Source.AI_DOCUMENT,
-            is_confirmed=False,
         )
 
         list_response = self.client.get("/api/v1/documents")
@@ -362,7 +340,7 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(response.data["results"][0]["title"], "MRI report")
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    def test_ingest_lab_result_creates_unconfirmed_ai_event_and_confirm_endpoint(self):
+    def test_ingest_lab_result_creates_ai_event(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
         payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
 
@@ -385,18 +363,12 @@ class MedicalApiTests(APITestCase):
         event = document.medical_events.get()
         self.assertEqual(event.event_type, MedicalEvent.EventType.EXAMINATION)
         self.assertEqual(event.source, MedicalEvent.Source.AI_DOCUMENT)
-        self.assertFalse(event.is_confirmed)
         self.assertEqual(event.attributes["measurements"][0]["label"], "CRP")
         self.assertIsNotNone(event.confidence)
 
         timeline_response = self.client.get("/api/v1/timeline")
         self.assertEqual(timeline_response.status_code, status.HTTP_200_OK)
         self.assertEqual(timeline_response.data["results"][0]["source_document_id"], str(document.id))
-        self.assertFalse(timeline_response.data["results"][0]["is_confirmed"])
-
-        confirm_response = self.client.post(f"/api/v1/events/{event.id}/confirm")
-        self.assertEqual(confirm_response.status_code, status.HTTP_200_OK)
-        self.assertTrue(confirm_response.data["is_confirmed"])
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_document_explanation_detail_and_availability(self):
@@ -532,10 +504,9 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(event.event_type, MedicalEvent.EventType.MEDICATION)
         self.assertEqual(event.attributes["name"], "Mesalazine")
         self.assertEqual(event.attributes["dose"], "800 mg")
-        self.assertFalse(event.is_confirmed)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    def test_upload_audio_creates_document_and_unconfirmed_voice_event(self):
+    def test_upload_audio_creates_document_and_voice_event(self):
         payload = b"Voice note: CRP was 12 mg/L on 2026-05-12."
 
         response = self.client.post(
@@ -561,7 +532,6 @@ class MedicalApiTests(APITestCase):
         event = document.medical_events.get()
         self.assertEqual(event.source, MedicalEvent.Source.AI_VOICE)
         self.assertEqual(event.event_type, MedicalEvent.EventType.EXAMINATION)
-        self.assertFalse(event.is_confirmed)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_existing_audio_document_ingest_accepts_supported_audio(self):
@@ -697,7 +667,6 @@ class MedicalApiTests(APITestCase):
 
         event = document.medical_events.get()
         self.assertEqual(event.event_type, MedicalEvent.EventType.EXAMINATION)
-        self.assertFalse(event.is_confirmed)
         self.assertEqual(event.attributes["measurements"][1]["label"], "Platelets")
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
@@ -899,7 +868,7 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(response.data["error"]["code"], "not_ready")
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    def test_regenerate_summary_creates_current_version_from_confirmed_events(self):
+    def test_regenerate_summary_creates_current_version_from_events(self):
         subject = self._default_subject()
         MedicalEvent.objects.create(
             user=self.user,
@@ -908,15 +877,13 @@ class MedicalApiTests(APITestCase):
             title="Abdominal pain",
             description="Moderate pain after meals",
             event_date=date(2026, 6, 1),
-            is_confirmed=True,
         )
         MedicalEvent.objects.create(
             user=self.user,
             subject=subject,
             event_type=MedicalEvent.EventType.EXAMINATION,
-            title="Unreviewed lab",
+            title="Lab",
             event_date=date(2026, 6, 2),
-            is_confirmed=False,
             source=MedicalEvent.Source.AI_DOCUMENT,
         )
 
@@ -930,7 +897,7 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(summary_response.status_code, status.HTTP_200_OK)
         self.assertEqual(summary_response.data["version"], 1)
         self.assertTrue(summary_response.data["is_current"])
-        self.assertEqual(summary_response.data["generated_from_event_count"], 1)
+        self.assertEqual(summary_response.data["generated_from_event_count"], 2)
         self.assertIn("key_symptoms", summary_response.data["content"])
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
@@ -1054,7 +1021,6 @@ class MedicalApiTests(APITestCase):
             attributes={"result": "normal"},
             source=MedicalEvent.Source.AI_DOCUMENT,
             confidence=0.8,
-            is_confirmed=False,
         )
         event.tags.add(tag)
         MedicalSummary.objects.create(
@@ -1140,7 +1106,7 @@ class MedicalApiTests(APITestCase):
         self.assertTrue(existing.is_current)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    def test_confirmed_event_changes_enqueue_summary_refresh(self):
+    def test_event_changes_enqueue_summary_refresh(self):
         create_response = self.client.post(
             "/api/v1/events",
             {
