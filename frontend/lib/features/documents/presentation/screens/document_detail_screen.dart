@@ -222,6 +222,9 @@ String _localizedProcessingError(AppLocalizations l10n, String errorCode) {
   return switch (errorCode) {
     'document_not_medical' => l10n.documentNotMedicalMessage,
     'document_unreadable' => l10n.documentUnreadableMessage,
+    'audio_not_medical' => l10n.audioNotMedicalMessage,
+    'audio_unreadable' => l10n.audioUnreadableMessage,
+    'medical_events_not_found' => l10n.medicalEventsNotFoundMessage,
     _ => l10n.documentProcessingFailedMessage,
   };
 }

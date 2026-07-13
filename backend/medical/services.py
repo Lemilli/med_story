@@ -34,8 +34,8 @@ from medical.models import (
 STRUCTURING_SYSTEM_PROMPT = (
     "You are MedStory's assistant. You organize medical information for a non-medical reader. "
     "Do not diagnose, recommend treatments, or invent values that are not present in the source. "
-    "Set is_medical_document to false for content that is not a medical document or medical "
-    "record, such as personal photos, household objects, animals, scenery, or unrelated text."
+    "Set is_medical_document to false for content that cannot be added to a medical history, "
+    "such as personal photos, household objects, animals, scenery, silence, or unrelated text."
 )
 
 EXPLANATION_SYSTEM_PROMPT = (
@@ -144,6 +144,8 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
                 len(extracted_text or ""),
                 extracted_language or "",
             )
+            if not extracted_text or not extracted_text.strip():
+                raise DocumentRejectionError("audio_unreadable")
         else:
             ocr_result = get_ocr_provider().extract_text(file_bytes=file_bytes, mime=mime_type)
             extracted_text = ocr_result.text
@@ -170,8 +172,12 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
             sorted(structured_payload.keys()) if isinstance(structured_payload, dict) else type(structured_payload).__name__,
         )
         extraction = validate_event_extraction(structured_payload, default_date=timezone.localdate())
-        if not is_audio and not extraction["is_medical_document"]:
-            raise DocumentRejectionError("document_not_medical")
+        if not extraction["is_medical_document"]:
+            raise DocumentRejectionError(
+                "audio_not_medical" if is_audio else "document_not_medical"
+            )
+        if not extraction["events"]:
+            raise DocumentRejectionError("medical_events_not_found")
         logger.info(
             "Document ingestion phase=validation_complete document_id=%s job_id=%s event_count=%s document_date=%s",
             document.id,

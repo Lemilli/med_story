@@ -323,6 +323,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get voiceNoteTitle => 'Голосовая заметка';
 
   @override
+  String get voiceNoteCaptureLabel => 'Голосовая заметка';
+
+  @override
+  String get medicalPhotoCaptureLabel => 'Медицинское фото';
+
+  @override
   String get voicePermissionRequesting => 'Проверяем доступ к микрофону';
 
   @override
@@ -508,6 +514,18 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось прочитать документ. Попробуйте более чёткое фото или файл.';
 
   @override
+  String get audioNotMedicalMessage =>
+      'Похоже, в этой голосовой заметке нет медицинской информации.';
+
+  @override
+  String get audioUnreadableMessage =>
+      'Мы не смогли распознать эту запись. Попробуйте записать заметку ещё раз.';
+
+  @override
+  String get medicalEventsNotFoundMessage =>
+      'Мы не нашли медицинскую информацию, которую можно добавить в вашу историю.';
+
+  @override
   String get documentFileTooLargeMessage =>
       'Выберите файл размером не более 5 МБ.';
 
@@ -547,6 +565,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get uploadQueueDismissAction => 'Скрыть';
+
+  @override
+  String get uploadQueueOpenResultHint => 'Открыть результат загрузки';
 
   @override
   String get documentProcessingFailedMessage =>

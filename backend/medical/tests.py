@@ -861,6 +861,83 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(job.status, ProcessingJob.Status.FAILED)
         self.assertTrue(job.error_message)
 
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_empty_audio_is_rejected_without_creating_events(self):
+        document = self._create_document(Document.DocumentType.AUDIO, mime_type="audio/mpeg")
+
+        class EmptySTTProvider:
+            def transcribe(self, *, audio_bytes, mime, lang=None):
+                return ""
+
+        with patch("medical.services.get_stt_provider", return_value=EmptySTTProvider()):
+            response = self.client.post(
+                "/api/v1/documents/upload-audio",
+                {
+                    "title": "Voice note",
+                    "file": self._upload("voice.mp3", b"audio", "audio/mpeg"),
+                },
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document = Document.objects.get(title="Voice note")
+        self.assertEqual(document.status, Document.Status.FAILED)
+        self.assertEqual(document.error_message, "audio_unreadable")
+        self.assertEqual(document.medical_events.count(), 0)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_non_medical_audio_is_rejected_without_creating_events(self):
+        class NonMedicalLLMProvider:
+            def complete_json(self, **_kwargs):
+                return {
+                    "is_medical_document": False,
+                    "document_date": None,
+                    "suggested_title": None,
+                    "events": [],
+                }
+
+        with patch("medical.services.get_llm_provider", return_value=NonMedicalLLMProvider()):
+            response = self.client.post(
+                "/api/v1/documents/upload-audio",
+                {
+                    "title": "Voice note",
+                    "file": self._upload("voice.mp3", b"unrelated audio", "audio/mpeg"),
+                },
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document = Document.objects.get(title="Voice note")
+        self.assertEqual(document.status, Document.Status.FAILED)
+        self.assertEqual(document.error_message, "audio_not_medical")
+        self.assertEqual(document.medical_events.count(), 0)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_zero_event_extraction_is_rejected_without_creating_events(self):
+        document = self._create_document(Document.DocumentType.IMAGE, mime_type="image/jpeg")
+
+        class NoEventsLLMProvider:
+            def complete_json(self, **_kwargs):
+                return {
+                    "is_medical_document": True,
+                    "document_date": None,
+                    "suggested_title": "Medical image",
+                    "events": [],
+                }
+
+        with patch("medical.services.get_llm_provider", return_value=NoEventsLLMProvider()):
+            response = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {"file": self._upload("record.jpg", b"medical text", "image/jpeg")},
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.FAILED)
+        self.assertEqual(document.error_message, "medical_events_not_found")
+        self.assertEqual(document.medical_events.count(), 0)
+
     def test_get_missing_summary_returns_not_ready(self):
         response = self.client.get("/api/v1/summary")
 

@@ -59,12 +59,16 @@ void main() {
           l10n.addPhotoTitle,
           l10n.scanDocumentTitle,
           l10n.chooseFileTitle,
-          l10n.writeNoteTitle,
           l10n.recordVoiceTitle,
+          l10n.writeNoteTitle,
         ],
       );
+      expect(find.byIcon(Icons.camera_alt_outlined), findsOneWidget);
       await tester.scrollUntilVisible(find.text(l10n.writeNoteTitle), 160);
-      await tester.scrollUntilVisible(find.text(l10n.capturePrivacyNotice), 160);
+      await tester.scrollUntilVisible(
+        find.text(l10n.capturePrivacyNotice),
+        160,
+      );
       expect(find.text(l10n.capturePrivacyNotice), findsOneWidget);
 
       await tester.scrollUntilVisible(find.text(l10n.writeNoteTitle), -160);

@@ -139,6 +139,9 @@ class DocumentRepository {
                 : document.errorMessage,
           );
         }
+        if (!document.extractedTextAvailable || document.eventCount == 0) {
+          throw const AppFailure('medical_events_not_found');
+        }
         return document;
       }
       if (DateTime.now().isAfter(deadline)) {

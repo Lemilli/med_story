@@ -324,6 +324,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceNoteTitle => 'Voice note';
 
   @override
+  String get voiceNoteCaptureLabel => 'Voice note';
+
+  @override
+  String get medicalPhotoCaptureLabel => 'Medical photo';
+
+  @override
   String get voicePermissionRequesting => 'Checking microphone access';
 
   @override
@@ -509,6 +515,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'We couldn’t read this document. Try a clearer photo or file.';
 
   @override
+  String get audioNotMedicalMessage =>
+      'This voice note doesn’t appear to contain medical information.';
+
+  @override
+  String get audioUnreadableMessage =>
+      'We couldn’t understand this recording. Try a clearer voice note.';
+
+  @override
+  String get medicalEventsNotFoundMessage =>
+      'We couldn’t find medical information to add to your story.';
+
+  @override
   String get documentFileTooLargeMessage =>
       'Choose a file that is 5 MB or smaller.';
 
@@ -548,6 +566,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get uploadQueueDismissAction => 'Dismiss';
+
+  @override
+  String get uploadQueueOpenResultHint => 'Open upload result';
 
   @override
   String get documentProcessingFailedMessage =>

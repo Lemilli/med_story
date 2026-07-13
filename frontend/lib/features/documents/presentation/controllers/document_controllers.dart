@@ -90,18 +90,32 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
 
   Future<void> dismiss(String id) async {
     final database = ref.read(db.localDatabaseProvider);
-    await (database.update(
-      database.uploadQueueItems,
-    )..where((item) => item.id.equals(id))).write(
-      db.UploadQueueItemsCompanion(
-        isDismissed: const Value(true),
-        updatedAt: Value(DateTime.now()),
-      ),
-    );
+    final item = await _findItem(id);
+    if (item == null) return;
+    if (item.stage == UploadQueueStage.failed && item.documentId != null) {
+      await ref
+          .read(documentRepositoryProvider)
+          .deleteDocument(item.documentId!);
+    }
+    if (item.stage == UploadQueueStage.failed) {
+      await (database.delete(
+        database.uploadQueueItems,
+      )..where((queueItem) => queueItem.id.equals(id))).go();
+    } else {
+      await (database.update(
+        database.uploadQueueItems,
+      )..where((queueItem) => queueItem.id.equals(id))).write(
+        db.UploadQueueItemsCompanion(
+          isDismissed: const Value(true),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+    }
     state = AsyncValue.data(await _loadVisibleItems());
   }
 
   Future<void> _run(QueuedUpload item) async {
+    var current = item;
     try {
       final repository = ref.read(documentRepositoryProvider);
       final result = await repository.createAndUploadStored(
@@ -113,18 +127,17 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
           }
         },
       );
-      await _save(
-        item.copyWith(
-          stage: UploadQueueStage.processing,
-          documentId: result.documentId,
-          updatedAt: DateTime.now(),
-        ),
+      current = current.copyWith(
+        stage: UploadQueueStage.processing,
+        documentId: result.documentId,
+        updatedAt: DateTime.now(),
       );
+      await _save(current);
       final document = await repository.pollDocumentUntilTerminal(
         id: result.documentId,
       );
       await _save(
-        item.copyWith(
+        current.copyWith(
           stage: UploadQueueStage.completed,
           documentId: document.id,
           updatedAt: DateTime.now(),
@@ -133,7 +146,7 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
       ref.invalidate(timelineControllerProvider);
     } on Object catch (error) {
       await _save(
-        item.copyWith(
+        current.copyWith(
           stage: UploadQueueStage.failed,
           errorMessage: error.toString(),
           updatedAt: DateTime.now(),

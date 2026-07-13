@@ -6,12 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../core/error/app_failure.dart';
 import '../../../../core/widgets/med_story_action_row.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../documents/data/document_repository.dart';
 import '../../../documents/domain/medical_document.dart';
@@ -71,6 +73,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                       onDismiss: (id) => ref
                           .read(documentUploadControllerProvider.notifier)
                           .dismiss(id),
+                      onOpenDocument: (id) => context.push('/documents/$id'),
                     ),
             ),
             if (hasUploads) const SizedBox(height: AppSpacing.xl),
@@ -103,7 +106,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                   onTap: _pickGalleryImage,
                 ),
                 _CaptureAction(
-                  icon: Icons.document_scanner_outlined,
+                  icon: Icons.camera_alt_outlined,
                   title: l10n.scanDocumentTitle,
                   description: l10n.scanDocumentDescription,
                   semanticHint: l10n.scanDocumentSemanticHint,
@@ -117,18 +120,18 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                   onTap: _pickFile,
                 ),
                 _CaptureAction(
-                  icon: Icons.edit_note_rounded,
-                  title: l10n.writeNoteTitle,
-                  description: l10n.writeNoteDescription,
-                  semanticHint: l10n.writeNoteSemanticHint,
-                  onTap: () => context.push('/notes/new'),
-                ),
-                _CaptureAction(
                   icon: Icons.mic_none_rounded,
                   title: l10n.recordVoiceTitle,
                   description: l10n.recordVoiceDescription,
                   semanticHint: l10n.recordVoiceSemanticHint,
                   onTap: _startVoiceRecording,
+                ),
+                _CaptureAction(
+                  icon: Icons.edit_note_rounded,
+                  title: l10n.writeNoteTitle,
+                  description: l10n.writeNoteDescription,
+                  semanticHint: l10n.writeNoteSemanticHint,
+                  onTap: () => context.push('/notes/new'),
                 ),
               ],
             ),
@@ -141,25 +144,29 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   }
 
   Future<void> _pickCameraImage() async {
+    final l10n = context.l10n;
     final image = await _imagePicker.pickImage(source: ImageSource.camera);
     if (image == null) {
       return;
     }
     await _setPickedFile(
       path: image.path,
-      fileName: image.name,
+      fileName: _friendlyCaptureFileName('medical-photo', image.mimeType),
+      displayName: _friendlyCaptureLabel(l10n.medicalPhotoCaptureLabel),
       mimeType: image.mimeType ?? _mimeTypeForName(image.name),
     );
   }
 
   Future<void> _pickGalleryImage() async {
+    final l10n = context.l10n;
     final image = await _imagePicker.pickImage(source: ImageSource.gallery);
     if (image == null) {
       return;
     }
     await _setPickedFile(
       path: image.path,
-      fileName: image.name,
+      fileName: _friendlyCaptureFileName('medical-photo', image.mimeType),
+      displayName: _friendlyCaptureLabel(l10n.medicalPhotoCaptureLabel),
       mimeType: image.mimeType ?? _mimeTypeForName(image.name),
     );
   }
@@ -178,7 +185,10 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     if (image != null) {
       await _setPickedFile(
         path: image.path,
-        fileName: image.name,
+        fileName: _friendlyCaptureFileName('medical-photo', image.mimeType),
+        displayName: _friendlyCaptureLabel(
+          context.l10n.medicalPhotoCaptureLabel,
+        ),
         mimeType: image.mimeType ?? _mimeTypeForName(image.name),
       );
       return;
@@ -213,6 +223,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     required String path,
     required String fileName,
     required String mimeType,
+    String? displayName,
     int? sizeBytes,
   }) async {
     final l10n = context.l10n;
@@ -236,10 +247,12 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         .read(documentUploadControllerProvider.notifier)
         .enqueue(
           DocumentUploadDraft(
-            title: _titleFromFileName(
-              fileName,
-              fallback: l10n.documentUntitledTitle,
-            ),
+            title:
+                displayName ??
+                _titleFromFileName(
+                  fileName,
+                  fallback: l10n.documentUntitledTitle,
+                ),
             docType: DocumentType.medicalRecord,
             subjectId: subjectState?.selectedSubjectId,
             source: DocumentSourceFile(
@@ -288,12 +301,15 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         .read(documentUploadControllerProvider.notifier)
         .enqueue(
           DocumentUploadDraft(
-            title: context.l10n.voiceNoteTitle,
+            title: _friendlyCaptureLabel(context.l10n.voiceNoteCaptureLabel),
             docType: DocumentType.audio,
             subjectId: subjectState?.selectedSubjectId,
             source: DocumentSourceFile(
               path: recorded.path!,
-              fileName: recorded.fileName!,
+              fileName: _friendlyCaptureFileName(
+                'voice-note',
+                voiceCaptureMimeType,
+              ),
               mimeType: voiceCaptureMimeType,
             ),
             language: Localizations.localeOf(context).languageCode,
@@ -320,6 +336,19 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
+  }
+
+  String _friendlyCaptureLabel(String label) =>
+      '$label — ${DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag()).add_Hm().format(DateTime.now())}';
+
+  String _friendlyCaptureFileName(String prefix, String? mimeType) {
+    final extension = switch (mimeType) {
+      'image/png' => 'png',
+      'image/heic' || 'image/heif' => 'heic',
+      'audio/m4a' => 'm4a',
+      _ => 'jpg',
+    };
+    return '$prefix-${DateFormat('yyyy-MM-dd-HHmmss').format(DateTime.now())}.$extension';
   }
 }
 
@@ -556,11 +585,13 @@ class _UploadQueue extends StatelessWidget {
     required this.items,
     required this.onRetry,
     required this.onDismiss,
+    required this.onOpenDocument,
   });
 
   final List<QueuedUpload> items;
   final ValueChanged<String> onRetry;
   final ValueChanged<String> onDismiss;
+  final ValueChanged<String> onOpenDocument;
 
   @override
   Widget build(BuildContext context) {
@@ -593,6 +624,7 @@ class _UploadQueue extends StatelessWidget {
                       item: items[index],
                       onRetry: onRetry,
                       onDismiss: onDismiss,
+                      onOpenDocument: onOpenDocument,
                     ),
                     if (index != items.length - 1)
                       const Divider(height: 1, color: AppColors.clinicalLine),
@@ -612,11 +644,13 @@ class _UploadQueueRow extends StatelessWidget {
     required this.item,
     required this.onRetry,
     required this.onDismiss,
+    required this.onOpenDocument,
   });
 
   final QueuedUpload item;
   final ValueChanged<String> onRetry;
   final ValueChanged<String> onDismiss;
+  final ValueChanged<String> onOpenDocument;
 
   @override
   Widget build(BuildContext context) {
@@ -632,9 +666,12 @@ class _UploadQueueRow extends StatelessWidget {
       UploadQueueStage.uploading => l10n.uploadQueueUploading,
       UploadQueueStage.processing => l10n.uploadQueueProcessing,
       UploadQueueStage.completed => l10n.uploadQueueCompleted,
-      UploadQueueStage.failed => l10n.uploadQueueFailed,
+      UploadQueueStage.failed => _localizedUploadQueueError(
+        l10n,
+        item.errorMessage,
+      ),
     };
-    return Padding(
+    final row = Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -694,14 +731,24 @@ class _UploadQueueRow extends StatelessWidget {
             ),
           ),
           if (isFailed)
-            TextButton.icon(
-              onPressed: () => onRetry(item.id),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: Text(l10n.documentRetryAction),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.controlledCrimson,
-                minimumSize: const Size(48, 48),
-              ),
+            Column(
+              children: [
+                TextButton.icon(
+                  onPressed: () => onRetry(item.id),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: Text(l10n.documentRetryAction),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.controlledCrimson,
+                    minimumSize: const Size(48, 48),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => onDismiss(item.id),
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  label: Text(l10n.uploadQueueDismissAction),
+                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                ),
+              ],
             ),
           if (item.stage == UploadQueueStage.completed)
             TextButton.icon(
@@ -716,7 +763,26 @@ class _UploadQueueRow extends StatelessWidget {
         ],
       ),
     );
+    if (item.stage != UploadQueueStage.completed || item.documentId == null) {
+      return row;
+    }
+    return Semantics(
+      button: true,
+      label: l10n.uploadQueueOpenResultHint,
+      child: InkWell(onTap: () => onOpenDocument(item.documentId!), child: row),
+    );
   }
+}
+
+String _localizedUploadQueueError(AppLocalizations l10n, String? errorCode) {
+  return switch (errorCode) {
+    'document_not_medical' => l10n.documentNotMedicalMessage,
+    'document_unreadable' => l10n.documentUnreadableMessage,
+    'audio_not_medical' => l10n.audioNotMedicalMessage,
+    'audio_unreadable' => l10n.audioUnreadableMessage,
+    'medical_events_not_found' => l10n.medicalEventsNotFoundMessage,
+    _ => l10n.uploadQueueFailed,
+  };
 }
 
 class _QueueFileIcon extends StatelessWidget {

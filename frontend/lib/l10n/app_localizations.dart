@@ -638,6 +638,18 @@ abstract class AppLocalizations {
   /// **'Voice note'**
   String get voiceNoteTitle;
 
+  /// No description provided for @voiceNoteCaptureLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice note'**
+  String get voiceNoteCaptureLabel;
+
+  /// No description provided for @medicalPhotoCaptureLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical photo'**
+  String get medicalPhotoCaptureLabel;
+
   /// No description provided for @voicePermissionRequesting.
   ///
   /// In en, this message translates to:
@@ -944,6 +956,24 @@ abstract class AppLocalizations {
   /// **'We couldn’t read this document. Try a clearer photo or file.'**
   String get documentUnreadableMessage;
 
+  /// No description provided for @audioNotMedicalMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This voice note doesn’t appear to contain medical information.'**
+  String get audioNotMedicalMessage;
+
+  /// No description provided for @audioUnreadableMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t understand this recording. Try a clearer voice note.'**
+  String get audioUnreadableMessage;
+
+  /// No description provided for @medicalEventsNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t find medical information to add to your story.'**
+  String get medicalEventsNotFoundMessage;
+
   /// No description provided for @documentFileTooLargeMessage.
   ///
   /// In en, this message translates to:
@@ -1015,6 +1045,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get uploadQueueDismissAction;
+
+  /// No description provided for @uploadQueueOpenResultHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open upload result'**
+  String get uploadQueueOpenResultHint;
 
   /// No description provided for @documentProcessingFailedMessage.
   ///

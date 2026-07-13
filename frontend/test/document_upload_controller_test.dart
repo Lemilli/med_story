@@ -93,7 +93,7 @@ void main() {
     },
   );
 
-  test('failed uploads remain visible and can be retried', () async {
+  test('failed uploads can be dismissed with their remote document', () async {
     final container = _container(repository, database);
     addTearDown(container.dispose);
     final source = await _sourceFile(tempDirectory);
@@ -126,7 +126,61 @@ void main() {
         .requireValue
         .single;
     expect(item.stage, UploadQueueStage.failed);
+    expect(item.documentId, 'document-1');
+
+    when(
+      () => repository.deleteDocument('document-1'),
+    ).thenAnswer((_) async {});
+    await container
+        .read(documentUploadControllerProvider.notifier)
+        .dismiss(item.id);
+
+    verify(() => repository.deleteDocument('document-1')).called(1);
+    expect(
+      container.read(documentUploadControllerProvider).requireValue,
+      isEmpty,
+    );
+    expect(await database.select(database.uploadQueueItems).get(), isEmpty);
   });
+
+  test(
+    'a processed upload without extracted text or events remains failed',
+    () async {
+      final container = _container(repository, database);
+      addTearDown(container.dispose);
+      final source = await _sourceFile(tempDirectory);
+
+      when(
+        () => repository.createAndUploadStored(
+          any(),
+          any(),
+          onUploadProgress: any(named: 'onUploadProgress'),
+        ),
+      ).thenAnswer(
+        (_) async => DocumentIngestionResult(
+          documentId: 'document-1',
+          status: DocumentStatus.processing,
+          localFile: _storedFile(),
+        ),
+      );
+      when(
+        () => repository.pollDocumentUntilTerminal(id: 'document-1'),
+      ).thenThrow(const AppFailure('medical_events_not_found'));
+
+      await container.read(documentUploadControllerProvider.future);
+      await container
+          .read(documentUploadControllerProvider.notifier)
+          .enqueue(_draft(source.path));
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      final item = container
+          .read(documentUploadControllerProvider)
+          .requireValue
+          .single;
+      expect(item.stage, UploadQueueStage.failed);
+      expect(item.errorMessage, 'medical_events_not_found');
+    },
+  );
 
   test('blocks a matching file already in the queue', () async {
     final container = _container(repository, database);
