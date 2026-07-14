@@ -92,6 +92,10 @@ class Document(models.Model):
     language = models.CharField(max_length=10, blank=True)
     document_date = models.DateField(null=True, blank=True)
     error_message = models.TextField(blank=True)
+    # SHA-256 of the transient bytes supplied for ingestion. This lets us
+    # recognize the same file even when it has a different name or is added to
+    # another profile belonging to the same account.
+    content_hash = models.CharField(max_length=64, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -103,6 +107,7 @@ class Document(models.Model):
             models.Index(fields=("doc_type",), name="document_doc_type_idx"),
             models.Index(fields=("status",), name="document_status_idx"),
             models.Index(fields=("deleted_at",), name="document_deleted_at_idx"),
+            models.Index(fields=("user", "content_hash"), name="document_user_hash_idx"),
         ]
 
     def __str__(self):
@@ -292,7 +297,6 @@ class MedicalEvent(models.Model):
 class AuditLog(models.Model):
     class Action(models.TextChoices):
         LOGIN = "login", "Login"
-        DATA_EXPORT = "data_export", "Data export"
         ACCOUNT_DELETE = "account_delete", "Account delete"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

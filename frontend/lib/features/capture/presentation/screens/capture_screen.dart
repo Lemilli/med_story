@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -120,13 +119,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                   onTap: _pickFile,
                 ),
                 _CaptureAction(
-                  icon: Icons.mic_none_rounded,
-                  title: l10n.recordVoiceTitle,
-                  description: l10n.recordVoiceDescription,
-                  semanticHint: l10n.recordVoiceSemanticHint,
-                  onTap: _startVoiceRecording,
-                ),
-                _CaptureAction(
                   icon: Icons.edit_note_rounded,
                   title: l10n.writeNoteTitle,
                   description: l10n.writeNoteDescription,
@@ -239,7 +231,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       return;
     }
 
-    await _discardVoiceRecording();
     final subjectState = ref
         .read(subjectControllerProvider)
         .maybeWhen(data: (state) => state, orElse: () => null);
@@ -266,70 +257,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     if (result == UploadEnqueueResult.duplicate && mounted) {
       _showSnack(l10n.uploadQueueDuplicateMessage);
     }
-  }
-
-  Future<void> _startVoiceRecording() async {
-    await ref.read(voiceCaptureControllerProvider.notifier).startRecording();
-    if (mounted) {
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          builder: (_) =>
-              _VoiceCaptureFlowScreen(onUpload: _beginVoiceUploadFlow),
-        ),
-      );
-    }
-  }
-
-  Future<void> _discardVoiceRecording() {
-    return ref.read(voiceCaptureControllerProvider.notifier).discardRecording();
-  }
-
-  Future<void> _uploadRecordedVoice() async {
-    final voiceState = ref.read(voiceCaptureControllerProvider);
-    final recorded = voiceState.hasValue ? voiceState.requireValue : null;
-    if (recorded == null ||
-        recorded.stage != VoiceCaptureStage.recorded ||
-        recorded.path == null ||
-        recorded.fileName == null) {
-      return;
-    }
-
-    final subjectState = ref
-        .read(subjectControllerProvider)
-        .maybeWhen(data: (state) => state, orElse: () => null);
-    final result = await ref
-        .read(documentUploadControllerProvider.notifier)
-        .enqueue(
-          DocumentUploadDraft(
-            title: _friendlyCaptureLabel(context.l10n.voiceNoteCaptureLabel),
-            docType: DocumentType.audio,
-            subjectId: subjectState?.selectedSubjectId,
-            source: DocumentSourceFile(
-              path: recorded.path!,
-              fileName: _friendlyCaptureFileName(
-                'voice-note',
-                voiceCaptureMimeType,
-              ),
-              mimeType: voiceCaptureMimeType,
-            ),
-            language: Localizations.localeOf(context).languageCode,
-          ),
-        );
-    if (result == UploadEnqueueResult.enqueued) {
-      await _discardVoiceRecording();
-    } else if (mounted) {
-      _showSnack(context.l10n.uploadQueueDuplicateMessage);
-    }
-  }
-
-  void _beginVoiceUploadFlow() {
-    final voiceState = ref.read(voiceCaptureControllerProvider);
-    final recorded = voiceState.hasValue ? voiceState.requireValue : null;
-    Navigator.of(context).pop();
-    if (recorded?.fileName == null) {
-      return;
-    }
-    unawaited(_uploadRecordedVoice());
   }
 
   void _showSnack(String message) {
@@ -656,6 +583,9 @@ class _UploadQueueRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isFailed = item.stage == UploadQueueStage.failed;
+    final isAlreadyProcessed =
+        item.errorMessage == 'document_already_processed' &&
+        item.documentId != null;
     final isPhoto = item.localFile.mimeType.startsWith('image/');
     final isActive =
         item.stage == UploadQueueStage.uploading ||
@@ -733,15 +663,26 @@ class _UploadQueueRow extends StatelessWidget {
           if (isFailed)
             Column(
               children: [
-                TextButton.icon(
-                  onPressed: () => onRetry(item.id),
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: Text(l10n.documentRetryAction),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.controlledCrimson,
-                    minimumSize: const Size(48, 48),
+                if (isAlreadyProcessed)
+                  TextButton.icon(
+                    onPressed: () => onOpenDocument(item.documentId!),
+                    icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                    label: Text(l10n.documentAlreadyProcessedAction),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.deepClinicalBlue,
+                      minimumSize: const Size(48, 48),
+                    ),
+                  )
+                else
+                  TextButton.icon(
+                    onPressed: () => onRetry(item.id),
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: Text(l10n.documentRetryAction),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.controlledCrimson,
+                      minimumSize: const Size(48, 48),
+                    ),
                   ),
-                ),
                 TextButton.icon(
                   onPressed: () => onDismiss(item.id),
                   icon: const Icon(Icons.close_rounded, size: 18),
@@ -781,6 +722,7 @@ String _localizedUploadQueueError(AppLocalizations l10n, String? errorCode) {
     'audio_not_medical' => l10n.audioNotMedicalMessage,
     'audio_unreadable' => l10n.audioUnreadableMessage,
     'medical_events_not_found' => l10n.medicalEventsNotFoundMessage,
+    'document_already_processed' => l10n.documentAlreadyProcessedMessage,
     _ => l10n.uploadQueueFailed,
   };
 }
@@ -889,6 +831,9 @@ class _PrivacyNotice extends StatelessWidget {
   }
 }
 
+// Retained only for the existing audio-document backend flow; it is no longer
+// reachable from Capture. Voice input is offered from Write a note instead.
+// ignore: unused_element
 class _VoiceCaptureFlowScreen extends ConsumerWidget {
   const _VoiceCaptureFlowScreen({required this.onUpload});
 

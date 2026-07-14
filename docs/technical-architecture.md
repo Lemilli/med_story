@@ -14,7 +14,7 @@ The architecture is driven directly by the BRD's principles and non-functional r
 | Simplicity & low data-entry burden | AI/OCR/STT ingestion pipeline that auto-structures raw input |
 | Long-term value (years of data) | Durable on-device files, scalable timeline queries, continuously-updated summary |
 | Clarity for non-medical users | Server-side LLM "explanation" + "summary" generation services |
-| Privacy & user control | Per-user data isolation, encryption, export & delete (GDPR) |
+| Privacy & user control | Per-user data isolation, encryption, and account deletion |
 | Voice-first | Audio capture → transient upload → STT → structuring pipeline |
 | Trust (organizer, not provider) | No diagnostic/recommendation logic; AI is explanatory only |
 

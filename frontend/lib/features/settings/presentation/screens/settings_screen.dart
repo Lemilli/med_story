@@ -59,7 +59,7 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.lg),
                 _SettingsSection(
                   title: l10n.settingsPrivacySectionTitle,
-                  child: _PrivacyPanel(state: settingsState),
+                  child: const _PrivacyPanel(),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 _SettingsSection(
@@ -83,8 +83,6 @@ class SettingsScreen extends ConsumerWidget {
     final message = state.actionMessage;
     if (message != null) {
       return switch (message) {
-        SettingsActionMessage.exportShared =>
-          l10n.settingsDataExportSharedMessage,
         SettingsActionMessage.localeUpdated =>
           l10n.settingsLocaleUpdatedMessage,
       };
@@ -94,7 +92,6 @@ class SettingsScreen extends ConsumerWidget {
       return null;
     }
     return switch (error) {
-      SettingsActionError.exportFailed => l10n.settingsDataExportFailedMessage,
       SettingsActionError.localeUpdateFailed =>
         l10n.settingsLocaleUpdateFailedMessage,
       SettingsActionError.deleteAccountFailed =>
@@ -239,34 +236,17 @@ class _AccountPanel extends StatelessWidget {
   }
 }
 
-class _PrivacyPanel extends ConsumerWidget {
-  const _PrivacyPanel({required this.state});
-
-  final SettingsState state;
+class _PrivacyPanel extends StatelessWidget {
+  const _PrivacyPanel();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
 
     return _Panel(
       padding: EdgeInsets.zero,
       child: Column(
         children: [
-          _ActionTile(
-            icon: Icons.ios_share_rounded,
-            title: l10n.settingsDataExportTitle,
-            description: l10n.settingsDataExportDescription,
-            actionLabel: state.isExporting
-                ? l10n.settingsDataExportInProgress
-                : l10n.settingsDataExportAction,
-            isLoading: state.isExporting,
-            onPressed: state.isExporting
-                ? null
-                : () => ref
-                      .read(settingsControllerProvider.notifier)
-                      .exportPrivacyData(),
-          ),
-          const Divider(height: 1),
           _InfoTile(
             icon: Icons.lock_outline_rounded,
             title: l10n.settingsPrivacyNoteTitle,

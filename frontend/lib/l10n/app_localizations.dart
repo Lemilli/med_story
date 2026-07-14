@@ -434,42 +434,6 @@ abstract class AppLocalizations {
   /// **'Account actions'**
   String get settingsActionsSectionTitle;
 
-  /// No description provided for @settingsDataExportTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Export my data'**
-  String get settingsDataExportTitle;
-
-  /// No description provided for @settingsDataExportDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Share a JSON copy of your profile, timeline, documents, summaries, and audit history.'**
-  String get settingsDataExportDescription;
-
-  /// No description provided for @settingsDataExportAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Export data'**
-  String get settingsDataExportAction;
-
-  /// No description provided for @settingsDataExportInProgress.
-  ///
-  /// In en, this message translates to:
-  /// **'Preparing export'**
-  String get settingsDataExportInProgress;
-
-  /// No description provided for @settingsDataExportSharedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Privacy export is ready to share.'**
-  String get settingsDataExportSharedMessage;
-
-  /// No description provided for @settingsDataExportFailedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'We could not prepare your privacy export. Check your connection and try again.'**
-  String get settingsDataExportFailedMessage;
-
   /// No description provided for @settingsPrivacyNoteTitle.
   ///
   /// In en, this message translates to:
@@ -533,7 +497,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDeleteAccountDialogMessage.
   ///
   /// In en, this message translates to:
-  /// **'This permanently deletes your account and backend records. Export your data first if you need a copy.'**
+  /// **'This permanently deletes your account and backend records.'**
   String get settingsDeleteAccountDialogMessage;
 
   /// No description provided for @settingsDeleteAccountConfirmLabel.
@@ -767,13 +731,13 @@ abstract class AppLocalizations {
   /// No description provided for @writeNoteDescription.
   ///
   /// In en, this message translates to:
-  /// **'Type thoughts, questions, or details you remember.'**
+  /// **'Type or dictate thoughts, symptoms, or details you remember.'**
   String get writeNoteDescription;
 
   /// No description provided for @writeNoteSemanticHint.
   ///
   /// In en, this message translates to:
-  /// **'Opens a text note capture.'**
+  /// **'Opens a note where you can type or dictate your memory.'**
   String get writeNoteSemanticHint;
 
   /// No description provided for @addPhotoTitle.
@@ -1027,6 +991,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This file is already being processed or was added before.'**
   String get uploadQueueDuplicateMessage;
+
+  /// No description provided for @documentAlreadyProcessedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This document was already processed and added to your story.'**
+  String get documentAlreadyProcessedMessage;
+
+  /// No description provided for @documentAlreadyProcessedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open existing document'**
+  String get documentAlreadyProcessedAction;
 
   /// No description provided for @uploadQueuePhotoLabel.
   ///

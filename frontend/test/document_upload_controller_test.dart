@@ -182,6 +182,42 @@ void main() {
     },
   );
 
+  test(
+    'links to the existing document when the backend rejects a duplicate',
+    () async {
+      final container = _container(repository, database);
+      addTearDown(container.dispose);
+      final source = await _sourceFile(tempDirectory);
+
+      when(
+        () => repository.createAndUploadStored(
+          any(),
+          any(),
+          onUploadProgress: any(named: 'onUploadProgress'),
+        ),
+      ).thenThrow(
+        const AppFailure(
+          'document_already_processed',
+          documentId: 'existing-document',
+        ),
+      );
+
+      await container.read(documentUploadControllerProvider.future);
+      await container
+          .read(documentUploadControllerProvider.notifier)
+          .enqueue(_draft(source.path));
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      final item = container
+          .read(documentUploadControllerProvider)
+          .requireValue
+          .single;
+      expect(item.stage, UploadQueueStage.failed);
+      expect(item.errorMessage, 'document_already_processed');
+      expect(item.documentId, 'existing-document');
+    },
+  );
+
   test('blocks a matching file already in the queue', () async {
     final container = _container(repository, database);
     addTearDown(container.dispose);

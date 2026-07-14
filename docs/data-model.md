@@ -203,14 +203,14 @@ Tracks async pipeline work for observability and retries.
 | created_at / updated_at | timestamptz | |
 
 ### 3.9 AuditLog (privacy/compliance)
-Append-only record of sensitive actions (export, delete, login). See
+Append-only record of sensitive actions (delete, login). See
 [security-privacy.md](./security-privacy.md).
 
 | Field | Type | Notes |
 |-------|------|-------|
 | id | UUID (PK) | |
 | user_id | FK → User (nullable, SET_NULL) | Cleared when an account is hard-deleted |
-| action | varchar | e.g. data_export, account_delete, login |
+| action | varchar | e.g. account_delete, login |
 | metadata | JSONB | Non-sensitive context; no raw health content/tokens |
 | ip_address | inet (nullable) | |
 | created_at | timestamptz | |
@@ -262,8 +262,7 @@ flexibly so the schema can evolve without migrations.
   until the user reviews them).
 - **Update**: users can edit AI-extracted events; summaries regenerate on change.
 - **Soft delete**: `deleted_at` hides records while preserving referential history.
-- **Hard delete / export (GDPR)**: account deletion purges DB rows;
-  backend export returns immediate JSON metadata/history (original files are user-managed on-device). See
+- **Hard delete (GDPR)**: account deletion purges DB rows. See
   [security-privacy.md](./security-privacy.md).
 
 ## 7. Indexing & Performance Notes

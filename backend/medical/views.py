@@ -1,4 +1,5 @@
 import base64
+import hashlib
 from pathlib import Path
 
 from django.http import HttpResponse
@@ -24,20 +25,19 @@ from medical.serializers import (
     DocumentExplanationSerializer,
     MedicalEventSerializer,
     MedicalSummarySerializer,
-    PrivacyExportSerializer,
     ProcessingJobSerializer,
     SubjectSerializer,
     VisitPreparationSerializer,
 )
 from medical.services import (
-    build_privacy_export,
     build_summary_export_pdf,
     enqueue_summary_regeneration,
     get_or_create_default_subject,
     log_audit_event,
     summary_export_json,
 )
-from medical.tasks import explain_document_task, ingest_document_task
+from medical.tasks import explain_document_task, ingest_document_task, ingest_note_task
+from ai.providers import get_stt_provider
 
 AUDIO_MIME_BY_EXTENSION = {
     ".mp3": "audio/mpeg",
@@ -290,7 +290,25 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
             )
 
         file_bytes = upload.read()
-        job = self._mark_processing_and_create_job(document=document, upload=upload, mime_type=mime_type)
+        content_hash = hashlib.sha256(file_bytes).hexdigest()
+        duplicate = self._processed_duplicate(document=document, content_hash=content_hash)
+        if duplicate is not None:
+            # The first, pending document exists only to receive an upload. It
+            # has no retained content or events, so remove it before returning
+            # the existing result to the client.
+            document.delete()
+            return self._error_response(
+                code="document_already_processed",
+                message="This document was already processed and added to your story.",
+                http_status=status.HTTP_409_CONFLICT,
+                details={"document_id": str(duplicate.id)},
+            )
+        job = self._mark_processing_and_create_job(
+            document=document,
+            upload=upload,
+            mime_type=mime_type,
+            content_hash=content_hash,
+        )
         self._dispatch_ingestion(
             document=document,
             job=job,
@@ -302,13 +320,28 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
 
         return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
 
-    def _mark_processing_and_create_job(self, *, document, upload, mime_type):
+    def _processed_duplicate(self, *, document, content_hash):
+        return (
+            Document.objects.filter(
+                user=document.user,
+                content_hash=content_hash,
+                deleted_at__isnull=True,
+                status=Document.Status.PROCESSED,
+                medical_events__deleted_at__isnull=True,
+            )
+            .exclude(id=document.id)
+            .order_by("-created_at")
+            .first()
+        )
+
+    def _mark_processing_and_create_job(self, *, document, upload, mime_type, content_hash):
         with transaction.atomic():
             document.status = Document.Status.PROCESSING
             document.error_message = ""
             document.mime_type = mime_type
             document.size_bytes = upload.size
-            document.save(update_fields=("status", "error_message", "mime_type", "size_bytes", "updated_at"))
+            document.content_hash = content_hash
+            document.save(update_fields=("status", "error_message", "mime_type", "size_bytes", "content_hash", "updated_at"))
             return ProcessingJob.objects.create(
                 user=document.user,
                 document=document,
@@ -414,7 +447,12 @@ class DocumentAudioUploadView(DocumentIngestView):
         document = serializer.save()
 
         file_bytes = upload.read()
-        job = self._mark_processing_and_create_job(document=document, upload=upload, mime_type=mime_type)
+        job = self._mark_processing_and_create_job(
+            document=document,
+            upload=upload,
+            mime_type=mime_type,
+            content_hash=hashlib.sha256(file_bytes).hexdigest(),
+        )
         self._dispatch_ingestion(
             document=document,
             job=job,
@@ -424,6 +462,56 @@ class DocumentAudioUploadView(DocumentIngestView):
         )
         document.refresh_from_db()
 
+        return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
+
+
+class CaptureTranscriptionView(DocumentIngestView):
+    """Transient voice-to-text endpoint. Audio is never persisted."""
+
+    lookup_url_kwarg = None
+
+    def post(self, request, *args, **kwargs):
+        upload = request.FILES.get("file")
+        if upload is None:
+            return self._error_response(code="validation_error", message="file is required.", http_status=status.HTTP_400_BAD_REQUEST)
+        if upload.size > MAX_DOCUMENT_SIZE_BYTES:
+            return self._error_response(code="file_too_large", message="File must be 5 MB or smaller.", http_status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+        mime_type = self._normalize_mime_type(request.data.get("mime_type") or getattr(upload, "content_type", None), upload)
+        if mime_type not in SUPPORTED_AUDIO_MIME_TYPES:
+            return self._error_response(code="unsupported_mime_type", message="Unsupported MIME type.", http_status=status.HTTP_400_BAD_REQUEST)
+        try:
+            transcript = get_stt_provider().transcribe(
+                audio_bytes=upload.read(), mime=mime_type, lang=self._resolve_language(request)
+            )
+        except Exception:
+            return self._error_response(code="audio_unreadable", message="We could not understand this recording.", http_status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        if not transcript or not transcript.strip():
+            return self._error_response(code="audio_unreadable", message="We could not understand this recording.", http_status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return Response({"transcript": transcript.strip()})
+
+
+class NoteProcessView(generics.GenericAPIView):
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "ai"
+
+    def post(self, request, *args, **kwargs):
+        text = request.data.get("text")
+        if not isinstance(text, str) or not text.strip():
+            return Response({"error": {"code": "note_empty", "message": "Enter a note to process."}}, status=status.HTTP_400_BAD_REQUEST)
+        subject_id = request.data.get("subject_id")
+        subject = Subject.objects.filter(id=subject_id, user=request.user).first() if subject_id else get_or_create_default_subject(request.user)
+        if subject is None:
+            raise ValidationError({"subject_id": ["Subject not found."]})
+        clean_text = text.strip()
+        document = Document.objects.create(
+            user=request.user, subject=subject, title=clean_text.splitlines()[0][:255] or "Note",
+            doc_type=Document.DocumentType.NOTE, mime_type="text/plain", size_bytes=len(clean_text.encode("utf-8")),
+            status=Document.Status.PROCESSING,
+        )
+        job = ProcessingJob.objects.create(user=request.user, document=document, status=ProcessingJob.Status.QUEUED)
+        result = ingest_note_task.delay(str(document.id), str(job.id), clean_text, request.data.get("language"))
+        job.task_id = result.id or ""
+        job.save(update_fields=("task_id", "updated_at"))
         return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
 
 
@@ -612,15 +700,6 @@ class VisitPreparationView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-
-
-class PrivacyExportView(generics.GenericAPIView):
-    serializer_class = PrivacyExportSerializer
-
-    @extend_schema(request=None, responses=PrivacyExportSerializer)
-    def post(self, request, *args, **kwargs):
-        log_audit_event(user=request.user, action=AuditLog.Action.DATA_EXPORT, request=request)
-        return Response(build_privacy_export(request.user), status=status.HTTP_200_OK)
 
 
 class JobDetailView(generics.RetrieveAPIView):

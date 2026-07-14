@@ -12,7 +12,7 @@ from rest_framework.test import APITestCase
 
 from ai.providers.base import OCRResult
 from ai.schemas import SchemaValidationError
-from medical.models import AuditLog, Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, Tag, VisitPreparation
+from medical.models import Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, VisitPreparation
 
 
 TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
@@ -39,6 +39,11 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["display_name"], "Jane Doe")
         self.assertTrue(response.data[0]["is_default"])
+
+    def test_privacy_data_export_endpoint_is_not_exposed(self):
+        response = self.client.post("/api/v1/privacy/export", {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_visit_preparation_is_subject_scoped_and_exported(self):
         subject = Subject.objects.create(
@@ -691,6 +696,51 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(ProcessingJob.objects.filter(document=document).count(), 1)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_ingest_rejects_exact_file_already_processed_for_same_user(self):
+        original = self._create_document(Document.DocumentType.LAB_RESULT)
+        duplicate = self._create_document(Document.DocumentType.LAB_RESULT)
+        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+
+        first_response = self.client.post(
+            f"/api/v1/documents/{original.id}/ingest",
+            {"file": self._upload("original.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+        duplicate_response = self.client.post(
+            f"/api/v1/documents/{duplicate.id}/ingest",
+            {"file": self._upload("renamed-copy.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+
+        self.assertEqual(first_response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(duplicate_response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(duplicate_response.data["error"]["code"], "document_already_processed")
+        self.assertEqual(duplicate_response.data["error"]["details"]["document_id"], str(original.id))
+        self.assertFalse(Document.objects.filter(id=duplicate.id).exists())
+        self.assertEqual(ProcessingJob.objects.filter(document=original).count(), 1)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_ingest_allows_exact_file_after_original_document_is_deleted(self):
+        original = self._create_document(Document.DocumentType.LAB_RESULT)
+        replacement = self._create_document(Document.DocumentType.LAB_RESULT)
+        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+
+        self.client.post(
+            f"/api/v1/documents/{original.id}/ingest",
+            {"file": self._upload("original.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+        self.client.delete(f"/api/v1/documents/{original.id}")
+        response = self.client.post(
+            f"/api/v1/documents/{replacement.id}/ingest",
+            {"file": self._upload("replacement.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(ProcessingJob.objects.filter(document=replacement).count(), 1)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_audio_ingest_is_idempotent_for_processed_document(self):
         document = self._create_document(Document.DocumentType.AUDIO, mime_type="audio/mpeg")
         payload = b"Voice note: CRP was 12 mg/L."
@@ -1055,91 +1105,6 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(detail_response.data["status"], ProcessingJob.Status.SUCCEEDED)
         self.assertEqual(hidden_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(other_summary_response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_privacy_export_returns_user_data_and_audits_access(self):
-        subject = Subject.objects.create(
-            user=self.user,
-            display_name="Jane Doe",
-            relationship=Subject.Relationship.SELF,
-            is_default=True,
-        )
-        other_subject = Subject.objects.create(
-            user=self.other_user,
-            display_name="Other User",
-            relationship=Subject.Relationship.SELF,
-            is_default=True,
-        )
-        tag = Tag.objects.create(user=self.user, name="GI", color="#336699")
-        document = Document.objects.create(
-            user=self.user,
-            subject=subject,
-            title="Lab result",
-            doc_type=Document.DocumentType.LAB_RESULT,
-            mime_type="application/pdf",
-            size_bytes=512,
-            status=Document.Status.PROCESSED,
-            extracted_text="Hemoglobin 13.2",
-        )
-        document.explanations.create(
-            summary_text="A short explanation.",
-            key_points=["Hemoglobin listed."],
-            glossary={},
-            model_name="mock",
-            language="en",
-        )
-        event = MedicalEvent.objects.create(
-            user=self.user,
-            subject=subject,
-            source_document=document,
-            event_type=MedicalEvent.EventType.EXAMINATION,
-            title="CBC",
-            description="Complete blood count",
-            event_date=date(2026, 6, 1),
-            attributes={"result": "normal"},
-            source=MedicalEvent.Source.AI_DOCUMENT,
-            confidence=0.8,
-        )
-        event.tags.add(tag)
-        MedicalSummary.objects.create(
-            user=self.user,
-            subject=subject,
-            version=1,
-            is_current=True,
-            content={"key_symptoms": []},
-            narrative_text="Summary text",
-            generated_from_event_count=1,
-            model_name="mock",
-            language="en",
-        )
-        ProcessingJob.objects.create(
-            user=self.user,
-            document=document,
-            job_type=ProcessingJob.JobType.INGESTION,
-            status=ProcessingJob.Status.SUCCEEDED,
-        )
-        MedicalEvent.objects.create(
-            user=self.other_user,
-            subject=other_subject,
-            event_type=MedicalEvent.EventType.NOTE,
-            title="Other event",
-            event_date=date(2026, 6, 2),
-        )
-
-        response = self.client.post("/api/v1/privacy/export", {}, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["user"]["email"], "user@example.com")
-        self.assertEqual(response.data["subjects"][0]["id"], str(subject.id))
-        self.assertEqual(response.data["tags"][0]["name"], "GI")
-        self.assertEqual(response.data["documents"][0]["extracted_text"], "Hemoglobin 13.2")
-        self.assertEqual(response.data["document_explanations"][0]["summary_text"], "A short explanation.")
-        self.assertEqual(response.data["medical_events"][0]["title"], "CBC")
-        self.assertEqual(response.data["medical_events"][0]["tags"], ["GI"])
-        self.assertEqual(response.data["medical_summaries"][0]["narrative_text"], "Summary text")
-        self.assertEqual(response.data["processing_jobs"][0]["status"], ProcessingJob.Status.SUCCEEDED)
-        self.assertNotIn("Other event", json.dumps(response.data))
-        self.assertTrue(AuditLog.objects.filter(user=self.user, action=AuditLog.Action.DATA_EXPORT).exists())
-        self.assertTrue(any(item["action"] == AuditLog.Action.DATA_EXPORT for item in response.data["audit_logs"]))
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_summary_generation_failure_preserves_existing_current_summary(self):

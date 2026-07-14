@@ -83,7 +83,7 @@ frontend/lib/
 │   ├── organize/                  # review inbox, medication history, unified search
 │   ├── visit_preparation/         # per-subject questions/concerns for a visit
 │   ├── subjects/                  # patient profile switcher
-│   └── settings/                  # account, privacy/export/delete, locale
+│   └── settings/                  # account, privacy/delete, locale
 └── l10n/                          # ARB files (en, ru) + generated AppLocalizations
 ```
 

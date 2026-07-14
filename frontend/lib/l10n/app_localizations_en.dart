@@ -207,27 +207,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsActionsSectionTitle => 'Account actions';
 
   @override
-  String get settingsDataExportTitle => 'Export my data';
-
-  @override
-  String get settingsDataExportDescription =>
-      'Share a JSON copy of your profile, timeline, documents, summaries, and audit history.';
-
-  @override
-  String get settingsDataExportAction => 'Export data';
-
-  @override
-  String get settingsDataExportInProgress => 'Preparing export';
-
-  @override
-  String get settingsDataExportSharedMessage =>
-      'Privacy export is ready to share.';
-
-  @override
-  String get settingsDataExportFailedMessage =>
-      'We could not prepare your privacy export. Check your connection and try again.';
-
-  @override
   String get settingsPrivacyNoteTitle => 'What stays here';
 
   @override
@@ -262,7 +241,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDeleteAccountDialogMessage =>
-      'This permanently deletes your account and backend records. Export your data first if you need a copy.';
+      'This permanently deletes your account and backend records.';
 
   @override
   String get settingsDeleteAccountConfirmLabel => 'Type DELETE to confirm';
@@ -400,10 +379,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get writeNoteDescription =>
-      'Type thoughts, questions, or details you remember.';
+      'Type or dictate thoughts, symptoms, or details you remember.';
 
   @override
-  String get writeNoteSemanticHint => 'Opens a text note capture.';
+  String get writeNoteSemanticHint =>
+      'Opens a note where you can type or dictate your memory.';
 
   @override
   String get addPhotoTitle => 'Add a photo';
@@ -557,6 +537,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get uploadQueueDuplicateMessage =>
       'This file is already being processed or was added before.';
+
+  @override
+  String get documentAlreadyProcessedMessage =>
+      'This document was already processed and added to your story.';
+
+  @override
+  String get documentAlreadyProcessedAction => 'Open existing document';
 
   @override
   String get uploadQueuePhotoLabel => 'Photo upload';

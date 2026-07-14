@@ -4,26 +4,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:med_story/app/theme/app_theme.dart';
 import 'package:med_story/features/auth/data/auth_repository.dart';
 import 'package:med_story/features/auth/domain/auth_models.dart';
-import 'package:med_story/features/settings/data/privacy_repository.dart';
 import 'package:med_story/features/settings/presentation/screens/settings_screen.dart';
 import 'package:med_story/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockAuthRepository extends Mock implements AuthRepository {}
 
-class _MockPrivacyRepository extends Mock implements PrivacyRepository {}
-
 void main() {
   late _MockAuthRepository authRepository;
-  late _MockPrivacyRepository privacyRepository;
 
   setUp(() {
     authRepository = _MockAuthRepository();
-    privacyRepository = _MockPrivacyRepository();
     when(
       () => authRepository.restoreSession(),
     ).thenAnswer((_) async => AuthState.authenticated(_user(locale: 'en')));
-    when(() => privacyRepository.exportAndShareData()).thenAnswer((_) async {});
     when(
       () => authRepository.updateLocale('ru'),
     ).thenAnswer((_) async => _user(locale: 'ru'));
@@ -32,7 +26,7 @@ void main() {
   });
 
   testWidgets('renders privacy, language, and account actions', (tester) async {
-    await _pumpScreen(tester, authRepository, privacyRepository);
+    await _pumpScreen(tester, authRepository);
     await tester.pumpAndSettle();
 
     final l10n = AppLocalizations.of(
@@ -40,8 +34,6 @@ void main() {
     )!;
 
     expect(find.text(l10n.settingsPrivacySectionTitle), findsOneWidget);
-    await _scrollToText(tester, l10n.settingsDataExportAction);
-    expect(find.text(l10n.settingsDataExportAction), findsOneWidget);
     await _scrollToText(tester, l10n.settingsLanguageRussian);
     expect(find.text(l10n.settingsLanguageRussian), findsOneWidget);
     final deleteAction = find.widgetWithText(
@@ -52,18 +44,13 @@ void main() {
     expect(deleteAction, findsOneWidget);
   });
 
-  testWidgets('exports data and updates locale', (tester) async {
-    await _pumpScreen(tester, authRepository, privacyRepository);
+  testWidgets('updates locale', (tester) async {
+    await _pumpScreen(tester, authRepository);
     await tester.pumpAndSettle();
 
     final l10n = AppLocalizations.of(
       tester.element(find.byType(SettingsScreen)),
     )!;
-
-    await _scrollToText(tester, l10n.settingsDataExportAction);
-    await tester.tap(find.text(l10n.settingsDataExportAction));
-    await tester.pumpAndSettle();
-    verify(() => privacyRepository.exportAndShareData()).called(1);
 
     await _scrollToText(tester, l10n.settingsLanguageRussian);
     await tester.tap(find.text(l10n.settingsLanguageRussian));
@@ -74,7 +61,7 @@ void main() {
   testWidgets('requires typed confirmation before account deletion', (
     tester,
   ) async {
-    await _pumpScreen(tester, authRepository, privacyRepository);
+    await _pumpScreen(tester, authRepository);
     await tester.pumpAndSettle();
 
     final l10n = AppLocalizations.of(
@@ -130,13 +117,11 @@ Future<void> _scrollToFinder(WidgetTester tester, Finder finder) async {
 Future<void> _pumpScreen(
   WidgetTester tester,
   AuthRepository authRepository,
-  PrivacyRepository privacyRepository,
 ) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(authRepository),
-        privacyRepositoryProvider.overrideWithValue(privacyRepository),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),

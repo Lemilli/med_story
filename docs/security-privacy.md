@@ -73,10 +73,9 @@ control. This document defines the controls to achieve that.
 | Lawful basis & consent | Explicit consent at signup; clear privacy policy; consent for AI processing of health data |
 | Data minimization | Only collect what serves the feature; redact for AI where possible |
 | Purpose limitation | Health data used only to organize/explain the user's own history |
-| Right of access / portability | `POST /privacy/export` → backend data bundle (JSON metadata/history) |
 | Right to erasure | `DELETE /me` purges DB rows (incl. backups per policy) |
 | Right to rectification | Users edit/confirm/delete events and documents |
-| Storage limitation | Retention policy + deletion of orphaned/temp data; no server-side export bundle retention in MVP |
+| Storage limitation | Retention policy + deletion of orphaned/temp data |
 | Records of processing | Sub-processor list + data-flow documentation maintained |
 | Breach notification | Incident response process (§10) with 72-hour notification readiness |
 
@@ -84,8 +83,7 @@ control. This document defines the controls to achieve that.
 - Soft delete (`deleted_at`) for in-app UX; `DELETE /me` immediately hard-deletes the
   account and cascaded backend records, making existing access tokens unusable because the
   user no longer exists. A provided refresh token is blacklisted best-effort before deletion.
-- `POST /privacy/export` returns immediate JSON and does not persist a server-side export bundle.
-- Visit-preparation notes are user-authored sensitive data: they are included in the privacy export and in a doctor PDF only when the user explicitly requests that PDF. They are never sent to an AI provider.
+- Visit-preparation notes are user-authored sensitive data and are included in a doctor PDF only when the user explicitly requests that PDF. They are never sent to an AI provider.
 
 ## 8. Application Security Practices
 
@@ -105,7 +103,7 @@ control. This document defines the controls to achieve that.
 ## 9. Logging, Monitoring & Auditing
 
 - **No health content in logs**; logs carry IDs/metadata only.
-- **AuditLog** table records sensitive actions (login, export, deletion) with IP + timestamp.
+- **AuditLog** table records sensitive actions (login and deletion) with IP + timestamp.
 - Error tracking (e.g. Sentry) with PII scrubbing enabled.
 - Alerts on auth anomalies, elevated error rates, and AI cost spikes.
 
@@ -131,7 +129,7 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 
 | Status | Item |
 |--------|------|
-| MVP | GDPR alignment, TLS, encryption at rest, isolation, export/erasure |
+| MVP | GDPR alignment, TLS, encryption at rest, isolation, erasure |
 | Hardening | Malware scanning, field-level encryption, pen-test, biometric lock, cert pinning |
 | HIPAA-ready (later) | BAAs with vendors, expanded audit controls, formal risk assessments, access reviews |
 
@@ -142,7 +140,7 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 - [ ] JWT rotation + blacklist working.
 - [ ] On-device file storage is sandboxed/encrypted by platform defaults.
 - [ ] Per-user queryset isolation verified by tests.
-- [x] Backend export + delete flows verified by tests; backups policy still requires ops/legal review.
+- [x] Backend account-deletion flow verified by tests; backups policy still requires ops/legal review.
 - [ ] No health data in logs; PII scrubbing on.
 - [ ] Optional: review DPAs and maintain the subprocessor register where applicable.
 - [x] Dependency + secret scanning in CI; no secrets in repo.

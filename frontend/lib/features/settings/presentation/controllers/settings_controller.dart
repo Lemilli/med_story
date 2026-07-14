@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../data/privacy_repository.dart';
 
 final settingsControllerProvider =
     NotifierProvider<SettingsController, SettingsState>(SettingsController.new);
@@ -10,29 +9,6 @@ class SettingsController extends Notifier<SettingsState> {
   @override
   SettingsState build() {
     return const SettingsState();
-  }
-
-  Future<void> exportPrivacyData() async {
-    if (state.isExporting) {
-      return;
-    }
-    state = state.copyWith(
-      isExporting: true,
-      actionMessage: null,
-      actionError: null,
-    );
-    try {
-      await ref.read(privacyRepositoryProvider).exportAndShareData();
-      state = state.copyWith(
-        isExporting: false,
-        actionMessage: SettingsActionMessage.exportShared,
-      );
-    } on Object {
-      state = state.copyWith(
-        isExporting: false,
-        actionError: SettingsActionError.exportFailed,
-      );
-    }
   }
 
   Future<void> updateLocale(String locale) async {
@@ -85,28 +61,24 @@ class SettingsController extends Notifier<SettingsState> {
 
 class SettingsState {
   const SettingsState({
-    this.isExporting = false,
     this.isUpdatingLocale = false,
     this.isDeletingAccount = false,
     this.actionMessage,
     this.actionError,
   });
 
-  final bool isExporting;
   final bool isUpdatingLocale;
   final bool isDeletingAccount;
   final SettingsActionMessage? actionMessage;
   final SettingsActionError? actionError;
 
   SettingsState copyWith({
-    bool? isExporting,
     bool? isUpdatingLocale,
     bool? isDeletingAccount,
     SettingsActionMessage? actionMessage,
     SettingsActionError? actionError,
   }) {
     return SettingsState(
-      isExporting: isExporting ?? this.isExporting,
       isUpdatingLocale: isUpdatingLocale ?? this.isUpdatingLocale,
       isDeletingAccount: isDeletingAccount ?? this.isDeletingAccount,
       actionMessage: actionMessage,
@@ -115,10 +87,9 @@ class SettingsState {
   }
 }
 
-enum SettingsActionMessage { exportShared, localeUpdated }
+enum SettingsActionMessage { localeUpdated }
 
 enum SettingsActionError {
-  exportFailed,
   localeUpdateFailed,
   deleteAccountFailed,
 }

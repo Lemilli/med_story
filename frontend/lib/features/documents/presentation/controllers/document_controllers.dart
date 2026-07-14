@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:drift/drift.dart' show OrderingTerm, Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/error/app_failure.dart';
 import '../../../../core/storage/local_database.dart' as db;
 import '../../../timeline/presentation/controllers/timeline_controller.dart';
 import '../../data/document_repository.dart';
@@ -145,9 +146,11 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
       );
       ref.invalidate(timelineControllerProvider);
     } on Object catch (error) {
+      final duplicateDocumentId = error is AppFailure ? error.documentId : null;
       await _save(
         current.copyWith(
           stage: UploadQueueStage.failed,
+          documentId: duplicateDocumentId ?? current.documentId,
           errorMessage: error.toString(),
           updatedAt: DateTime.now(),
         ),

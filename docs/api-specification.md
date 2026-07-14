@@ -16,7 +16,8 @@
   `next` / `previous` cursors.
 - **Filtering**: query params per endpoint (documented below).
 - **Errors**: consistent envelope (see §8).
-- **Idempotency**: mutating ingestion calls keyed by document ID; safe to retry.
+- **Idempotency**: mutating ingestion calls keyed by document ID; safe to retry. Exact-byte
+  document and photo duplicates are also rejected per account once they have produced active events.
 - **Rate limiting**: registration/login are 5/IP/hour, refresh/logout 20/IP/hour, and
   AI-triggering uploads/regenerations 10/user/hour; other traffic is 120/minute (HTTP 429).
 
@@ -118,6 +119,11 @@ Constraints:
 
 → `202 { "id": "uuid", "status": "processing" }`
 
+If the exact same PDF or image was already processed for the account and produced active events,
+the request returns `409 document_already_processed` with the existing `document_id` in
+`error.details`. The check applies across the account's profiles. After that original document is
+deleted, the same file can be added again.
+
 If an image/PDF has no readable text, processing finishes with `status: "failed"` and
 `error_message: "document_unreadable"`. If the extracted content is not a medical document,
 it finishes with `error_message: "document_not_medical"`. Neither outcome creates timeline events.
@@ -157,6 +163,25 @@ Allowed audio types: `audio/mpeg`, `audio/mp3`, `audio/mp4`, `audio/mpga`, `audi
 extension maps safely to one of those types.
 
 → `202 { "id": "uuid", "doc_type": "audio", "status": "processing" }`
+
+### POST /capture/transcribe
+Transient voice transcription for the editable capture draft. `multipart/form-data` with required
+`file` and optional `mime_type` and `language`; the 5 MB audio limit and supported types match
+`/documents/upload-audio`. Audio bytes are discarded after transcription and no document, event,
+or audio record is created.
+
+→ `200 { "transcript": "..." }`; unreadable audio returns `422` with `audio_unreadable`.
+
+### POST /capture/notes
+Starts asynchronous extraction from final user-edited text.
+
+```jsonc
+{ "text": "...", "subject_id": "uuid?", "language": "en?" }
+```
+
+→ `202` with the processing note document. A non-medical or empty draft becomes `failed` and
+creates no medical events. If no event date is supplied or deduced, extraction defaults to the
+server's current local date (UTC in the current deployment configuration).
 
 ## 5. Document Explanations (Scenario B)
 
@@ -249,13 +274,10 @@ Poll an async job (used after regenerate / ingestions when a job_id is returned)
   "created_at": "...", "finished_at": null }
 ```
 
-## 9. Data Export & Privacy (GDPR)
+## 9. Privacy (GDPR)
 
-### POST /privacy/export
-Returns an immediate JSON backend data export:
-profile, subjects, tags, document metadata/extracted text, document explanations,
-events, summaries, processing jobs, and audit data. Original uploaded files are not
-included because they are not persisted server-side. → `200`.
+`DELETE /me` permanently removes the account and backend records. Original uploaded files
+are not persisted server-side.
 
 > See [security-privacy.md](./security-privacy.md) for retention, encryption, and erasure details.
 
@@ -302,6 +324,8 @@ Throttled responses include a `Retry-After` header and
 | GET | /documents | List documents |
 | GET/DELETE | /documents/{id} | Read/delete document |
 | POST | /documents/upload-audio | Voice capture |
+| POST | /capture/transcribe | Transcribe ephemeral voice draft |
+| POST | /capture/notes | Process final edited note |
 | GET | /documents/{id}/explanation | Plain-language explanation |
 | POST | /documents/{id}/explanation/regenerate | Re-explain |
 | GET | /timeline | Chronological events |
@@ -314,4 +338,3 @@ Throttled responses include a `Retry-After` header and
 | GET | /summary/export | Doctor-ready export |
 | GET/PUT | /visit-preparation | Per-subject visit questions/concerns |
 | GET | /jobs/{id} | Poll async job |
-| POST | /privacy/export | Immediate JSON data export |

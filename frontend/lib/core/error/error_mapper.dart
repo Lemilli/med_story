@@ -14,7 +14,12 @@ AppFailure mapDioException(
   if (code != null) {
     final mapped = _mapKnownCode(code, statusCode);
     if (mapped != null) {
-      return AppFailure(mapped);
+      return AppFailure(
+        mapped,
+        documentId: code == 'document_already_processed'
+            ? _extractDocumentId(error.response?.data)
+            : null,
+      );
     }
   }
   final message = _extractMessage(error.response?.data);
@@ -28,6 +33,16 @@ AppFailure mapDioException(
     return const AppFailure('request_failed');
   }
   return AppFailure(fallback);
+}
+
+String? _extractDocumentId(Object? data) {
+  if (data is! Map<String, dynamic>) return null;
+  final error = data['error'];
+  if (error is! Map<String, dynamic>) return null;
+  final details = error['details'];
+  if (details is! Map<String, dynamic>) return null;
+  final documentId = details['document_id'];
+  return documentId is String && documentId.isNotEmpty ? documentId : null;
 }
 
 String? _extractCode(Object? data) {
@@ -56,6 +71,7 @@ String? _mapKnownCode(String code, int statusCode) {
     'processing_failed' ||
     'document_processing_failed' ||
     'failed_processing' => 'document_processing_failed',
+    'document_already_processed' => 'document_already_processed',
     'not_authenticated' || 'token_expired' => 'auth_failed',
     'permission_denied' => 'permission_denied',
     'not_found' => 'not_found',

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/error_mapper.dart';
+import '../../../core/error/app_failure.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/medical_document.dart';
 
@@ -88,6 +89,51 @@ class DocumentApi {
       );
     } on DioException catch (error) {
       throw mapDioException(error, fallback: 'document_audio_upload_failed');
+    }
+  }
+
+  Future<String> transcribeAudio({
+    required String filePath,
+    required String fileName,
+    required String mimeType,
+    String? language,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/capture/transcribe',
+        data: FormData.fromMap({
+          'mime_type': mimeType,
+          if (language != null && language.isNotEmpty) 'language': language,
+          'file': await MultipartFile.fromFile(filePath, filename: fileName),
+        }),
+      );
+      final transcript = response.data?['transcript'];
+      if (transcript is! String || transcript.trim().isEmpty) {
+        throw const AppFailure('audio_unreadable');
+      }
+      return transcript.trim();
+    } on DioException catch (error) {
+      throw mapDioException(error, fallback: 'audio_unreadable');
+    }
+  }
+
+  Future<DocumentStatusUpdate> processNote({
+    required String text,
+    String? subjectId,
+    String? language,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/capture/notes',
+        data: {
+          'text': text,
+          if (subjectId != null && subjectId.isNotEmpty) 'subject_id': subjectId,
+          if (language != null && language.isNotEmpty) 'language': language,
+        },
+      );
+      return DocumentStatusUpdate.fromJson(response.data ?? <String, dynamic>{});
+    } on DioException catch (error) {
+      throw mapDioException(error, fallback: 'note_processing_failed');
     }
   }
 

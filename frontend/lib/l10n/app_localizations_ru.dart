@@ -205,27 +205,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsActionsSectionTitle => 'Действия с аккаунтом';
 
   @override
-  String get settingsDataExportTitle => 'Экспортировать мои данные';
-
-  @override
-  String get settingsDataExportDescription =>
-      'Поделиться JSON-копией профиля, хронологии, документов, сводок и истории аудита.';
-
-  @override
-  String get settingsDataExportAction => 'Экспортировать данные';
-
-  @override
-  String get settingsDataExportInProgress => 'Готовим экспорт';
-
-  @override
-  String get settingsDataExportSharedMessage =>
-      'Экспорт данных готов к отправке.';
-
-  @override
-  String get settingsDataExportFailedMessage =>
-      'Не удалось подготовить экспорт. Проверьте соединение и попробуйте снова.';
-
-  @override
   String get settingsPrivacyNoteTitle => 'Что остаётся здесь';
 
   @override
@@ -260,7 +239,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsDeleteAccountDialogMessage =>
-      'Это навсегда удалит аккаунт и записи на сервере. Если нужна копия, сначала экспортируйте данные.';
+      'Это навсегда удалит аккаунт и записи на сервере.';
 
   @override
   String get settingsDeleteAccountConfirmLabel =>
@@ -399,10 +378,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get writeNoteDescription =>
-      'Введите мысли, вопросы или детали, которые помните.';
+      'Введите или продиктуйте мысли, симптомы или детали, которые помните.';
 
   @override
-  String get writeNoteSemanticHint => 'Открывает текстовую заметку.';
+  String get writeNoteSemanticHint =>
+      'Открывает заметку, в которую можно писать или диктовать.';
 
   @override
   String get addPhotoTitle => 'Добавить фото';
@@ -556,6 +536,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get uploadQueueDuplicateMessage =>
       'Этот файл уже обрабатывается или был добавлен ранее.';
+
+  @override
+  String get documentAlreadyProcessedMessage =>
+      'Этот документ уже обработан и добавлен в вашу историю.';
+
+  @override
+  String get documentAlreadyProcessedAction => 'Открыть существующий документ';
 
   @override
   String get uploadQueuePhotoLabel => 'Загрузка фото';

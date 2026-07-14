@@ -97,26 +97,27 @@ remain for deterministic local tests.
 ### Phase 5 — Voice-First Capture
 **Status:** Implemented.
 **Goal:** low-friction voice input (BRD §9 NFR).
-- Backend: audio document type, **STT** provider, STT→structuring task. **Implemented.**
-- Frontend: voice recording + local audio persistence + transient ingest reusing the same state
-  machine. **Implemented.**
-- **Exit:** backend supports recording upload to structured, confirmable events; frontend voice
-  capture records locally, reviews before upload, and sends audio through the transient ingest flow.
+- Backend: transient STT endpoint plus asynchronous final-text structuring. Raw audio is never
+  persisted. **Implemented.**
+- Frontend: stopping a recording uploads it immediately for transcription; the returned text is
+  editable and later recordings append to it. **Implemented.**
+- **Exit:** users submit one final edited text draft for processing. Empty or non-medical drafts
+  fail without creating timeline events.
 
 ### Phase 6 — Privacy, Hardening & Launch Prep
 **Status:** GDPR/settings flows, API throttling, and CI dependency/secret scanning implemented;
 legal/operations launch hardening remains in progress.
 **Goal:** GDPR flows, security checklist, store readiness.
-- Backend: `/privacy/export`, `DELETE /me` (hard delete of backend records), `AuditLog`,
+- Backend: `DELETE /me` (hard delete of backend records) and `AuditLog`,
   Redis-backed auth/AI throttling, and backend tests implemented.
 - CI: blocking dependency and full-history secret scans plus weekly Dependabot updates.
 - Compliance: optional subprocessor register and DPA review checklist are available; they do not
   gate production provider configuration.
-- Frontend: settings (export, delete account, locale), onboarding disclaimer ("organizer, not
+- Frontend: settings (delete account, locale), onboarding disclaimer ("organizer, not
   a doctor"), accessibility pass. **Implemented.**
 - Ops: backend metadata backups, monitoring/error tracking, cost alerts; complete the security checklist
   (`security-privacy.md` §14).
-- **Exit:** GDPR export/erasure work; security checklist green; app store builds ready.
+- **Exit:** account-erasure work; security checklist green; app store builds ready.
 
 ### Core UX Release — Capture, Review & Visit Preparation
 **Status:** Implemented; launch hardening remains separate.
@@ -152,7 +153,7 @@ All ─▶ Phase 6 (hardening) ─▶ Launch
 - All BRD §8 functional requirements implemented.
 - Non-functional requirements (§9) met: usable, accessible, low data-entry (voice + AI),
   trust framing, privacy controls.
-- Security checklist complete; GDPR export + erasure verified.
+- Security checklist complete; account erasure verified.
 - iOS + Android builds pass; monitoring and backend metadata backups live.
 
 ## 7. Explicitly Deferred (post-MVP)

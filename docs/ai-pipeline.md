@@ -50,6 +50,9 @@ Selection is config-driven (`AI_LLM_PROVIDER`, `AI_OCR_PROVIDER`, `AI_STT_PROVID
 
 ### 3.1 Document Ingestion Pipeline
 Triggered by `POST /documents/{id}/ingest` (transient multipart upload, max 5 MB).
+Before OCR or LLM work, the backend calculates a SHA-256 fingerprint of the transient bytes. A
+matching live document for the same account that has already generated active events is returned
+as a duplicate rather than processed again; deleted documents do not block re-uploading.
 
 ```
 [Document bytes received transiently]

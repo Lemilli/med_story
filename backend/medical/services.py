@@ -5,7 +5,6 @@ from textwrap import wrap
 from django.conf import settings
 from django.db.models import Max
 from django.db import transaction
-from django.utils import timezone
 
 from ai.providers.factory import get_llm_provider, get_ocr_provider, get_stt_provider
 from ai.schemas import (
@@ -21,13 +20,10 @@ from ai.schemas import (
 from medical.models import (
     AuditLog,
     Document,
-    DocumentExplanation,
     MedicalEvent,
     MedicalSummary,
     ProcessingJob,
     Subject,
-    Tag,
-    VisitPreparation,
 )
 
 
@@ -99,7 +95,7 @@ def get_or_create_default_subject(user):
     )
 
 
-def process_document_ingestion(*, document, file_bytes, mime_type, job=None, language=None):
+def process_document_ingestion(*, document, file_bytes, mime_type, job=None, language=None, extracted_text_override=None):
     from medical.models import Document, MedicalEvent, ProcessingJob
 
     job_id = getattr(job, "id", None)
@@ -128,7 +124,13 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
         job.save(update_fields=("status", "attempts", "started_at", "finished_at", "error_message", "updated_at"))
 
     try:
-        if is_audio:
+        if extracted_text_override is not None:
+            extracted_text = extracted_text_override
+            extracted_language = language or ""
+            event_source = MedicalEvent.Source.USER_MANUAL
+            if not extracted_text.strip():
+                raise DocumentRejectionError("note_empty")
+        elif is_audio:
             source_language = _resolve_audio_language(document=document, requested_language=language)
             extracted_text = get_stt_provider().transcribe(
                 audio_bytes=file_bytes,
@@ -475,189 +477,6 @@ def get_client_ip(request):
     if forwarded_for:
         return forwarded_for.split(",", 1)[0].strip() or None
     return request.META.get("REMOTE_ADDR") if request is not None else None
-
-
-def build_privacy_export(user):
-    subjects = list(Subject.objects.filter(user=user).order_by("-is_default", "display_name", "created_at"))
-    tags = list(Tag.objects.filter(user=user).order_by("name", "id"))
-    documents = list(Document.objects.filter(user=user).select_related("subject").order_by("-created_at", "id"))
-    explanations = list(
-        DocumentExplanation.objects.filter(document__user=user)
-        .select_related("document")
-        .order_by("-created_at", "id")
-    )
-    events = list(
-        MedicalEvent.objects.filter(user=user)
-        .select_related("subject", "source_document")
-        .prefetch_related("tags")
-        .order_by("-event_date", "-created_at", "id")
-    )
-    summaries = list(
-        MedicalSummary.objects.filter(user=user)
-        .select_related("subject")
-        .order_by("subject_id", "-version", "id")
-    )
-    visit_preparations = list(
-        VisitPreparation.objects.filter(user=user).select_related("subject").order_by("subject_id")
-    )
-    jobs = list(
-        ProcessingJob.objects.filter(user=user)
-        .select_related("document", "summary")
-        .order_by("-created_at", "id")
-    )
-    audit_logs = list(AuditLog.objects.filter(user=user).order_by("-created_at", "id"))
-
-    return {
-        "schema_version": "2026-07-11",
-        "exported_at": _json_timestamp(timezone.now()),
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "locale": user.locale,
-            "is_active": user.is_active,
-            "date_joined": _json_timestamp(user.date_joined),
-            "updated_at": _json_timestamp(user.updated_at),
-        },
-        "subjects": [_subject_export(subject) for subject in subjects],
-        "tags": [_tag_export(tag) for tag in tags],
-        "documents": [_document_export(document) for document in documents],
-        "document_explanations": [_document_explanation_export(explanation) for explanation in explanations],
-        "medical_events": [_medical_event_export(event) for event in events],
-        "medical_summaries": [_medical_summary_export(summary) for summary in summaries],
-        "visit_preparations": [_visit_preparation_export(preparation) for preparation in visit_preparations],
-        "processing_jobs": [_processing_job_export(job) for job in jobs],
-        "audit_logs": [_audit_log_export(audit_log) for audit_log in audit_logs],
-    }
-
-
-def _json_timestamp(value):
-    if value is None:
-        return None
-    return value.isoformat().replace("+00:00", "Z")
-
-
-def _subject_export(subject):
-    return {
-        "id": str(subject.id),
-        "display_name": subject.display_name,
-        "relationship": subject.relationship,
-        "date_of_birth": _json_timestamp(subject.date_of_birth),
-        "biological_sex": subject.biological_sex,
-        "is_default": subject.is_default,
-        "created_at": _json_timestamp(subject.created_at),
-        "updated_at": _json_timestamp(subject.updated_at),
-    }
-
-
-def _tag_export(tag):
-    return {
-        "id": str(tag.id),
-        "name": tag.name,
-        "color": tag.color,
-    }
-
-
-def _document_export(document):
-    return {
-        "id": str(document.id),
-        "subject_id": str(document.subject_id),
-        "title": document.title,
-        "doc_type": document.doc_type,
-        "mime_type": document.mime_type,
-        "local_uri_hint": document.local_uri_hint,
-        "size_bytes": document.size_bytes,
-        "status": document.status,
-        "extracted_text": document.extracted_text,
-        "language": document.language,
-        "document_date": _json_timestamp(document.document_date),
-        "error_message": document.error_message,
-        "created_at": _json_timestamp(document.created_at),
-        "updated_at": _json_timestamp(document.updated_at),
-        "deleted_at": _json_timestamp(document.deleted_at),
-    }
-
-
-def _document_explanation_export(explanation):
-    return {
-        "id": str(explanation.id),
-        "document_id": str(explanation.document_id),
-        "summary_text": explanation.summary_text,
-        "key_points": explanation.key_points,
-        "glossary": explanation.glossary,
-        "language": explanation.language,
-        "created_at": _json_timestamp(explanation.created_at),
-    }
-
-
-def _medical_event_export(event):
-    return {
-        "id": str(event.id),
-        "subject_id": str(event.subject_id),
-        "source_document_id": str(event.source_document_id) if event.source_document_id else None,
-        "event_type": event.event_type,
-        "title": event.title,
-        "description": event.description,
-        "event_date": _json_timestamp(event.event_date),
-        "event_end_date": _json_timestamp(event.event_end_date),
-        "attributes": event.attributes,
-        "source": event.source,
-        "confidence": event.confidence,
-        "tags": [tag.name for tag in event.tags.all()],
-        "created_at": _json_timestamp(event.created_at),
-        "updated_at": _json_timestamp(event.updated_at),
-        "deleted_at": _json_timestamp(event.deleted_at),
-    }
-
-
-def _medical_summary_export(summary):
-    return {
-        "id": str(summary.id),
-        "subject_id": str(summary.subject_id),
-        "version": summary.version,
-        "is_current": summary.is_current,
-        "content": summary.content,
-        "narrative_text": summary.narrative_text,
-        "generated_from_event_count": summary.generated_from_event_count,
-        "language": summary.language,
-        "created_at": _json_timestamp(summary.created_at),
-    }
-
-
-def _visit_preparation_export(preparation):
-    return {
-        "id": str(preparation.id),
-        "subject_id": str(preparation.subject_id),
-        "note": preparation.note,
-        "created_at": _json_timestamp(preparation.created_at),
-        "updated_at": _json_timestamp(preparation.updated_at),
-    }
-
-
-def _processing_job_export(job):
-    return {
-        "id": str(job.id),
-        "document_id": str(job.document_id) if job.document_id else None,
-        "summary_id": str(job.summary_id) if job.summary_id else None,
-        "job_type": job.job_type,
-        "status": job.status,
-        "attempts": job.attempts,
-        "error_message": job.error_message,
-        "started_at": _json_timestamp(job.started_at),
-        "finished_at": _json_timestamp(job.finished_at),
-        "created_at": _json_timestamp(job.created_at),
-        "updated_at": _json_timestamp(job.updated_at),
-    }
-
-
-def _audit_log_export(audit_log):
-    return {
-        "id": str(audit_log.id),
-        "action": audit_log.action,
-        "metadata": audit_log.metadata,
-        "ip_address": audit_log.ip_address,
-        "created_at": _json_timestamp(audit_log.created_at),
-    }
 
 
 def _build_document_explanation(*, document, extracted_text, language):

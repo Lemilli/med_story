@@ -59,7 +59,6 @@ void main() {
           l10n.addPhotoTitle,
           l10n.scanDocumentTitle,
           l10n.chooseFileTitle,
-          l10n.recordVoiceTitle,
           l10n.writeNoteTitle,
         ],
       );

@@ -2,6 +2,8 @@ from django.urls import path
 
 from medical.views import (
     DocumentAudioUploadView,
+    CaptureTranscriptionView,
+    NoteProcessView,
     DocumentDetailView,
     DocumentExplanationRegenerateView,
     DocumentExplanationView,
@@ -11,7 +13,6 @@ from medical.views import (
     EventListCreateView,
     EventSearchView,
     JobDetailView,
-    PrivacyExportView,
     SummaryCurrentView,
     SummaryExportView,
     SummaryRegenerateView,
@@ -27,6 +28,8 @@ urlpatterns = [
     path("subjects/<uuid:id>", SubjectDetailView.as_view(), name="subject-detail"),
     path("documents", DocumentListCreateView.as_view(), name="document-list"),
     path("documents/upload-audio", DocumentAudioUploadView.as_view(), name="document-upload-audio"),
+    path("capture/transcribe", CaptureTranscriptionView.as_view(), name="capture-transcribe"),
+    path("capture/notes", NoteProcessView.as_view(), name="capture-note-process"),
     path("documents/<uuid:id>", DocumentDetailView.as_view(), name="document-detail"),
     path("documents/<uuid:id>/ingest", DocumentIngestView.as_view(), name="document-ingest"),
     path("documents/<uuid:id>/explanation", DocumentExplanationView.as_view(), name="document-explanation"),
@@ -44,6 +47,5 @@ urlpatterns = [
     path("summary/versions", SummaryVersionsView.as_view(), name="summary-versions"),
     path("summary/export", SummaryExportView.as_view(), name="summary-export"),
     path("visit-preparation", VisitPreparationView.as_view(), name="visit-preparation"),
-    path("privacy/export", PrivacyExportView.as_view(), name="privacy-export"),
     path("jobs/<uuid:id>", JobDetailView.as_view(), name="job-detail"),
 ]

@@ -53,6 +53,25 @@ def ingest_document_task(document_id, job_id, file_bytes_b64, mime_type, languag
 
 
 @shared_task
+def ingest_note_task(document_id, job_id, text, language=None):
+    document = Document.objects.select_related("user", "subject").get(id=document_id, deleted_at__isnull=True)
+    job = ProcessingJob.objects.filter(id=job_id, document=document).first()
+    try:
+        process_document_ingestion(
+            document=document,
+            file_bytes=b"",
+            mime_type="text/plain",
+            job=job,
+            language=language,
+            extracted_text_override=text,
+        )
+    except Exception:
+        logger.exception("Note ingestion failed document_id=%s job_id=%s", document.id, job_id)
+        return {"status": "failed", "document_id": str(document.id), "error": document.error_message}
+    return {"status": "processed", "document_id": str(document.id)}
+
+
+@shared_task
 def explain_document_task(document_id, job_id, language=None):
     document = Document.objects.select_related("user", "subject").get(id=document_id, deleted_at__isnull=True)
     job = ProcessingJob.objects.filter(id=job_id, document=document).first()
