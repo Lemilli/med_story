@@ -146,15 +146,28 @@ Same machine as 7.1.
 - Reads from the Drift cache first (instant), then refreshes from `/timeline`
   (stale-while-revalidate).
 
-### 7.4 Doctor Summary (Scenario D)
-- `summary` screen shows the structured memory + narrative.
-- "Prepare for visit" → `GET /summary/export?format=pdf` → share sheet.
-- The prepare-for-visit flow saves a per-subject note before export; the note is user-authored and is not AI input.
+### 7.4 Prepare for a Visit (Scenario D)
+- The screen is a structured, approximately 60-second briefing understandable to both doctor and
+  patient. It shows seven ordered sections: current concerns; important diagnoses and findings;
+  allergies; current medications; important test results; previous treatments and outcomes; and
+  procedures and hospitalizations. Empty sections are hidden.
+- Items prefer one concise line and may use a second line only when necessary. A trailing blue
+  source icon is the compact provenance action. One source opens the event; multiple sources open a
+  bottom sheet (event title, date, and document name) before the selected event opens.
+- The navigation contract is `Summary → Event → local original`. A one-based supporting position
+  can select an uploaded image/page asset in a multi-image scan. Internal pages of a single PDF are
+  not separately identified or rendered in the current MVP, so PDFs and sources without asset-level
+  provenance open at the file/document start. If the original is no longer on the device, the event
+  remains available and explains that the local file is unavailable.
+- The free-text reason for visit is saved per subject until changed. Refresh is the only generation
+  trigger. The old cached summary stays visible with a compact updating state and remains available
+  if regeneration fails.
+- Source links are for the in-app phone experience; exports do not attempt to preserve local links.
 
 ## 8. Offline & Caching
 
-- **Read-mostly offline**: timeline and current summary cached in Drift; viewable
-  offline.
+- **Read-mostly offline**: timeline and current summary, including backend-enriched event provenance,
+  are cached in Drift. Source navigation works offline when the event and local original are present.
 - **Writes require connectivity** for MVP (transient ingestion/AI need the backend); queued
   retry is a post-MVP enhancement.
 - Document/audio binaries are durable on-device only; there is no cross-device sync/backup in MVP.

@@ -18,6 +18,8 @@ class _VisitPreparationScreenState
     extends ConsumerState<VisitPreparationScreen> {
   final _note = TextEditingController();
   Future<VisitPreparation>? _load;
+  String? _loadedSubject;
+  bool _initialized = false;
   bool _saving = false;
 
   @override
@@ -36,7 +38,12 @@ class _VisitPreparationScreenState
     if (subject == null) {
       return Scaffold(appBar: AppBar(title: Text(l10n.visitPrepTitle)));
     }
-    _load ??= ref.read(visitPreparationApiProvider).get(subject);
+    if (_loadedSubject != subject) {
+      _loadedSubject = subject;
+      _initialized = false;
+      _note.clear();
+      _load = ref.read(visitPreparationApiProvider).get(subject);
+    }
     return Scaffold(
       appBar: AppBar(title: Text(l10n.visitPrepTitle)),
       body: FutureBuilder<VisitPreparation>(
@@ -48,7 +55,10 @@ class _VisitPreparationScreenState
           if (snapshot.hasError) {
             return Center(child: Text(snapshot.error.toString()));
           }
-          if (_note.text.isEmpty) _note.text = snapshot.data?.note ?? '';
+          if (!_initialized) {
+            _initialized = true;
+            _note.text = snapshot.data?.reason ?? '';
+          }
           return SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
@@ -56,17 +66,11 @@ class _VisitPreparationScreenState
                 children: [
                   Text(context.l10n.summaryBoundaryNote),
                   const SizedBox(height: AppSpacing.lg),
-                  Expanded(
-                    child: TextField(
-                      controller: _note,
-                      expands: true,
-                      minLines: null,
-                      maxLines: null,
-                      textAlignVertical: TextAlignVertical.top,
-                      decoration: InputDecoration(
-                        labelText: l10n.visitPrepHint,
-                      ),
-                    ),
+                  TextField(
+                    controller: _note,
+                    maxLength: 300,
+                    maxLines: 1,
+                    decoration: InputDecoration(labelText: l10n.visitPrepHint),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   FilledButton(
@@ -78,8 +82,8 @@ class _VisitPreparationScreenState
                     onPressed: _saving
                         ? null
                         : () async {
-                            await _save(subject, quiet: true);
-                            if (mounted) {
+                            final saved = await _save(subject, quiet: true);
+                            if (mounted && saved) {
                               await ref
                                   .read(summaryRepositoryProvider)
                                   .exportPdf(subjectId: subject);
@@ -97,17 +101,28 @@ class _VisitPreparationScreenState
     );
   }
 
-  Future<void> _save(String subject, {bool quiet = false}) async {
+  Future<bool> _save(String subject, {bool quiet = false}) async {
     setState(() => _saving = true);
     try {
-      await ref
-          .read(visitPreparationApiProvider)
-          .save(subject, _note.text.trim());
+      final reason = _note.text.replaceAll(RegExp(r'\s+'), ' ').trim();
+      await ref.read(visitPreparationApiProvider).save(subject, reason);
+      _note.value = TextEditingValue(
+        text: reason,
+        selection: TextSelection.collapsed(offset: reason.length),
+      );
       if (mounted && !quiet) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(context.l10n.visitPrepSaved)));
       }
+      return true;
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.summaryVisitReasonSaveFailed)),
+        );
+      }
+      return false;
     } finally {
       if (mounted) setState(() => _saving = false);
     }

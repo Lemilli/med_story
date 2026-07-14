@@ -107,7 +107,7 @@ class _EventDetailBody extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: AppSpacing.lg),
-          if (event.sourceDocumentId != null && event.sourceAssetCount > 0) ...[
+          if (event.sourceDocumentId != null) ...[
             FilledButton.icon(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
@@ -220,13 +220,15 @@ class _OriginalSourceScreen extends ConsumerStatefulWidget {
 }
 
 class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
-  final _pageController = PageController();
+  late final PageController _pageController;
   late final Future<List<db.DocumentLocalAsset>> _assetsFuture;
   var _currentPage = 0;
+  var _didApplyRequestedPage = false;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     final documentId = widget.event.sourceDocumentId;
     _assetsFuture = documentId == null
         ? Future.value(const [])
@@ -283,6 +285,7 @@ class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
                   );
                 }
                 final hasMultiplePages = assets.length > 1;
+                _applyRequestedPage(assets.length);
                 final currentPage = _currentPage.clamp(0, assets.length - 1);
                 return Column(
                   children: [
@@ -412,6 +415,22 @@ class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
     // PageView's callback keeps the indicator and available arrows in sync
     // for both button taps and swipe navigation.
     _pageController.jumpToPage(page);
+  }
+
+  void _applyRequestedPage(int assetCount) {
+    if (_didApplyRequestedPage || assetCount <= 0) return;
+    _didApplyRequestedPage = true;
+    final requested = widget.event.sourcePagePositions
+        .where((position) => position > 0)
+        .firstOrNull;
+    final target = ((requested ?? 1) - 1).clamp(0, assetCount - 1);
+    if (target == 0) return;
+    _currentPage = target;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _pageController.hasClients) {
+        _pageController.jumpToPage(target);
+      }
+    });
   }
 }
 

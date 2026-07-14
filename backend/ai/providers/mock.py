@@ -1,3 +1,5 @@
+import json
+
 from ai.providers.base import OCRResult
 
 
@@ -22,20 +24,23 @@ class MockLLMProvider:
                 "glossary": {},
             }
         if "narrative_text" in schema.get("properties", {}):
+            try:
+                event_ids = [event["event_id"] for event in json.loads(user).get("events", [])]
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+                event_ids = []
+            source_ids = event_ids[:1]
+            item = lambda text: {"text": text, "detail": "", "source_event_ids": source_ids}
             return {
                 "content": {
-                    "key_symptoms": [
-                        "Abdominal pain — recurring symptom recorded in the timeline."
-                    ],
-                    "major_diagnoses": ["Ulcerative colitis — recorded in the timeline history."],
-                    "treatment_history": ["Mesalazine — treatment recorded in the timeline."],
-                    "important_examinations": ["CRP — result of 12 mg/L was recorded."],
-                    "relevant_medications": ["Mesalazine — 800 mg dose recorded."],
+                    "current_concerns": [item("Abdominal pain")] if source_ids else [],
+                    "important_diagnoses_and_findings": [],
+                    "allergies": [],
+                    "current_medications": [],
+                    "important_test_results": [],
+                    "previous_treatments_and_outcomes": [],
+                    "procedures_and_hospitalizations": [],
                 },
-                "narrative_text": (
-                    "This summary organizes MedStory timeline events for a healthcare visit. "
-                    "It does not diagnose or recommend treatment."
-                ),
+                "narrative_text": "A concise brief based on MedStory timeline events.",
             }
 
         normalized = user.casefold()
@@ -61,6 +66,7 @@ class MockLLMProvider:
                             ],
                         },
                         "confidence": 0.92,
+                        "source_page_positions": [1],
                     },
             }
         if "mesalazine" in normalized:
@@ -82,6 +88,7 @@ class MockLLMProvider:
                             "prescriber": "Dr. Example",
                         },
                         "confidence": 0.94,
+                        "source_page_positions": [1],
                     },
             }
         return {

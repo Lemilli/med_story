@@ -77,6 +77,8 @@ class SummaryRepository {
     return api.regenerateSummary(subjectId: subjectId);
   }
 
+  Future<String> getJobStatus(String jobId) => api.getJobStatus(jobId);
+
   Future<void> exportPdf({required String subjectId}) async {
     final bytes = await api.exportPdf(subjectId: subjectId);
     await shareService.sharePdf(bytes);

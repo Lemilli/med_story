@@ -149,6 +149,54 @@ class AppLocalizationsRu extends AppLocalizations {
   String get summaryLoadFailedMessage => 'Не удалось загрузить эту сводку.';
 
   @override
+  String get summaryAiOrganizedNote =>
+      'ИИ упорядочил ваши сохранённые медицинские события. Откройте источник, чтобы проверить детали.';
+
+  @override
+  String get summarySourceAction => 'Открыть событие-источник';
+
+  @override
+  String get summarySourcesTitle => 'Источники';
+
+  @override
+  String get summaryVisitReasonLabel => 'Причина визита';
+
+  @override
+  String get summaryVisitReasonEmpty =>
+      'Добавьте причину, чтобы уточнить сводку';
+
+  @override
+  String get summaryVisitReasonEdit => 'Изменить причину визита';
+
+  @override
+  String get summaryVisitReasonHint => 'Например: постоянная боль в животе';
+
+  @override
+  String get summaryVisitReasonSaveFailed =>
+      'Не удалось сохранить причину визита. Проверьте соединение и попробуйте снова.';
+
+  @override
+  String get summarySectionCurrentConcerns => 'Текущие жалобы';
+
+  @override
+  String get summarySectionImportantDiagnosesAndFindings =>
+      'Важные диагнозы и результаты';
+
+  @override
+  String get summarySectionCurrentMedications => 'Текущие лекарства';
+
+  @override
+  String get summarySectionImportantTestResults => 'Важные результаты анализов';
+
+  @override
+  String get summarySectionPreviousTreatmentsAndOutcomes =>
+      'Предыдущее лечение и результаты';
+
+  @override
+  String get summarySectionProceduresAndHospitalizations =>
+      'Процедуры и госпитализации';
+
+  @override
   String get summarySectionKeySymptoms => 'Ключевые симптомы';
 
   @override
@@ -1112,16 +1160,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get visitPrepTitle => 'Подготовка к визиту';
 
   @override
-  String get visitPrepHint => 'Вопросы или темы, которые вы хотите обсудить';
+  String get visitPrepHint => 'Причина этого визита';
 
   @override
-  String get visitPrepSave => 'Сохранить заметку к визиту';
+  String get visitPrepSave => 'Сохранить';
 
   @override
   String get visitPrepExport => 'Экспортировать сводку к визиту';
 
   @override
-  String get visitPrepSaved => 'Заметка к визиту сохранена.';
+  String get visitPrepSaved => 'Причина визита сохранена.';
 
   @override
   String get onboardingTitle => 'Ваша медицинская история — в одном месте';

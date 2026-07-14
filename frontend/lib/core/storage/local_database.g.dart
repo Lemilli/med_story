@@ -699,6 +699,41 @@ class $CachedMedicalEventsTable extends CachedMedicalEvents
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sourceTextMeta = const VerificationMeta(
+    'sourceText',
+  );
+  @override
+  late final GeneratedColumn<String> sourceText = GeneratedColumn<String>(
+    'source_text',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceAssetCountMeta = const VerificationMeta(
+    'sourceAssetCount',
+  );
+  @override
+  late final GeneratedColumn<int> sourceAssetCount = GeneratedColumn<int>(
+    'source_asset_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _sourcePagePositionsJsonMeta =
+      const VerificationMeta('sourcePagePositionsJson');
+  @override
+  late final GeneratedColumn<String> sourcePagePositionsJson =
+      GeneratedColumn<String>(
+        'source_page_positions_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
   static const VerificationMeta _confidenceMeta = const VerificationMeta(
     'confidence',
   );
@@ -766,6 +801,9 @@ class $CachedMedicalEventsTable extends CachedMedicalEvents
     attributesJson,
     source,
     sourceDocumentId,
+    sourceText,
+    sourceAssetCount,
+    sourcePagePositionsJson,
     confidence,
     tagsJson,
     createdAt,
@@ -869,6 +907,30 @@ class $CachedMedicalEventsTable extends CachedMedicalEvents
         ),
       );
     }
+    if (data.containsKey('source_text')) {
+      context.handle(
+        _sourceTextMeta,
+        sourceText.isAcceptableOrUnknown(data['source_text']!, _sourceTextMeta),
+      );
+    }
+    if (data.containsKey('source_asset_count')) {
+      context.handle(
+        _sourceAssetCountMeta,
+        sourceAssetCount.isAcceptableOrUnknown(
+          data['source_asset_count']!,
+          _sourceAssetCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_page_positions_json')) {
+      context.handle(
+        _sourcePagePositionsJsonMeta,
+        sourcePagePositionsJson.isAcceptableOrUnknown(
+          data['source_page_positions_json']!,
+          _sourcePagePositionsJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('confidence')) {
       context.handle(
         _confidenceMeta,
@@ -956,6 +1018,18 @@ class $CachedMedicalEventsTable extends CachedMedicalEvents
         DriftSqlType.string,
         data['${effectivePrefix}source_document_id'],
       ),
+      sourceText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_text'],
+      ),
+      sourceAssetCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_asset_count'],
+      )!,
+      sourcePagePositionsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_page_positions_json'],
+      )!,
       confidence: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}confidence'],
@@ -997,6 +1071,9 @@ class CachedMedicalEvent extends DataClass
   final String attributesJson;
   final String source;
   final String? sourceDocumentId;
+  final String? sourceText;
+  final int sourceAssetCount;
+  final String sourcePagePositionsJson;
   final double? confidence;
   final String tagsJson;
   final DateTime createdAt;
@@ -1013,6 +1090,9 @@ class CachedMedicalEvent extends DataClass
     required this.attributesJson,
     required this.source,
     this.sourceDocumentId,
+    this.sourceText,
+    required this.sourceAssetCount,
+    required this.sourcePagePositionsJson,
     this.confidence,
     required this.tagsJson,
     required this.createdAt,
@@ -1036,6 +1116,13 @@ class CachedMedicalEvent extends DataClass
     if (!nullToAbsent || sourceDocumentId != null) {
       map['source_document_id'] = Variable<String>(sourceDocumentId);
     }
+    if (!nullToAbsent || sourceText != null) {
+      map['source_text'] = Variable<String>(sourceText);
+    }
+    map['source_asset_count'] = Variable<int>(sourceAssetCount);
+    map['source_page_positions_json'] = Variable<String>(
+      sourcePagePositionsJson,
+    );
     if (!nullToAbsent || confidence != null) {
       map['confidence'] = Variable<double>(confidence);
     }
@@ -1062,6 +1149,11 @@ class CachedMedicalEvent extends DataClass
       sourceDocumentId: sourceDocumentId == null && nullToAbsent
           ? const Value.absent()
           : Value(sourceDocumentId),
+      sourceText: sourceText == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceText),
+      sourceAssetCount: Value(sourceAssetCount),
+      sourcePagePositionsJson: Value(sourcePagePositionsJson),
       confidence: confidence == null && nullToAbsent
           ? const Value.absent()
           : Value(confidence),
@@ -1088,6 +1180,11 @@ class CachedMedicalEvent extends DataClass
       attributesJson: serializer.fromJson<String>(json['attributesJson']),
       source: serializer.fromJson<String>(json['source']),
       sourceDocumentId: serializer.fromJson<String?>(json['sourceDocumentId']),
+      sourceText: serializer.fromJson<String?>(json['sourceText']),
+      sourceAssetCount: serializer.fromJson<int>(json['sourceAssetCount']),
+      sourcePagePositionsJson: serializer.fromJson<String>(
+        json['sourcePagePositionsJson'],
+      ),
       confidence: serializer.fromJson<double?>(json['confidence']),
       tagsJson: serializer.fromJson<String>(json['tagsJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1109,6 +1206,11 @@ class CachedMedicalEvent extends DataClass
       'attributesJson': serializer.toJson<String>(attributesJson),
       'source': serializer.toJson<String>(source),
       'sourceDocumentId': serializer.toJson<String?>(sourceDocumentId),
+      'sourceText': serializer.toJson<String?>(sourceText),
+      'sourceAssetCount': serializer.toJson<int>(sourceAssetCount),
+      'sourcePagePositionsJson': serializer.toJson<String>(
+        sourcePagePositionsJson,
+      ),
       'confidence': serializer.toJson<double?>(confidence),
       'tagsJson': serializer.toJson<String>(tagsJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1128,6 +1230,9 @@ class CachedMedicalEvent extends DataClass
     String? attributesJson,
     String? source,
     Value<String?> sourceDocumentId = const Value.absent(),
+    Value<String?> sourceText = const Value.absent(),
+    int? sourceAssetCount,
+    String? sourcePagePositionsJson,
     Value<double?> confidence = const Value.absent(),
     String? tagsJson,
     DateTime? createdAt,
@@ -1146,6 +1251,10 @@ class CachedMedicalEvent extends DataClass
     sourceDocumentId: sourceDocumentId.present
         ? sourceDocumentId.value
         : this.sourceDocumentId,
+    sourceText: sourceText.present ? sourceText.value : this.sourceText,
+    sourceAssetCount: sourceAssetCount ?? this.sourceAssetCount,
+    sourcePagePositionsJson:
+        sourcePagePositionsJson ?? this.sourcePagePositionsJson,
     confidence: confidence.present ? confidence.value : this.confidence,
     tagsJson: tagsJson ?? this.tagsJson,
     createdAt: createdAt ?? this.createdAt,
@@ -1172,6 +1281,15 @@ class CachedMedicalEvent extends DataClass
       sourceDocumentId: data.sourceDocumentId.present
           ? data.sourceDocumentId.value
           : this.sourceDocumentId,
+      sourceText: data.sourceText.present
+          ? data.sourceText.value
+          : this.sourceText,
+      sourceAssetCount: data.sourceAssetCount.present
+          ? data.sourceAssetCount.value
+          : this.sourceAssetCount,
+      sourcePagePositionsJson: data.sourcePagePositionsJson.present
+          ? data.sourcePagePositionsJson.value
+          : this.sourcePagePositionsJson,
       confidence: data.confidence.present
           ? data.confidence.value
           : this.confidence,
@@ -1195,6 +1313,9 @@ class CachedMedicalEvent extends DataClass
           ..write('attributesJson: $attributesJson, ')
           ..write('source: $source, ')
           ..write('sourceDocumentId: $sourceDocumentId, ')
+          ..write('sourceText: $sourceText, ')
+          ..write('sourceAssetCount: $sourceAssetCount, ')
+          ..write('sourcePagePositionsJson: $sourcePagePositionsJson, ')
           ..write('confidence: $confidence, ')
           ..write('tagsJson: $tagsJson, ')
           ..write('createdAt: $createdAt, ')
@@ -1216,6 +1337,9 @@ class CachedMedicalEvent extends DataClass
     attributesJson,
     source,
     sourceDocumentId,
+    sourceText,
+    sourceAssetCount,
+    sourcePagePositionsJson,
     confidence,
     tagsJson,
     createdAt,
@@ -1236,6 +1360,9 @@ class CachedMedicalEvent extends DataClass
           other.attributesJson == this.attributesJson &&
           other.source == this.source &&
           other.sourceDocumentId == this.sourceDocumentId &&
+          other.sourceText == this.sourceText &&
+          other.sourceAssetCount == this.sourceAssetCount &&
+          other.sourcePagePositionsJson == this.sourcePagePositionsJson &&
           other.confidence == this.confidence &&
           other.tagsJson == this.tagsJson &&
           other.createdAt == this.createdAt &&
@@ -1254,6 +1381,9 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
   final Value<String> attributesJson;
   final Value<String> source;
   final Value<String?> sourceDocumentId;
+  final Value<String?> sourceText;
+  final Value<int> sourceAssetCount;
+  final Value<String> sourcePagePositionsJson;
   final Value<double?> confidence;
   final Value<String> tagsJson;
   final Value<DateTime> createdAt;
@@ -1271,6 +1401,9 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
     this.attributesJson = const Value.absent(),
     this.source = const Value.absent(),
     this.sourceDocumentId = const Value.absent(),
+    this.sourceText = const Value.absent(),
+    this.sourceAssetCount = const Value.absent(),
+    this.sourcePagePositionsJson = const Value.absent(),
     this.confidence = const Value.absent(),
     this.tagsJson = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1289,6 +1422,9 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
     required String attributesJson,
     required String source,
     this.sourceDocumentId = const Value.absent(),
+    this.sourceText = const Value.absent(),
+    this.sourceAssetCount = const Value.absent(),
+    this.sourcePagePositionsJson = const Value.absent(),
     this.confidence = const Value.absent(),
     required String tagsJson,
     required DateTime createdAt,
@@ -1318,6 +1454,9 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
     Expression<String>? attributesJson,
     Expression<String>? source,
     Expression<String>? sourceDocumentId,
+    Expression<String>? sourceText,
+    Expression<int>? sourceAssetCount,
+    Expression<String>? sourcePagePositionsJson,
     Expression<double>? confidence,
     Expression<String>? tagsJson,
     Expression<DateTime>? createdAt,
@@ -1336,6 +1475,10 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
       if (attributesJson != null) 'attributes_json': attributesJson,
       if (source != null) 'source': source,
       if (sourceDocumentId != null) 'source_document_id': sourceDocumentId,
+      if (sourceText != null) 'source_text': sourceText,
+      if (sourceAssetCount != null) 'source_asset_count': sourceAssetCount,
+      if (sourcePagePositionsJson != null)
+        'source_page_positions_json': sourcePagePositionsJson,
       if (confidence != null) 'confidence': confidence,
       if (tagsJson != null) 'tags_json': tagsJson,
       if (createdAt != null) 'created_at': createdAt,
@@ -1356,6 +1499,9 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
     Value<String>? attributesJson,
     Value<String>? source,
     Value<String?>? sourceDocumentId,
+    Value<String?>? sourceText,
+    Value<int>? sourceAssetCount,
+    Value<String>? sourcePagePositionsJson,
     Value<double?>? confidence,
     Value<String>? tagsJson,
     Value<DateTime>? createdAt,
@@ -1374,6 +1520,10 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
       attributesJson: attributesJson ?? this.attributesJson,
       source: source ?? this.source,
       sourceDocumentId: sourceDocumentId ?? this.sourceDocumentId,
+      sourceText: sourceText ?? this.sourceText,
+      sourceAssetCount: sourceAssetCount ?? this.sourceAssetCount,
+      sourcePagePositionsJson:
+          sourcePagePositionsJson ?? this.sourcePagePositionsJson,
       confidence: confidence ?? this.confidence,
       tagsJson: tagsJson ?? this.tagsJson,
       createdAt: createdAt ?? this.createdAt,
@@ -1416,6 +1566,17 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
     if (sourceDocumentId.present) {
       map['source_document_id'] = Variable<String>(sourceDocumentId.value);
     }
+    if (sourceText.present) {
+      map['source_text'] = Variable<String>(sourceText.value);
+    }
+    if (sourceAssetCount.present) {
+      map['source_asset_count'] = Variable<int>(sourceAssetCount.value);
+    }
+    if (sourcePagePositionsJson.present) {
+      map['source_page_positions_json'] = Variable<String>(
+        sourcePagePositionsJson.value,
+      );
+    }
     if (confidence.present) {
       map['confidence'] = Variable<double>(confidence.value);
     }
@@ -1450,6 +1611,9 @@ class CachedMedicalEventsCompanion extends UpdateCompanion<CachedMedicalEvent> {
           ..write('attributesJson: $attributesJson, ')
           ..write('source: $source, ')
           ..write('sourceDocumentId: $sourceDocumentId, ')
+          ..write('sourceText: $sourceText, ')
+          ..write('sourceAssetCount: $sourceAssetCount, ')
+          ..write('sourcePagePositionsJson: $sourcePagePositionsJson, ')
           ..write('confidence: $confidence, ')
           ..write('tagsJson: $tagsJson, ')
           ..write('createdAt: $createdAt, ')
@@ -3859,6 +4023,9 @@ typedef $$CachedMedicalEventsTableCreateCompanionBuilder =
       required String attributesJson,
       required String source,
       Value<String?> sourceDocumentId,
+      Value<String?> sourceText,
+      Value<int> sourceAssetCount,
+      Value<String> sourcePagePositionsJson,
       Value<double?> confidence,
       required String tagsJson,
       required DateTime createdAt,
@@ -3878,6 +4045,9 @@ typedef $$CachedMedicalEventsTableUpdateCompanionBuilder =
       Value<String> attributesJson,
       Value<String> source,
       Value<String?> sourceDocumentId,
+      Value<String?> sourceText,
+      Value<int> sourceAssetCount,
+      Value<String> sourcePagePositionsJson,
       Value<double?> confidence,
       Value<String> tagsJson,
       Value<DateTime> createdAt,
@@ -3942,6 +4112,21 @@ class $$CachedMedicalEventsTableFilterComposer
 
   ColumnFilters<String> get sourceDocumentId => $composableBuilder(
     column: $table.sourceDocumentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceText => $composableBuilder(
+    column: $table.sourceText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sourceAssetCount => $composableBuilder(
+    column: $table.sourceAssetCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourcePagePositionsJson => $composableBuilder(
+    column: $table.sourcePagePositionsJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4030,6 +4215,21 @@ class $$CachedMedicalEventsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get sourceText => $composableBuilder(
+    column: $table.sourceText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sourceAssetCount => $composableBuilder(
+    column: $table.sourceAssetCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourcePagePositionsJson => $composableBuilder(
+    column: $table.sourcePagePositionsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get confidence => $composableBuilder(
     column: $table.confidence,
     builder: (column) => ColumnOrderings(column),
@@ -4100,6 +4300,21 @@ class $$CachedMedicalEventsTableAnnotationComposer
 
   GeneratedColumn<String> get sourceDocumentId => $composableBuilder(
     column: $table.sourceDocumentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceText => $composableBuilder(
+    column: $table.sourceText,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sourceAssetCount => $composableBuilder(
+    column: $table.sourceAssetCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourcePagePositionsJson => $composableBuilder(
+    column: $table.sourcePagePositionsJson,
     builder: (column) => column,
   );
 
@@ -4174,6 +4389,9 @@ class $$CachedMedicalEventsTableTableManager
                 Value<String> attributesJson = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 Value<String?> sourceDocumentId = const Value.absent(),
+                Value<String?> sourceText = const Value.absent(),
+                Value<int> sourceAssetCount = const Value.absent(),
+                Value<String> sourcePagePositionsJson = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
                 Value<String> tagsJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -4191,6 +4409,9 @@ class $$CachedMedicalEventsTableTableManager
                 attributesJson: attributesJson,
                 source: source,
                 sourceDocumentId: sourceDocumentId,
+                sourceText: sourceText,
+                sourceAssetCount: sourceAssetCount,
+                sourcePagePositionsJson: sourcePagePositionsJson,
                 confidence: confidence,
                 tagsJson: tagsJson,
                 createdAt: createdAt,
@@ -4210,6 +4431,9 @@ class $$CachedMedicalEventsTableTableManager
                 required String attributesJson,
                 required String source,
                 Value<String?> sourceDocumentId = const Value.absent(),
+                Value<String?> sourceText = const Value.absent(),
+                Value<int> sourceAssetCount = const Value.absent(),
+                Value<String> sourcePagePositionsJson = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
                 required String tagsJson,
                 required DateTime createdAt,
@@ -4227,6 +4451,9 @@ class $$CachedMedicalEventsTableTableManager
                 attributesJson: attributesJson,
                 source: source,
                 sourceDocumentId: sourceDocumentId,
+                sourceText: sourceText,
+                sourceAssetCount: sourceAssetCount,
+                sourcePagePositionsJson: sourcePagePositionsJson,
                 confidence: confidence,
                 tagsJson: tagsJson,
                 createdAt: createdAt,

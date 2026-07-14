@@ -154,8 +154,7 @@ class EventListCreateView(MedicalEventQuerysetMixin, generics.ListCreateAPIView)
         return self.get_base_queryset()
 
     def perform_create(self, serializer):
-        event = serializer.save()
-        enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_created")
+        serializer.save()
 
 
 class EventDetailView(MedicalEventQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
@@ -166,13 +165,11 @@ class EventDetailView(MedicalEventQuerysetMixin, generics.RetrieveUpdateDestroyA
         return self.get_base_queryset()
 
     def perform_update(self, serializer):
-        event = serializer.save()
-        enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_updated")
+        serializer.save()
 
     def perform_destroy(self, instance):
         instance.deleted_at = timezone.now()
         instance.save(update_fields=("deleted_at", "updated_at"))
-        enqueue_summary_regeneration(user=instance.user, subject=instance.subject, reason="event_deleted")
 
 
 class EventRevisionListCreateView(MedicalEventQuerysetMixin, generics.GenericAPIView):
@@ -219,7 +216,6 @@ class EventRevisionDetailView(MedicalEventQuerysetMixin, generics.GenericAPIView
             event = apply_event_revision(revision=self._revision(), fields=fields)
         except ValueError as exc:
             raise ValidationError({"revision": [str(exc)]}) from exc
-        enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_revision_applied")
         return Response(MedicalEventSerializer(event, context={"request": request}).data)
 
     def delete(self, request, *args, **kwargs):

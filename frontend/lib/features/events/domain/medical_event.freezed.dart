@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MedicalEvent {
 
- String get id;@JsonKey(name: 'event_type') MedicalEventType get eventType; String get title; String get description;@JsonKey(name: 'event_date') String get eventDate;@JsonKey(name: 'event_end_date') String? get eventEndDate; Map<String, dynamic> get attributes; EventSource get source;@JsonKey(name: 'source_document_id') String? get sourceDocumentId;@JsonKey(name: 'source_text') String? get sourceText;@JsonKey(name: 'source_asset_count') int get sourceAssetCount;@JsonKey(name: 'pending_revision') EventRevision? get pendingRevision; double? get confidence; List<String> get tags;@JsonKey(name: 'subject_id') String get subjectId;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'updated_at') DateTime get updatedAt;
+ String get id;@JsonKey(name: 'event_type') MedicalEventType get eventType; String get title; String get description;@JsonKey(name: 'event_date') String get eventDate;@JsonKey(name: 'event_end_date') String? get eventEndDate; Map<String, dynamic> get attributes; EventSource get source;@JsonKey(name: 'source_document_id') String? get sourceDocumentId;@JsonKey(name: 'source_text') String? get sourceText;@JsonKey(name: 'source_asset_count') int get sourceAssetCount;@JsonKey(name: 'source_page_positions') List<int> get sourcePagePositions;@JsonKey(name: 'pending_revision') EventRevision? get pendingRevision; double? get confidence; List<String> get tags;@JsonKey(name: 'subject_id') String get subjectId;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'updated_at') DateTime get updatedAt;
 /// Create a copy of MedicalEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $MedicalEventCopyWith<MedicalEvent> get copyWith => _$MedicalEventCopyWithImpl<M
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MedicalEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.eventType, eventType) || other.eventType == eventType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.eventDate, eventDate) || other.eventDate == eventDate)&&(identical(other.eventEndDate, eventEndDate) || other.eventEndDate == eventEndDate)&&const DeepCollectionEquality().equals(other.attributes, attributes)&&(identical(other.source, source) || other.source == source)&&(identical(other.sourceDocumentId, sourceDocumentId) || other.sourceDocumentId == sourceDocumentId)&&(identical(other.sourceText, sourceText) || other.sourceText == sourceText)&&(identical(other.sourceAssetCount, sourceAssetCount) || other.sourceAssetCount == sourceAssetCount)&&(identical(other.pendingRevision, pendingRevision) || other.pendingRevision == pendingRevision)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MedicalEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.eventType, eventType) || other.eventType == eventType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.eventDate, eventDate) || other.eventDate == eventDate)&&(identical(other.eventEndDate, eventEndDate) || other.eventEndDate == eventEndDate)&&const DeepCollectionEquality().equals(other.attributes, attributes)&&(identical(other.source, source) || other.source == source)&&(identical(other.sourceDocumentId, sourceDocumentId) || other.sourceDocumentId == sourceDocumentId)&&(identical(other.sourceText, sourceText) || other.sourceText == sourceText)&&(identical(other.sourceAssetCount, sourceAssetCount) || other.sourceAssetCount == sourceAssetCount)&&const DeepCollectionEquality().equals(other.sourcePagePositions, sourcePagePositions)&&(identical(other.pendingRevision, pendingRevision) || other.pendingRevision == pendingRevision)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,eventType,title,description,eventDate,eventEndDate,const DeepCollectionEquality().hash(attributes),source,sourceDocumentId,sourceText,sourceAssetCount,pendingRevision,confidence,const DeepCollectionEquality().hash(tags),subjectId,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,eventType,title,description,eventDate,eventEndDate,const DeepCollectionEquality().hash(attributes),source,sourceDocumentId,sourceText,sourceAssetCount,const DeepCollectionEquality().hash(sourcePagePositions),pendingRevision,confidence,const DeepCollectionEquality().hash(tags),subjectId,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'MedicalEvent(id: $id, eventType: $eventType, title: $title, description: $description, eventDate: $eventDate, eventEndDate: $eventEndDate, attributes: $attributes, source: $source, sourceDocumentId: $sourceDocumentId, sourceText: $sourceText, sourceAssetCount: $sourceAssetCount, pendingRevision: $pendingRevision, confidence: $confidence, tags: $tags, subjectId: $subjectId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'MedicalEvent(id: $id, eventType: $eventType, title: $title, description: $description, eventDate: $eventDate, eventEndDate: $eventEndDate, attributes: $attributes, source: $source, sourceDocumentId: $sourceDocumentId, sourceText: $sourceText, sourceAssetCount: $sourceAssetCount, sourcePagePositions: $sourcePagePositions, pendingRevision: $pendingRevision, confidence: $confidence, tags: $tags, subjectId: $subjectId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $MedicalEventCopyWith<$Res>  {
   factory $MedicalEventCopyWith(MedicalEvent value, $Res Function(MedicalEvent) _then) = _$MedicalEventCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'event_type') MedicalEventType eventType, String title, String description,@JsonKey(name: 'event_date') String eventDate,@JsonKey(name: 'event_end_date') String? eventEndDate, Map<String, dynamic> attributes, EventSource source,@JsonKey(name: 'source_document_id') String? sourceDocumentId,@JsonKey(name: 'source_text') String? sourceText,@JsonKey(name: 'source_asset_count') int sourceAssetCount,@JsonKey(name: 'pending_revision') EventRevision? pendingRevision, double? confidence, List<String> tags,@JsonKey(name: 'subject_id') String subjectId,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt
+ String id,@JsonKey(name: 'event_type') MedicalEventType eventType, String title, String description,@JsonKey(name: 'event_date') String eventDate,@JsonKey(name: 'event_end_date') String? eventEndDate, Map<String, dynamic> attributes, EventSource source,@JsonKey(name: 'source_document_id') String? sourceDocumentId,@JsonKey(name: 'source_text') String? sourceText,@JsonKey(name: 'source_asset_count') int sourceAssetCount,@JsonKey(name: 'source_page_positions') List<int> sourcePagePositions,@JsonKey(name: 'pending_revision') EventRevision? pendingRevision, double? confidence, List<String> tags,@JsonKey(name: 'subject_id') String subjectId,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt
 });
 
 
@@ -65,7 +65,7 @@ class _$MedicalEventCopyWithImpl<$Res>
 
 /// Create a copy of MedicalEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? eventType = null,Object? title = null,Object? description = null,Object? eventDate = null,Object? eventEndDate = freezed,Object? attributes = null,Object? source = null,Object? sourceDocumentId = freezed,Object? sourceText = freezed,Object? sourceAssetCount = null,Object? pendingRevision = freezed,Object? confidence = freezed,Object? tags = null,Object? subjectId = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? eventType = null,Object? title = null,Object? description = null,Object? eventDate = null,Object? eventEndDate = freezed,Object? attributes = null,Object? source = null,Object? sourceDocumentId = freezed,Object? sourceText = freezed,Object? sourceAssetCount = null,Object? sourcePagePositions = null,Object? pendingRevision = freezed,Object? confidence = freezed,Object? tags = null,Object? subjectId = null,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,eventType: null == eventType ? _self.eventType : eventType // ignore: cast_nullable_to_non_nullable
@@ -78,7 +78,8 @@ as Map<String, dynamic>,source: null == source ? _self.source : source // ignore
 as EventSource,sourceDocumentId: freezed == sourceDocumentId ? _self.sourceDocumentId : sourceDocumentId // ignore: cast_nullable_to_non_nullable
 as String?,sourceText: freezed == sourceText ? _self.sourceText : sourceText // ignore: cast_nullable_to_non_nullable
 as String?,sourceAssetCount: null == sourceAssetCount ? _self.sourceAssetCount : sourceAssetCount // ignore: cast_nullable_to_non_nullable
-as int,pendingRevision: freezed == pendingRevision ? _self.pendingRevision : pendingRevision // ignore: cast_nullable_to_non_nullable
+as int,sourcePagePositions: null == sourcePagePositions ? _self.sourcePagePositions : sourcePagePositions // ignore: cast_nullable_to_non_nullable
+as List<int>,pendingRevision: freezed == pendingRevision ? _self.pendingRevision : pendingRevision // ignore: cast_nullable_to_non_nullable
 as EventRevision?,confidence: freezed == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
 as double?,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>,subjectId: null == subjectId ? _self.subjectId : subjectId // ignore: cast_nullable_to_non_nullable
@@ -181,10 +182,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'event_type')  MedicalEventType eventType,  String title,  String description, @JsonKey(name: 'event_date')  String eventDate, @JsonKey(name: 'event_end_date')  String? eventEndDate,  Map<String, dynamic> attributes,  EventSource source, @JsonKey(name: 'source_document_id')  String? sourceDocumentId, @JsonKey(name: 'source_text')  String? sourceText, @JsonKey(name: 'source_asset_count')  int sourceAssetCount, @JsonKey(name: 'pending_revision')  EventRevision? pendingRevision,  double? confidence,  List<String> tags, @JsonKey(name: 'subject_id')  String subjectId, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'event_type')  MedicalEventType eventType,  String title,  String description, @JsonKey(name: 'event_date')  String eventDate, @JsonKey(name: 'event_end_date')  String? eventEndDate,  Map<String, dynamic> attributes,  EventSource source, @JsonKey(name: 'source_document_id')  String? sourceDocumentId, @JsonKey(name: 'source_text')  String? sourceText, @JsonKey(name: 'source_asset_count')  int sourceAssetCount, @JsonKey(name: 'source_page_positions')  List<int> sourcePagePositions, @JsonKey(name: 'pending_revision')  EventRevision? pendingRevision,  double? confidence,  List<String> tags, @JsonKey(name: 'subject_id')  String subjectId, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MedicalEvent() when $default != null:
-return $default(_that.id,_that.eventType,_that.title,_that.description,_that.eventDate,_that.eventEndDate,_that.attributes,_that.source,_that.sourceDocumentId,_that.sourceText,_that.sourceAssetCount,_that.pendingRevision,_that.confidence,_that.tags,_that.subjectId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.eventType,_that.title,_that.description,_that.eventDate,_that.eventEndDate,_that.attributes,_that.source,_that.sourceDocumentId,_that.sourceText,_that.sourceAssetCount,_that.sourcePagePositions,_that.pendingRevision,_that.confidence,_that.tags,_that.subjectId,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -202,10 +203,10 @@ return $default(_that.id,_that.eventType,_that.title,_that.description,_that.eve
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'event_type')  MedicalEventType eventType,  String title,  String description, @JsonKey(name: 'event_date')  String eventDate, @JsonKey(name: 'event_end_date')  String? eventEndDate,  Map<String, dynamic> attributes,  EventSource source, @JsonKey(name: 'source_document_id')  String? sourceDocumentId, @JsonKey(name: 'source_text')  String? sourceText, @JsonKey(name: 'source_asset_count')  int sourceAssetCount, @JsonKey(name: 'pending_revision')  EventRevision? pendingRevision,  double? confidence,  List<String> tags, @JsonKey(name: 'subject_id')  String subjectId, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'event_type')  MedicalEventType eventType,  String title,  String description, @JsonKey(name: 'event_date')  String eventDate, @JsonKey(name: 'event_end_date')  String? eventEndDate,  Map<String, dynamic> attributes,  EventSource source, @JsonKey(name: 'source_document_id')  String? sourceDocumentId, @JsonKey(name: 'source_text')  String? sourceText, @JsonKey(name: 'source_asset_count')  int sourceAssetCount, @JsonKey(name: 'source_page_positions')  List<int> sourcePagePositions, @JsonKey(name: 'pending_revision')  EventRevision? pendingRevision,  double? confidence,  List<String> tags, @JsonKey(name: 'subject_id')  String subjectId, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _MedicalEvent():
-return $default(_that.id,_that.eventType,_that.title,_that.description,_that.eventDate,_that.eventEndDate,_that.attributes,_that.source,_that.sourceDocumentId,_that.sourceText,_that.sourceAssetCount,_that.pendingRevision,_that.confidence,_that.tags,_that.subjectId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.eventType,_that.title,_that.description,_that.eventDate,_that.eventEndDate,_that.attributes,_that.source,_that.sourceDocumentId,_that.sourceText,_that.sourceAssetCount,_that.sourcePagePositions,_that.pendingRevision,_that.confidence,_that.tags,_that.subjectId,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -222,10 +223,10 @@ return $default(_that.id,_that.eventType,_that.title,_that.description,_that.eve
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'event_type')  MedicalEventType eventType,  String title,  String description, @JsonKey(name: 'event_date')  String eventDate, @JsonKey(name: 'event_end_date')  String? eventEndDate,  Map<String, dynamic> attributes,  EventSource source, @JsonKey(name: 'source_document_id')  String? sourceDocumentId, @JsonKey(name: 'source_text')  String? sourceText, @JsonKey(name: 'source_asset_count')  int sourceAssetCount, @JsonKey(name: 'pending_revision')  EventRevision? pendingRevision,  double? confidence,  List<String> tags, @JsonKey(name: 'subject_id')  String subjectId, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'event_type')  MedicalEventType eventType,  String title,  String description, @JsonKey(name: 'event_date')  String eventDate, @JsonKey(name: 'event_end_date')  String? eventEndDate,  Map<String, dynamic> attributes,  EventSource source, @JsonKey(name: 'source_document_id')  String? sourceDocumentId, @JsonKey(name: 'source_text')  String? sourceText, @JsonKey(name: 'source_asset_count')  int sourceAssetCount, @JsonKey(name: 'source_page_positions')  List<int> sourcePagePositions, @JsonKey(name: 'pending_revision')  EventRevision? pendingRevision,  double? confidence,  List<String> tags, @JsonKey(name: 'subject_id')  String subjectId, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _MedicalEvent() when $default != null:
-return $default(_that.id,_that.eventType,_that.title,_that.description,_that.eventDate,_that.eventEndDate,_that.attributes,_that.source,_that.sourceDocumentId,_that.sourceText,_that.sourceAssetCount,_that.pendingRevision,_that.confidence,_that.tags,_that.subjectId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.eventType,_that.title,_that.description,_that.eventDate,_that.eventEndDate,_that.attributes,_that.source,_that.sourceDocumentId,_that.sourceText,_that.sourceAssetCount,_that.sourcePagePositions,_that.pendingRevision,_that.confidence,_that.tags,_that.subjectId,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -237,7 +238,7 @@ return $default(_that.id,_that.eventType,_that.title,_that.description,_that.eve
 @JsonSerializable()
 
 class _MedicalEvent implements MedicalEvent {
-  const _MedicalEvent({required this.id, @JsonKey(name: 'event_type') required this.eventType, required this.title, this.description = '', @JsonKey(name: 'event_date') required this.eventDate, @JsonKey(name: 'event_end_date') this.eventEndDate, final  Map<String, dynamic> attributes = const <String, dynamic>{}, this.source = EventSource.userManual, @JsonKey(name: 'source_document_id') this.sourceDocumentId, @JsonKey(name: 'source_text') this.sourceText, @JsonKey(name: 'source_asset_count') this.sourceAssetCount = 0, @JsonKey(name: 'pending_revision') this.pendingRevision, this.confidence, final  List<String> tags = const <String>[], @JsonKey(name: 'subject_id') required this.subjectId, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt}): _attributes = attributes,_tags = tags;
+  const _MedicalEvent({required this.id, @JsonKey(name: 'event_type') required this.eventType, required this.title, this.description = '', @JsonKey(name: 'event_date') required this.eventDate, @JsonKey(name: 'event_end_date') this.eventEndDate, final  Map<String, dynamic> attributes = const <String, dynamic>{}, this.source = EventSource.userManual, @JsonKey(name: 'source_document_id') this.sourceDocumentId, @JsonKey(name: 'source_text') this.sourceText, @JsonKey(name: 'source_asset_count') this.sourceAssetCount = 0, @JsonKey(name: 'source_page_positions') final  List<int> sourcePagePositions = const <int>[], @JsonKey(name: 'pending_revision') this.pendingRevision, this.confidence, final  List<String> tags = const <String>[], @JsonKey(name: 'subject_id') required this.subjectId, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt}): _attributes = attributes,_sourcePagePositions = sourcePagePositions,_tags = tags;
   factory _MedicalEvent.fromJson(Map<String, dynamic> json) => _$MedicalEventFromJson(json);
 
 @override final  String id;
@@ -257,6 +258,13 @@ class _MedicalEvent implements MedicalEvent {
 @override@JsonKey(name: 'source_document_id') final  String? sourceDocumentId;
 @override@JsonKey(name: 'source_text') final  String? sourceText;
 @override@JsonKey(name: 'source_asset_count') final  int sourceAssetCount;
+ final  List<int> _sourcePagePositions;
+@override@JsonKey(name: 'source_page_positions') List<int> get sourcePagePositions {
+  if (_sourcePagePositions is EqualUnmodifiableListView) return _sourcePagePositions;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_sourcePagePositions);
+}
+
 @override@JsonKey(name: 'pending_revision') final  EventRevision? pendingRevision;
 @override final  double? confidence;
  final  List<String> _tags;
@@ -283,16 +291,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MedicalEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.eventType, eventType) || other.eventType == eventType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.eventDate, eventDate) || other.eventDate == eventDate)&&(identical(other.eventEndDate, eventEndDate) || other.eventEndDate == eventEndDate)&&const DeepCollectionEquality().equals(other._attributes, _attributes)&&(identical(other.source, source) || other.source == source)&&(identical(other.sourceDocumentId, sourceDocumentId) || other.sourceDocumentId == sourceDocumentId)&&(identical(other.sourceText, sourceText) || other.sourceText == sourceText)&&(identical(other.sourceAssetCount, sourceAssetCount) || other.sourceAssetCount == sourceAssetCount)&&(identical(other.pendingRevision, pendingRevision) || other.pendingRevision == pendingRevision)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MedicalEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.eventType, eventType) || other.eventType == eventType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.eventDate, eventDate) || other.eventDate == eventDate)&&(identical(other.eventEndDate, eventEndDate) || other.eventEndDate == eventEndDate)&&const DeepCollectionEquality().equals(other._attributes, _attributes)&&(identical(other.source, source) || other.source == source)&&(identical(other.sourceDocumentId, sourceDocumentId) || other.sourceDocumentId == sourceDocumentId)&&(identical(other.sourceText, sourceText) || other.sourceText == sourceText)&&(identical(other.sourceAssetCount, sourceAssetCount) || other.sourceAssetCount == sourceAssetCount)&&const DeepCollectionEquality().equals(other._sourcePagePositions, _sourcePagePositions)&&(identical(other.pendingRevision, pendingRevision) || other.pendingRevision == pendingRevision)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,eventType,title,description,eventDate,eventEndDate,const DeepCollectionEquality().hash(_attributes),source,sourceDocumentId,sourceText,sourceAssetCount,pendingRevision,confidence,const DeepCollectionEquality().hash(_tags),subjectId,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,eventType,title,description,eventDate,eventEndDate,const DeepCollectionEquality().hash(_attributes),source,sourceDocumentId,sourceText,sourceAssetCount,const DeepCollectionEquality().hash(_sourcePagePositions),pendingRevision,confidence,const DeepCollectionEquality().hash(_tags),subjectId,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'MedicalEvent(id: $id, eventType: $eventType, title: $title, description: $description, eventDate: $eventDate, eventEndDate: $eventEndDate, attributes: $attributes, source: $source, sourceDocumentId: $sourceDocumentId, sourceText: $sourceText, sourceAssetCount: $sourceAssetCount, pendingRevision: $pendingRevision, confidence: $confidence, tags: $tags, subjectId: $subjectId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'MedicalEvent(id: $id, eventType: $eventType, title: $title, description: $description, eventDate: $eventDate, eventEndDate: $eventEndDate, attributes: $attributes, source: $source, sourceDocumentId: $sourceDocumentId, sourceText: $sourceText, sourceAssetCount: $sourceAssetCount, sourcePagePositions: $sourcePagePositions, pendingRevision: $pendingRevision, confidence: $confidence, tags: $tags, subjectId: $subjectId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -303,7 +311,7 @@ abstract mixin class _$MedicalEventCopyWith<$Res> implements $MedicalEventCopyWi
   factory _$MedicalEventCopyWith(_MedicalEvent value, $Res Function(_MedicalEvent) _then) = __$MedicalEventCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'event_type') MedicalEventType eventType, String title, String description,@JsonKey(name: 'event_date') String eventDate,@JsonKey(name: 'event_end_date') String? eventEndDate, Map<String, dynamic> attributes, EventSource source,@JsonKey(name: 'source_document_id') String? sourceDocumentId,@JsonKey(name: 'source_text') String? sourceText,@JsonKey(name: 'source_asset_count') int sourceAssetCount,@JsonKey(name: 'pending_revision') EventRevision? pendingRevision, double? confidence, List<String> tags,@JsonKey(name: 'subject_id') String subjectId,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt
+ String id,@JsonKey(name: 'event_type') MedicalEventType eventType, String title, String description,@JsonKey(name: 'event_date') String eventDate,@JsonKey(name: 'event_end_date') String? eventEndDate, Map<String, dynamic> attributes, EventSource source,@JsonKey(name: 'source_document_id') String? sourceDocumentId,@JsonKey(name: 'source_text') String? sourceText,@JsonKey(name: 'source_asset_count') int sourceAssetCount,@JsonKey(name: 'source_page_positions') List<int> sourcePagePositions,@JsonKey(name: 'pending_revision') EventRevision? pendingRevision, double? confidence, List<String> tags,@JsonKey(name: 'subject_id') String subjectId,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt
 });
 
 
@@ -320,7 +328,7 @@ class __$MedicalEventCopyWithImpl<$Res>
 
 /// Create a copy of MedicalEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? eventType = null,Object? title = null,Object? description = null,Object? eventDate = null,Object? eventEndDate = freezed,Object? attributes = null,Object? source = null,Object? sourceDocumentId = freezed,Object? sourceText = freezed,Object? sourceAssetCount = null,Object? pendingRevision = freezed,Object? confidence = freezed,Object? tags = null,Object? subjectId = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? eventType = null,Object? title = null,Object? description = null,Object? eventDate = null,Object? eventEndDate = freezed,Object? attributes = null,Object? source = null,Object? sourceDocumentId = freezed,Object? sourceText = freezed,Object? sourceAssetCount = null,Object? sourcePagePositions = null,Object? pendingRevision = freezed,Object? confidence = freezed,Object? tags = null,Object? subjectId = null,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_MedicalEvent(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,eventType: null == eventType ? _self.eventType : eventType // ignore: cast_nullable_to_non_nullable
@@ -333,7 +341,8 @@ as Map<String, dynamic>,source: null == source ? _self.source : source // ignore
 as EventSource,sourceDocumentId: freezed == sourceDocumentId ? _self.sourceDocumentId : sourceDocumentId // ignore: cast_nullable_to_non_nullable
 as String?,sourceText: freezed == sourceText ? _self.sourceText : sourceText // ignore: cast_nullable_to_non_nullable
 as String?,sourceAssetCount: null == sourceAssetCount ? _self.sourceAssetCount : sourceAssetCount // ignore: cast_nullable_to_non_nullable
-as int,pendingRevision: freezed == pendingRevision ? _self.pendingRevision : pendingRevision // ignore: cast_nullable_to_non_nullable
+as int,sourcePagePositions: null == sourcePagePositions ? _self._sourcePagePositions : sourcePagePositions // ignore: cast_nullable_to_non_nullable
+as List<int>,pendingRevision: freezed == pendingRevision ? _self.pendingRevision : pendingRevision // ignore: cast_nullable_to_non_nullable
 as EventRevision?,confidence: freezed == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
 as double?,tags: null == tags ? _self._tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>,subjectId: null == subjectId ? _self.subjectId : subjectId // ignore: cast_nullable_to_non_nullable

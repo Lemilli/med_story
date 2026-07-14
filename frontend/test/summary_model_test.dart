@@ -9,9 +9,20 @@ void main() {
       'version': 3,
       'is_current': true,
       'content': {
-        'key_symptoms': ['Pain flare'],
-        'medications': [
-          {'name': 'Medicine A', 'status': 'current'},
+        'important_test_results': [
+          {
+            'text': 'Vitamin D low — 11.7 ng/mL · ref. 30–100',
+            'detail': '',
+            'sources': [
+              {
+                'event_id': 'event-1',
+                'title': 'Vitamin D test',
+                'event_date': '2020-10-16',
+                'document_title': 'Lab report',
+                'source_page_positions': [2],
+              },
+            ],
+          },
         ],
       },
       'narrative_text': 'Patient has a long-term symptom history.',
@@ -28,7 +39,14 @@ void main() {
     expect(summary.subjectId, 'subject-1');
     expect(summary.version, 3);
     expect(summary.isCurrent, isTrue);
-    expect(summary.content['key_symptoms'], isA<List<dynamic>>());
+    final item = SummaryItem.fromJson(
+      Map<String, dynamic>.from(
+        (summary.content['important_test_results'] as List).single as Map,
+      ),
+    );
+    expect(item.text, contains('11.7 ng/mL'));
+    expect(item.sources.single.eventId, 'event-1');
+    expect(item.sources.single.sourcePagePositions, [2]);
     expect(summary.narrativeText, contains('long-term'));
     expect(summary.generatedFromEventCount, 12);
     expect(summary.createdAt, DateTime.utc(2026, 6, 1, 10));

@@ -41,6 +41,10 @@ class CachedMedicalEvents extends Table {
   TextColumn get attributesJson => text()();
   TextColumn get source => text()();
   TextColumn get sourceDocumentId => text().nullable()();
+  TextColumn get sourceText => text().nullable()();
+  IntColumn get sourceAssetCount => integer().withDefault(const Constant(0))();
+  TextColumn get sourcePagePositionsJson =>
+      text().withDefault(const Constant('[]'))();
   RealColumn get confidence => real().nullable()();
   TextColumn get tagsJson => text()();
   DateTimeColumn get createdAt => dateTime()();
@@ -119,7 +123,7 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration {
@@ -147,6 +151,20 @@ class LocalDatabase extends _$LocalDatabase {
             uploadQueueItems.assetsJson,
           );
           await migrator.createTable(documentLocalAssets);
+        }
+        if (from < 7) {
+          await migrator.addColumn(
+            cachedMedicalEvents,
+            cachedMedicalEvents.sourceText,
+          );
+          await migrator.addColumn(
+            cachedMedicalEvents,
+            cachedMedicalEvents.sourceAssetCount,
+          );
+          await migrator.addColumn(
+            cachedMedicalEvents,
+            cachedMedicalEvents.sourcePagePositionsJson,
+          );
         }
       },
     );
@@ -228,10 +246,16 @@ class LocalDatabase extends _$LocalDatabase {
     )..where((event) => event.id.equals(id))).go();
   }
 
+  Future<CachedMedicalEvent?> getEvent(String id) {
+    return (select(
+      cachedMedicalEvents,
+    )..where((event) => event.id.equals(id))).getSingleOrNull();
+  }
+
   Future<void> removeEventsForDocument(String documentId) {
-    return (delete(cachedMedicalEvents)
-          ..where((event) => event.sourceDocumentId.equals(documentId)))
-        .go();
+    return (delete(
+      cachedMedicalEvents,
+    )..where((event) => event.sourceDocumentId.equals(documentId))).go();
   }
 
   Future<void> removeSubject(String id) async {
@@ -364,4 +388,9 @@ List<String> decodeStringList(String value) {
     return decoded.whereType<String>().toList();
   }
   return const [];
+}
+
+List<dynamic> decodeJsonList(String value) {
+  final decoded = jsonDecode(value);
+  return decoded is List ? decoded : const [];
 }

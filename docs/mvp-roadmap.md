@@ -90,11 +90,18 @@ remain for deterministic local tests.
 
 ### Phase 4 — Medical Memory & Doctor Summary
 **Status:** Backend and frontend implemented.
-**Goal:** continuously-updated summary + doctor-ready export (Scenarios C & D).
-- Backend: `MedicalSummary` (versioned), summary task, immediate regeneration on event changes,
+**Goal:** a source-linked visit briefing that a doctor or patient can scan in about 60 seconds (Scenarios C & D).
+- Backend: `MedicalSummary` (versioned), manual-only summary task,
   `/summary`, `/summary/regenerate`, `/summary/versions`, `/summary/export` (PDF/JSON).
-- Frontend: subject-aware summary screen, version history, "Prepare for visit" PDF share,
-  cached current summary, and timeline-backed history search.
+- Frontend: seven concise structured sections, saved free-text visit reason, in-app event source
+  links, cached current summary, and timeline-backed history search.
+- Source traceability: summary items cite validated event IDs; the backend adds event/document/page
+  provenance. The phone flow is summary → event → locally stored original. Known one-based positions
+  address uploaded image assets/pages; a single PDF has no separately addressable internal-page
+  provenance in the MVP and opens at the file start, as do older sources without asset metadata.
+- Selection rules: current/unresolved information first; identical repeated analyses use the newest
+  result; meaningful changes and genuine conflicts are shown compactly; safety-critical recorded
+  facts remain visible regardless of visit reason.
 - **Exit:** user generates a concise doctor summary and reviews treatment history (C & D).
 
 ### Phase 5 — Voice-First Capture
@@ -127,7 +134,8 @@ legal/operations launch hardening remains in progress.
 - Capture navigation starts the selected scan, photo, file, voice, note, or manual-event flow directly.
 - AI suggestions have a dedicated review inbox with confirm, edit, and dismiss actions.
 - Timeline has year filtering and history search.
-- A per-subject visit-preparation note is appended to the doctor-summary PDF only when the user writes one.
+- A per-subject free-text visit reason is saved until changed and used only to prioritize existing
+  events during an explicit refresh; it is treated as untrusted input.
 - First-use onboarding reinforces the organizer-only boundary; reminders, caregiver mode, bulk import, and semantic search remain deferred.
 
 ## 4. Dependency Order

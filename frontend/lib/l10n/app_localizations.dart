@@ -326,6 +326,90 @@ abstract class AppLocalizations {
   /// **'We could not load this summary.'**
   String get summaryLoadFailedMessage;
 
+  /// No description provided for @summaryAiOrganizedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-organized from your saved medical events. Open a source to verify details.'**
+  String get summaryAiOrganizedNote;
+
+  /// No description provided for @summarySourceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source event'**
+  String get summarySourceAction;
+
+  /// No description provided for @summarySourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get summarySourcesTitle;
+
+  /// No description provided for @summaryVisitReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for visit'**
+  String get summaryVisitReasonLabel;
+
+  /// No description provided for @summaryVisitReasonEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a reason to focus this summary'**
+  String get summaryVisitReasonEmpty;
+
+  /// No description provided for @summaryVisitReasonEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit reason for visit'**
+  String get summaryVisitReasonEdit;
+
+  /// No description provided for @summaryVisitReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: persistent abdominal pain'**
+  String get summaryVisitReasonHint;
+
+  /// No description provided for @summaryVisitReasonSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not save the reason for this visit. Check your connection and try again.'**
+  String get summaryVisitReasonSaveFailed;
+
+  /// No description provided for @summarySectionCurrentConcerns.
+  ///
+  /// In en, this message translates to:
+  /// **'Current concerns'**
+  String get summarySectionCurrentConcerns;
+
+  /// No description provided for @summarySectionImportantDiagnosesAndFindings.
+  ///
+  /// In en, this message translates to:
+  /// **'Important diagnoses and findings'**
+  String get summarySectionImportantDiagnosesAndFindings;
+
+  /// No description provided for @summarySectionCurrentMedications.
+  ///
+  /// In en, this message translates to:
+  /// **'Current medications'**
+  String get summarySectionCurrentMedications;
+
+  /// No description provided for @summarySectionImportantTestResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Important test results'**
+  String get summarySectionImportantTestResults;
+
+  /// No description provided for @summarySectionPreviousTreatmentsAndOutcomes.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous treatments and outcomes'**
+  String get summarySectionPreviousTreatmentsAndOutcomes;
+
+  /// No description provided for @summarySectionProceduresAndHospitalizations.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedures and hospitalizations'**
+  String get summarySectionProceduresAndHospitalizations;
+
   /// No description provided for @summarySectionKeySymptoms.
   ///
   /// In en, this message translates to:
@@ -2021,13 +2105,13 @@ abstract class AppLocalizations {
   /// No description provided for @visitPrepHint.
   ///
   /// In en, this message translates to:
-  /// **'Questions or concerns you want to discuss'**
+  /// **'Reason for this visit'**
   String get visitPrepHint;
 
   /// No description provided for @visitPrepSave.
   ///
   /// In en, this message translates to:
-  /// **'Save visit note'**
+  /// **'Save'**
   String get visitPrepSave;
 
   /// No description provided for @visitPrepExport.
@@ -2039,7 +2123,7 @@ abstract class AppLocalizations {
   /// No description provided for @visitPrepSaved.
   ///
   /// In en, this message translates to:
-  /// **'Visit note saved.'**
+  /// **'Reason for visit saved.'**
   String get visitPrepSaved;
 
   /// No description provided for @onboardingTitle.

@@ -304,6 +304,9 @@ class MedicalEvent(models.Model):
     attributes = models.JSONField(default=dict, blank=True)
     source = models.CharField(max_length=30, choices=Source.choices, default=Source.USER_MANUAL)
     confidence = models.FloatField(null=True, blank=True)
+    # One-based positions of the device-local document pages which support
+    # this event. The original bytes remain exclusively on the user's device.
+    source_page_positions = models.JSONField(default=list, blank=True)
     tags = models.ManyToManyField(Tag, related_name="medical_events", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

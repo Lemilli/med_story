@@ -52,6 +52,7 @@ OPENAI_UNSUPPORTED_SCHEMA_KEYWORDS = {
     "maximum",
     "minLength",
     "minimum",
+    "uniqueItems",
 }
 
 

@@ -150,6 +150,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get summaryLoadFailedMessage => 'We could not load this summary.';
 
   @override
+  String get summaryAiOrganizedNote =>
+      'AI-organized from your saved medical events. Open a source to verify details.';
+
+  @override
+  String get summarySourceAction => 'Open source event';
+
+  @override
+  String get summarySourcesTitle => 'Sources';
+
+  @override
+  String get summaryVisitReasonLabel => 'Reason for visit';
+
+  @override
+  String get summaryVisitReasonEmpty => 'Add a reason to focus this summary';
+
+  @override
+  String get summaryVisitReasonEdit => 'Edit reason for visit';
+
+  @override
+  String get summaryVisitReasonHint => 'For example: persistent abdominal pain';
+
+  @override
+  String get summaryVisitReasonSaveFailed =>
+      'We could not save the reason for this visit. Check your connection and try again.';
+
+  @override
+  String get summarySectionCurrentConcerns => 'Current concerns';
+
+  @override
+  String get summarySectionImportantDiagnosesAndFindings =>
+      'Important diagnoses and findings';
+
+  @override
+  String get summarySectionCurrentMedications => 'Current medications';
+
+  @override
+  String get summarySectionImportantTestResults => 'Important test results';
+
+  @override
+  String get summarySectionPreviousTreatmentsAndOutcomes =>
+      'Previous treatments and outcomes';
+
+  @override
+  String get summarySectionProceduresAndHospitalizations =>
+      'Procedures and hospitalizations';
+
+  @override
   String get summarySectionKeySymptoms => 'Key symptoms';
 
   @override
@@ -1113,16 +1160,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get visitPrepTitle => 'Prepare for a visit';
 
   @override
-  String get visitPrepHint => 'Questions or concerns you want to discuss';
+  String get visitPrepHint => 'Reason for this visit';
 
   @override
-  String get visitPrepSave => 'Save visit note';
+  String get visitPrepSave => 'Save';
 
   @override
   String get visitPrepExport => 'Export visit summary';
 
   @override
-  String get visitPrepSaved => 'Visit note saved.';
+  String get visitPrepSaved => 'Reason for visit saved.';
 
   @override
   String get onboardingTitle => 'Your medical story, in one place';

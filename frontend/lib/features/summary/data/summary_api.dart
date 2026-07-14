@@ -52,6 +52,15 @@ class SummaryApi {
     }
   }
 
+  Future<String> getJobStatus(String jobId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/jobs/$jobId');
+      return response.data?['status'] as String? ?? 'failed';
+    } on DioException catch (error) {
+      throw mapDioException(error, fallback: 'summary_job_status_failed');
+    }
+  }
+
   Future<List<MedicalSummary>> listVersions({String? subjectId}) async {
     try {
       final response = await _dio.get<Object>(

@@ -17,6 +17,9 @@ abstract class MedicalEvent with _$MedicalEvent {
     @JsonKey(name: 'source_document_id') String? sourceDocumentId,
     @JsonKey(name: 'source_text') String? sourceText,
     @JsonKey(name: 'source_asset_count') @Default(0) int sourceAssetCount,
+    @JsonKey(name: 'source_page_positions')
+    @Default(<int>[])
+    List<int> sourcePagePositions,
     @JsonKey(name: 'pending_revision') EventRevision? pendingRevision,
     double? confidence,
     @Default(<String>[]) List<String> tags,

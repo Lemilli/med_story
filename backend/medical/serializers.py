@@ -1,3 +1,5 @@
+import unicodedata
+
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 
@@ -13,6 +15,7 @@ from medical.models import (
     Tag,
     VisitPreparation,
 )
+from medical.summary_content import normalize_summary_content
 from medical.services import get_or_create_default_subject
 
 
@@ -100,6 +103,7 @@ class MedicalEventSerializer(serializers.ModelSerializer):
             "source_document_id",
             "source_text",
             "source_asset_count",
+            "source_page_positions",
             "pending_revision",
             "confidence",
             "tags",
@@ -107,7 +111,10 @@ class MedicalEventSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "source_document_id", "source_text", "created_at", "updated_at")
+        read_only_fields = (
+            "id", "source_document_id", "source_text", "source_page_positions",
+            "created_at", "updated_at",
+        )
 
     @extend_schema_field(serializers.UUIDField(allow_null=True))
     def get_source_document_id(self, obj):
@@ -362,6 +369,7 @@ class DocumentExplanationSerializer(serializers.ModelSerializer):
 
 class MedicalSummarySerializer(serializers.ModelSerializer):
     subject_id = serializers.SerializerMethodField()
+    content = serializers.SerializerMethodField()
 
     class Meta:
         model = MedicalSummary
@@ -382,14 +390,33 @@ class MedicalSummarySerializer(serializers.ModelSerializer):
     def get_subject_id(self, obj):
         return str(obj.subject_id)
 
+    def get_content(self, obj):
+        return normalize_summary_content(obj.content)
+
 
 class VisitPreparationSerializer(serializers.ModelSerializer):
     subject_id = serializers.UUIDField(read_only=True)
+    reason = serializers.CharField(
+        source="note", required=False, allow_blank=True, max_length=300, trim_whitespace=True
+    )
 
     class Meta:
         model = VisitPreparation
-        fields = ("id", "subject_id", "note", "created_at", "updated_at")
+        fields = ("id", "subject_id", "reason", "created_at", "updated_at")
         read_only_fields = ("id", "subject_id", "created_at", "updated_at")
+
+    def validate_reason(self, value):
+        if any(unicodedata.category(character) == "Cc" for character in value):
+            raise serializers.ValidationError("reason must be plain text without control characters.")
+        return value
+
+    def to_internal_value(self, data):
+        mapped = data.copy()
+        legacy_note = mapped.get("note")
+        mapped.pop("note", None)
+        if "reason" not in mapped and legacy_note is not None:
+            mapped["reason"] = legacy_note
+        return super().to_internal_value(mapped)
 
 
 class ProcessingJobSerializer(serializers.ModelSerializer):

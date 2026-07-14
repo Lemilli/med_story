@@ -16,6 +16,9 @@ extension MedicalEventCacheMapper on MedicalEvent {
       attributesJson: Value(db.encodeJson(attributes)),
       source: Value(_sourceApiName(source)),
       sourceDocumentId: Value(sourceDocumentId),
+      sourceText: Value(sourceText),
+      sourceAssetCount: Value(sourceAssetCount),
+      sourcePagePositionsJson: Value(db.encodeJson(sourcePagePositions)),
       confidence: Value(confidence),
       tagsJson: Value(db.encodeJson(tags)),
       createdAt: Value(createdAt),
@@ -37,6 +40,13 @@ extension CachedMedicalEventMapper on db.CachedMedicalEvent {
       attributes: db.decodeJsonObject(attributesJson),
       source: _sourceFromApiName(source),
       sourceDocumentId: sourceDocumentId,
+      sourceText: sourceText,
+      sourceAssetCount: sourceAssetCount,
+      sourcePagePositions: db
+          .decodeJsonList(sourcePagePositionsJson)
+          .whereType<num>()
+          .map((value) => value.toInt())
+          .toList(growable: false),
       confidence: confidence,
       tags: db.decodeStringList(tagsJson),
       subjectId: subjectId,

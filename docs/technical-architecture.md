@@ -12,7 +12,7 @@ The architecture is driven directly by the BRD's principles and non-functional r
 | BRD Driver | Architectural Implication |
 |-----------|---------------------------|
 | Simplicity & low data-entry burden | AI/OCR/STT ingestion pipeline that auto-structures raw input |
-| Long-term value (years of data) | Durable on-device files, scalable timeline queries, continuously-updated summary |
+| Long-term value (years of data) | Durable on-device files, scalable timeline queries, manually refreshed visit summary |
 | Clarity for non-medical users | Server-side LLM "explanation" + "summary" generation services |
 | Privacy & user control | Per-user data isolation, encryption, and account deletion |
 | Voice-first | Audio capture → transient upload → STT → structuring pipeline |
@@ -81,7 +81,7 @@ The synchronous request/response surface. Responsibilities:
 - **Documents**: metadata, transient ingestion upload, status polling.
 - **Medical Events**: CRUD for the structured medical history.
 - **Timeline**: chronological, paginated read model.
-- **Summary (Medical Memory)**: read the continuously-updated summary; trigger regeneration.
+- **Prepare for a Visit**: read the latest structured, source-linked summary; explicitly trigger regeneration.
 - **Explanations**: request and retrieve simplified document explanations.
 - **Profile**: user profile and (optionally) managed subjects (e.g. a child).
 
@@ -130,12 +130,19 @@ plus a cloud OCR and STT service.
 Record audio → save locally → transient ingest upload → STT → LLM structuring → one event
 ```
 
-### 4.3 Summary / Medical Memory (Scenario D)
+### 4.3 Prepare for a Visit (Scenario D)
 ```
-On meaningful change (new events) OR on-demand:
-  enqueue summary task → LLM consolidates current events → store MedicalSummary version
-App reads GET /summary (latest) and can trigger POST /summary/regenerate
+User presses refresh:
+  enqueue summary task → LLM selects concise items from all active subject events
+  → validate source event IDs → enrich provenance → store MedicalSummary version
+App keeps the previous summary visible while polling and reads GET /summary (latest)
+Source icon → one Event (or source-selection sheet) → local original at known asset or file start
 ```
+The saved per-subject visit reason is passed as untrusted prioritization-only context. It cannot add
+medical facts or change the prompt contract. Failed generation leaves the prior current summary
+intact. Source links are in-app only; the backend never needs access to the original local bytes.
+One-based provenance positions address uploaded assets such as pages of a multi-image scan. Internal
+pages within one PDF are not separately represented in the MVP and open at the PDF/file start.
 
 ### 4.4 Timeline Review (Scenario E)
 ```

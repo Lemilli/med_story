@@ -19,9 +19,17 @@ class EventRepository {
   final db.LocalDatabase database;
 
   Future<MedicalEvent> getEvent(String id) async {
-    final event = await api.getEvent(id);
-    await database.upsertEvents([event.toCacheCompanion()]);
-    return event;
+    try {
+      final event = await api.getEvent(id);
+      await database.upsertEvents([event.toCacheCompanion()]);
+      return event;
+    } on Object {
+      final cached = await database.getEvent(id);
+      if (cached != null) {
+        return cached.toDomain();
+      }
+      rethrow;
+    }
   }
 
   Future<MedicalEvent> createEvent(EventWriteRequest request) async {

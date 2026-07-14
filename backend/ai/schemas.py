@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from typing import Any
+from uuid import UUID
 
 
 ALLOWED_EVENT_TYPES = {
@@ -102,6 +103,7 @@ EVENT_EXTRACTION_JSON_SCHEMA = {
                 "event_date",
                 "attributes",
                 "confidence",
+                "source_page_positions",
             ],
             "properties": {
                 "event_type": {"type": "string", "enum": sorted(ALLOWED_EVENT_TYPES)},
@@ -110,6 +112,11 @@ EVENT_EXTRACTION_JSON_SCHEMA = {
                 "event_date": {"type": ["string", "null"], "format": "date"},
                 "attributes": EVENT_ATTRIBUTES_JSON_SCHEMA,
                 "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "source_page_positions": {
+                    "type": "array",
+                    "items": {"type": "integer", "minimum": 1},
+                    "uniqueItems": True,
+                },
             },
         },
     },
@@ -140,10 +147,26 @@ DOCUMENT_EXPLANATION_JSON_SCHEMA = {
     },
 }
 
+SUMMARY_ITEM_JSON_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["text", "detail", "source_event_ids"],
+    "properties": {
+        "text": {"type": "string", "minLength": 1},
+        "detail": {"type": "string"},
+        "source_event_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string", "format": "uuid"},
+        },
+    },
+}
+
 SUMMARY_SECTION_JSON_SCHEMA = {
     "type": "array",
-    "maxItems": 6,
-    "items": {"type": "string", "minLength": 1},
+    "maxItems": 5,
+    "items": SUMMARY_ITEM_JSON_SCHEMA,
 }
 
 MEDICAL_SUMMARY_JSON_SCHEMA = {
@@ -158,18 +181,22 @@ MEDICAL_SUMMARY_JSON_SCHEMA = {
             "type": "object",
             "additionalProperties": False,
             "required": [
-                "key_symptoms",
-                "major_diagnoses",
-                "treatment_history",
-                "important_examinations",
-                "relevant_medications",
+                "current_concerns",
+                "important_diagnoses_and_findings",
+                "allergies",
+                "current_medications",
+                "important_test_results",
+                "previous_treatments_and_outcomes",
+                "procedures_and_hospitalizations",
             ],
             "properties": {
-                "key_symptoms": SUMMARY_SECTION_JSON_SCHEMA,
-                "major_diagnoses": SUMMARY_SECTION_JSON_SCHEMA,
-                "treatment_history": SUMMARY_SECTION_JSON_SCHEMA,
-                "important_examinations": SUMMARY_SECTION_JSON_SCHEMA,
-                "relevant_medications": SUMMARY_SECTION_JSON_SCHEMA,
+                "current_concerns": SUMMARY_SECTION_JSON_SCHEMA,
+                "important_diagnoses_and_findings": SUMMARY_SECTION_JSON_SCHEMA,
+                "allergies": SUMMARY_SECTION_JSON_SCHEMA,
+                "current_medications": SUMMARY_SECTION_JSON_SCHEMA,
+                "important_test_results": SUMMARY_SECTION_JSON_SCHEMA,
+                "previous_treatments_and_outcomes": SUMMARY_SECTION_JSON_SCHEMA,
+                "procedures_and_hospitalizations": SUMMARY_SECTION_JSON_SCHEMA,
             },
         },
         "narrative_text": {"type": "string", "minLength": 1},
@@ -177,11 +204,13 @@ MEDICAL_SUMMARY_JSON_SCHEMA = {
 }
 
 SUMMARY_CONTENT_SECTIONS = (
-    "key_symptoms",
-    "major_diagnoses",
-    "treatment_history",
-    "important_examinations",
-    "relevant_medications",
+    "current_concerns",
+    "important_diagnoses_and_findings",
+    "allergies",
+    "current_medications",
+    "important_test_results",
+    "previous_treatments_and_outcomes",
+    "procedures_and_hospitalizations",
 )
 
 
@@ -263,7 +292,9 @@ def validate_document_explanation(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def validate_medical_summary(payload: dict[str, Any]) -> dict[str, Any]:
+def validate_medical_summary(
+    payload: dict[str, Any], *, allowed_event_ids: set[str] | None = None
+) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise SchemaValidationError("Summary output must be an object.")
 
@@ -276,11 +307,48 @@ def validate_medical_summary(payload: dict[str, Any]) -> dict[str, Any]:
         raw_items = raw_content.get(section)
         if not isinstance(raw_items, list):
             raise SchemaValidationError(f"content.{section} must be a list.")
-        items = [
-            item.strip()
-            for item in raw_items
-            if isinstance(item, str) and item.strip()
-        ]
+        items = []
+        for index, item in enumerate(raw_items):
+            if not isinstance(item, dict):
+                raise SchemaValidationError(f"content.{section}[{index}] must be an object.")
+            text = item.get("text")
+            detail = item.get("detail", "")
+            source_ids = item.get("source_event_ids")
+            if not isinstance(text, str) or not text.strip():
+                raise SchemaValidationError(f"content.{section}[{index}].text is required.")
+            if not isinstance(detail, str):
+                raise SchemaValidationError(f"content.{section}[{index}].detail must be a string.")
+            if not isinstance(source_ids, list) or not source_ids:
+                raise SchemaValidationError(
+                    f"content.{section}[{index}].source_event_ids must be a non-empty list."
+                )
+            normalized_ids = []
+            for source_id in source_ids:
+                if not isinstance(source_id, str) or not source_id.strip():
+                    raise SchemaValidationError(
+                        f"content.{section}[{index}].source_event_ids contains an invalid ID."
+                    )
+                source_id = source_id.strip()
+                try:
+                    UUID(source_id)
+                except ValueError as exc:
+                    raise SchemaValidationError(
+                        f"content.{section}[{index}].source_event_ids contains a malformed ID."
+                    ) from exc
+                if allowed_event_ids is not None and source_id not in allowed_event_ids:
+                    raise SchemaValidationError(
+                        f"content.{section}[{index}] references an unknown event."
+                    )
+                if source_id in normalized_ids:
+                    raise SchemaValidationError(
+                        f"content.{section}[{index}].source_event_ids contains duplicates."
+                    )
+                normalized_ids.append(source_id)
+            items.append({
+                "text": text.strip(),
+                "detail": detail.strip(),
+                "source_event_ids": normalized_ids,
+            })
         section_limit = SUMMARY_SECTION_JSON_SCHEMA["maxItems"]
         if len(items) > section_limit:
             raise SchemaValidationError(
@@ -319,6 +387,16 @@ def _validate_event(event: Any, index: Any, *, fallback_date: date) -> dict[str,
 
     confidence = _normalize_confidence(event.get("confidence"))
 
+    raw_positions = event.get("source_page_positions", [])
+    if not isinstance(raw_positions, list):
+        raise SchemaValidationError(f"events[{index}].source_page_positions must be a list.")
+    source_page_positions = []
+    for position in raw_positions:
+        if isinstance(position, bool) or not isinstance(position, int) or position < 1:
+            raise SchemaValidationError(f"events[{index}].source_page_positions contains an invalid position.")
+        if position not in source_page_positions:
+            source_page_positions.append(position)
+
     return {
         "event_type": event_type,
         "title": title,
@@ -326,6 +404,7 @@ def _validate_event(event: Any, index: Any, *, fallback_date: date) -> dict[str,
         "event_date": _parse_nullable_date(event.get("event_date")) or fallback_date,
         "attributes": attributes,
         "confidence": float(confidence),
+        "source_page_positions": source_page_positions,
     }
 
 

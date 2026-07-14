@@ -23,6 +23,11 @@ _MedicalEvent _$MedicalEventFromJson(Map<String, dynamic> json) =>
       sourceDocumentId: json['source_document_id'] as String?,
       sourceText: json['source_text'] as String?,
       sourceAssetCount: (json['source_asset_count'] as num?)?.toInt() ?? 0,
+      sourcePagePositions:
+          (json['source_page_positions'] as List<dynamic>?)
+              ?.map((e) => (e as num).toInt())
+              .toList() ??
+          const <int>[],
       pendingRevision: json['pending_revision'] == null
           ? null
           : EventRevision.fromJson(
@@ -50,6 +55,7 @@ Map<String, dynamic> _$MedicalEventToJson(_MedicalEvent instance) =>
       'source_document_id': instance.sourceDocumentId,
       'source_text': instance.sourceText,
       'source_asset_count': instance.sourceAssetCount,
+      'source_page_positions': instance.sourcePagePositions,
       'pending_revision': instance.pendingRevision,
       'confidence': instance.confidence,
       'tags': instance.tags,

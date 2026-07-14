@@ -7,7 +7,7 @@
 
 The data model captures the BRD's medical history domain (§8): symptoms, diagnoses,
 medications, examinations, procedures, hospitalizations, treatment outcomes, plus the
-documents they come from, a chronological timeline, and a continuously-updated summary
+documents they come from, a chronological timeline, and an on-demand visit summary
 ("Medical Memory").
 
 Design choices:
@@ -129,6 +129,7 @@ their supported facts inside structured attributes.
 | event_date | date | Primary date (drives timeline ordering) |
 | event_end_date | date (nullable) | For ranges (e.g. medication course, hospitalization) |
 | attributes | JSONB | Type-specific structured fields (see §4) |
+| source_page_positions | JSONB list | One-based uploaded-asset positions when known; empty/absent opens the first local asset or file start |
 | source | enum | user_manual, ai_document, ai_voice |
 | confidence | float (nullable) | AI extraction confidence (0–1) |
 | created_at / updated_at | timestamptz | |
@@ -155,9 +156,9 @@ LLM-produced plain-language explanation of a document (Scenario B).
 | language | varchar(10) | |
 | created_at | timestamptz | |
 
-### 3.6 MedicalSummary (Medical Memory)
-Versioned snapshot of the user's consolidated health story (Scenario D, BRD §8 Medical Memory
-+ Summary Generation).
+### 3.6 MedicalSummary (Prepare for a Visit)
+Versioned snapshot of a concise, source-linked briefing designed to be read by a doctor or patient
+in about 60 seconds. A new version is created only when the user explicitly refreshes it.
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -166,26 +167,41 @@ Versioned snapshot of the user's consolidated health story (Scenario D, BRD §8 
 | subject_id | FK → Subject | |
 | version | int | Monotonic per subject |
 | is_current | bool | Latest version flag |
-| content | JSONB | Structured summary (sections below) |
-| narrative_text | text | Doctor-ready prose summary |
+| content | JSONB | Seven structured sections containing concise source-linked items |
+| narrative_text | text | Legacy/export-compatible prose; not the primary mobile presentation |
 | generated_from_event_count | int | Provenance |
 | model_name | varchar | |
 | language | varchar(10) | |
 | created_at | timestamptz | |
 
-`content` sections (per BRD §8 summary fields): `key_symptoms`, `major_diagnoses`,
-`treatment_history`, `important_examinations`, `relevant_medications`.
+`content` sections, in display order: `current_concerns`, `important_diagnoses_and_findings`,
+`allergies`, `current_medications`, `important_test_results`,
+`previous_treatments_and_outcomes`, and `procedures_and_hospitalizations`. Empty sections are
+hidden. Each persisted/API item contains `text`, optional `detail`, and a `sources` list. Each source
+contains the authoritative event ID, `title`, date, source document name, and known supporting asset
+positions. The AI's transient output instead contains `source_event_ids`; the backend validates
+those UUIDs against the same user and subject, replaces them with enriched `sources`, and only then
+persists the summary. One source opens its event directly; multiple sources are presented as a list
+before opening the selected event.
+
+`source_page_positions` is event-level provenance, not a guarantee that every individual summary
+claim has a separately identified page. One-based positions identify uploaded local assets/pages,
+such as individual images in a multi-image scan. Internal pages of one uploaded PDF are not separate
+assets and are not individually rendered or addressable in the current MVP; that PDF opens at the
+file/document start. Existing events and extractions without reliable asset metadata use the same
+start-of-document fallback.
 
 ### 3.7 VisitPreparation
-One sensitive, user-authored note per subject for questions and concerns to discuss at a visit.
-It is not AI input and is appended to a requested PDF export only when non-empty.
+One sensitive, user-authored free-text reason for the visit per subject. It is saved until changed
+and is supplied to summary generation as untrusted, prioritization-only data. It cannot add facts,
+change output rules, or request unrelated AI behavior.
 
 | Field | Type | Notes |
 |-------|------|-------|
 | id | UUID (PK) | |
 | user_id | FK → User | Ownership isolation |
-| subject_id | one-to-one FK → Subject | One note per subject |
-| note | text | May be empty |
+| subject_id | one-to-one FK → Subject | One reason per subject |
+| reason | text | Visit reason; may be empty; maximum 300 characters |
 | created_at / updated_at | timestamptz | |
 
 ### 3.8 Tag & EventTag

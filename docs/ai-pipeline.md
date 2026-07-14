@@ -80,7 +80,7 @@ as a duplicate rather than processed again; deleted documents do not block re-up
      → DocumentExplanation row
    │
    ▼
-(5) Trigger summary refresh (debounced) → see 3.4
+(5) Finish ingestion without regenerating the visit summary; the user refreshes it explicitly
    │
    ▼
 [Document.status = processed only after one event exists]
@@ -93,27 +93,36 @@ user whether a multi-selection is one document or separate documents.
 
 ### 3.2 Voice Capture Pipeline
 ```
-[Audio bytes received transiently] → (1) STT transcribe → (2) LLM structuring → events → (3) summary refresh
+[Audio bytes received transiently] → (1) STT transcribe → (2) LLM structuring → events
 ```
 Implemented in the backend through `POST /documents/upload-audio` and `doc_type=audio`
 ingestion. Voice-derived events use `source=ai_voice` and can be edited or removed by the user,
 and store only the transcript/extracted text, not the raw audio.
 
 ### 3.3 On-Demand Explanation
-`POST /documents/{id}/explanation/regenerate` re-runs step (4), e.g. in another language.
+`POST /documents/{id}/explanation/regenerate` re-runs step (4) in the user's currently selected
+profile locale. The profile locale is authoritative for every generated title, event description,
+structured readable attribute, explanation, and medical summary; request payloads and the source
+document's detected language cannot override it. Original documents and `Document.extracted_text`
+remain in their source language.
 
 Event regeneration creates an `EventRevision` draft from the immutable source. It never overwrites
 the active event. Users compare the draft and explicitly apply selected fields.
 
 ### 3.4 Summary (Medical Memory) Pipeline
-Triggered on meaningful change (debounced) or via `POST /summary/regenerate`.
+Triggered only when the user requests `POST /summary/regenerate`.
 ```
-input: current MedicalEvents for the subject
-process: LLM consolidates into structured sections + narrative
+input: all active MedicalEvents for the subject + an optional untrusted saved visit reason
+process: LLM selects and consolidates concise, source-linked items for a 60-second briefing
 output: new MedicalSummary version (is_current=true; previous → is_current=false)
-sections: key_symptoms, major_diagnoses, treatment_history,
-          important_examinations, relevant_medications  (BRD §8)
+sections: current_concerns, important_diagnoses_and_findings, allergies,
+          current_medications, important_test_results, previous_treatments_and_outcomes,
+          procedures_and_hospitalizations
 ```
+The prior current summary remains available during generation and after any failed attempt. Each
+transient model-produced item cites only supplied `source_event_ids`; the backend rejects unknown or
+cross-user/cross-subject IDs, replaces them with authoritative `sources`, and persists/API-returns
+only `text`, `detail`, and those enriched sources for each item.
 
 ## 4. Handling Large / Long Documents
 
@@ -155,6 +164,9 @@ Use plain, simple language. Never invent values that are not present in the sour
 
 ### 6.2 Structuring Prompt (intent)
 - Input: document text. Output: schema-valid JSON of candidate events.
+- The source can be in any language, but all user-facing generated fields, including medical labels
+  and units, must be translated into the user's selected profile locale. Underlying facts and
+  quantitative values must remain accurate.
 - Rules: extract only what is present; set low `confidence` when unsure; normalize dates;
   do not infer diagnoses not stated in the text. The event description is a plain-language
   analysis of at most two or three sentences: say when shown results appear within their stated
@@ -167,18 +179,33 @@ Use plain, simple language. Never invent values that are not present in the sour
 
 ### 6.3 Explanation Prompt (intent)
 - Input: document text. Output: `summary_text` (plain language), `key_points`, `glossary`.
+- All generated explanation fields use the user's selected profile locale, independent of the
+  document's source language.
 - Rules: define jargon; explain what a test/value generally means **without** interpreting
   the user's specific health status as good/bad beyond what's written; add the standard
   "this is not medical advice" framing in UI (not baked into stored text).
 
 ### 6.4 Summary Prompt (intent)
-- Input: structured events. Output: the five BRD sections + a concise doctor-ready narrative.
-- Rules: lead with ongoing or repeatedly recorded concerns; order items only by explicit event
-  signals such as recency, repetition, duration, recorded intensity, ongoing status, or a concern
-  the user wrote; otherwise use reverse chronology. Keep each item to one dense plain-language line
-  with a short label, key detail, date/period, and recorded status or outcome when available. Do not
-  infer urgency or importance from medical knowledge, repeat facts across sections, or make
-  diagnostic conclusions.
+- Input: structured active events plus an optional saved visit reason, explicitly delimited as
+  untrusted text. Output: seven structured sections with concise items and source event UUIDs.
+- Target: a doctor or patient can scan the result in about 60 seconds. Prefer one line per item; use
+  a short second line only when omission would mislead. Hide empty sections and avoid duplication.
+- Prioritization: current and unresolved matters first; always retain recorded allergies, current
+  medications, major active diagnoses, significant procedures, and important recent abnormal
+  results. The visit reason may rank provided events only and cannot introduce facts or instructions.
+- Repeated results: for the same analysis use only the newest result; show a compact direction of
+  change when it matters; show a conflict with all relevant sources when results are not equivalent.
+  Omit normal results unless they explain an important change or conflict.
+- Detail: retain compact abnormal value, unit, and stated reference range; retain medication dose
+  and schedule when known; simplify technical names without losing a medically meaningful test name.
+  Dates appear only when they affect interpretation (tests, changes, procedures, hospitalizations,
+  and historical items).
+- Language and safety: a source-explicit diagnosis or classification may be restated; a value alone
+  remains a finding. Use `reported` for patient-originated uncertainty and `possible` for uncertainty
+  in a medical source. Never infer a diagnosis, urgency, treatment, or recommendation.
+- Provenance: every transient AI item cites supplied event IDs only. The model does not invent
+  document names, page positions, or source labels; the backend supplies those after validation and
+  stores each source with its event ID, `title`, date, document name, and known local-asset positions.
 
 ## 7. Safety, Quality & Disclaimers
 
@@ -186,7 +213,8 @@ Use plain, simple language. Never invent values that are not present in the sour
 - **Uncertainty surfaced**: uncertain source information is represented in the extracted data;
   users can edit the event's plain-language fields, remove it, and open the original document.
 - **Disclaimers**: the app consistently frames output as organizational, per BRD trust NFR.
-- **Human-in-the-loop**: nothing AI-derived is treated as authoritative without user review.
+- **Source traceability**: all active events are eligible, including AI-derived events; summary
+  claims link back to their underlying event and original document when locally available.
 - **Hallucination guardrails**: schema validation + "never invent values" instruction +
   source-grounding (only use provided text).
 
@@ -205,7 +233,7 @@ Use plain, simple language. Never invent values that are not present in the sour
 | Concern | Approach |
 |--------|----------|
 | Latency | Async pipeline; client polls; user is never blocked |
-| Cost control | Chunk caps, debounced summary regen, per-job `cost_estimate` tracking |
+| Cost control | Chunk caps, manual-only summary regeneration, per-job `cost_estimate` tracking |
 | Retries | Celery retry with backoff; idempotent by `document_id` to avoid dup events |
 | Failure isolation | Each step independent; partial success preserved (e.g. text saved even if structuring fails) |
 | Caching | Reuse extracted_text across re-runs (don't re-OCR) |
@@ -215,7 +243,7 @@ Use plain, simple language. Never invent values that are not present in the sour
 
 - A small **golden set** of de-identified sample documents with expected structured output.
 - Track: extraction precision/recall on key fields, explanation readability (manual review),
-  and summary completeness against the five BRD sections.
+  and summary completeness against the seven visit-summary sections.
 - Prompt changes are versioned and re-run against the golden set before rollout.
 
 ## 11. Post-MVP Directions

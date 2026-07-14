@@ -83,11 +83,16 @@ control. This document defines the controls to achieve that.
 - Soft delete (`deleted_at`) for in-app UX; `DELETE /me` immediately hard-deletes the
   account and cascaded backend records, making existing access tokens unusable because the
   user no longer exists. A provided refresh token is blacklisted best-effort before deletion.
-- Visit-preparation notes are user-authored sensitive data and are included in a doctor PDF only when the user explicitly requests that PDF. They are never sent to an AI provider.
+- The saved visit reason is sensitive, user-authored data. During an explicit summary refresh it may
+  be sent to the configured AI provider as delimited, untrusted, prioritization-only context. It is
+  length-limited, cannot add medical facts or alter system instructions, and is never logged.
 
 ## 8. Application Security Practices
 
 - **Input validation** via DRF serializers; reject unexpected fields.
+- **Summary provenance validation** accepts only source event UUIDs that were supplied to the model
+  and belong to the authenticated user and selected subject; provenance labels and page metadata are
+  added authoritatively by the backend rather than trusted from model output.
 - **Output**: consistent error envelope; never leak stack traces or internal IDs to clients.
 - **Rate limiting / throttling**: login/registration are limited to 5 requests/IP/hour;
   refresh/logout to 20/IP/hour; ingestion and AI regenerations to 10/user/hour; other traffic

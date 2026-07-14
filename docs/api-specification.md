@@ -163,7 +163,8 @@ STT → LLM structuring in one request. Raw audio is discarded after dispatch.
 Fields:
 - `file` required.
 - `title`, `subject_id`, `mime_type`, `language`, `local_uri_hint`, and `document_date`
-  optional.
+  optional. `language` is a source/transcription hint where applicable; the user's saved profile
+  locale is authoritative for generated document titles, events, explanations, and summaries.
 - `title` defaults to `"Voice note"`; subject defaults to the user's default self-subject.
 
 Allowed audio types: `audio/mpeg`, `audio/mp3`, `audio/mp4`, `audio/mpga`, `audio/m4a`,
@@ -204,7 +205,7 @@ server's current local date (UTC in the current deployment configuration).
 Returns `404` (with `processing` hint) until generated.
 
 ### POST /documents/{id}/explanation/regenerate
-Re-runs explanation (e.g. different language). → `202`.
+Re-runs the explanation in the user's currently selected profile locale. → `202`.
 
 ## 6. Medical Events & Timeline
 
@@ -251,19 +252,29 @@ Full-text + attribute search across history. Params: `q`, `types`, `subject_id`.
 ## 7. Medical Summary (Medical Memory — Scenario D)
 
 ### GET /summary
-Returns the current consolidated summary for the subject. If no summary exists yet,
+Returns the current structured visit summary for the subject. If no summary exists yet,
 returns `404 { "error": { "code": "not_ready", ... } }`.
 ```jsonc
 { "id": "uuid", "version": 7, "is_current": true,
   "content": {
-    "key_symptoms": [...], "major_diagnoses": [...], "treatment_history": [...],
-    "important_examinations": [...], "relevant_medications": [...] },
-  "narrative_text": "Patient is a 34-year-old with a 4-year history of ulcerative colitis...",
+    "current_concerns": [
+      { "text": "Recurring abdominal pain", "detail": "",
+        "sources": [{
+          "event_id": "event-uuid", "title": "Abdominal pain", "event_date": "2026-06-01",
+          "document_title": "Clinic note", "source_page_positions": [1] }] }
+    ],
+    "important_diagnoses_and_findings": [], "allergies": [], "current_medications": [],
+    "important_test_results": [], "previous_treatments_and_outcomes": [],
+    "procedures_and_hospitalizations": [] },
+  "narrative_text": "",
   "language": "en", "generated_from_event_count": 42, "created_at": "..." }
 ```
 
 ### POST /summary/regenerate
-Enqueues a fresh summary build from current events.
+Enqueues a fresh summary build from all active, non-deleted events for the subject. This endpoint
+is the only summary-generation trigger; event creation, editing, revision, or deletion does not
+regenerate automatically. The existing current summary remains readable while the job runs and
+also remains current if generation fails.
 → `202 { "job_id": "uuid", "status": "queued" }`.
 
 ### GET /summary/versions
@@ -271,14 +282,18 @@ Lists historical summary versions (the story as it evolved over time).
 
 ### GET /summary/export
 Doctor-ready export of the current summary. Param `format=pdf|json`.
-When `format=pdf`, a non-empty user-authored visit-preparation note is appended as
-“Questions and concerns to discuss”; it is never included in AI summary generation.
+Source actions are an in-app, phone-only experience and are not embedded as document links in an
+export.
+Returns `application/pdf` bytes for PDF or inline JSON.
 
 ### GET/PUT /visit-preparation
-Gets or updates the authenticated user's single visit-preparation note for a subject.
+Gets or updates the authenticated user's saved free-text visit reason for a subject.
 Pass `subject_id` as a query parameter (or omit it for the default subject). `PUT`
-accepts `{ "note": "..." }`; an empty note is valid.
-Returns `application/pdf` bytes for PDF or inline JSON.
+accepts `{ "reason": "Persistent abdominal pain" }`; an empty reason is valid and non-empty values
+are limited to 300 characters. On refresh, this value is treated as untrusted prioritization-only
+context: it cannot supply medical facts or alter the summary contract.
+Responses expose the canonical `reason` field, for example
+`{ "id": "uuid", "subject_id": "uuid", "reason": "Persistent abdominal pain", ... }`.
 
 ## 8. Jobs & Status
 
@@ -352,5 +367,5 @@ Throttled responses include a `Retry-After` header and
 | POST | /summary/regenerate | Rebuild summary |
 | GET | /summary/versions | Summary history |
 | GET | /summary/export | Doctor-ready export |
-| GET/PUT | /visit-preparation | Per-subject visit questions/concerns |
+| GET/PUT | /visit-preparation | Saved per-subject reason for visit |
 | GET | /jobs/{id} | Poll async job |
