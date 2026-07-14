@@ -22,6 +22,12 @@ _MedicalEvent _$MedicalEventFromJson(Map<String, dynamic> json) =>
           EventSource.userManual,
       sourceDocumentId: json['source_document_id'] as String?,
       sourceText: json['source_text'] as String?,
+      sourceAssetCount: (json['source_asset_count'] as num?)?.toInt() ?? 0,
+      pendingRevision: json['pending_revision'] == null
+          ? null
+          : EventRevision.fromJson(
+              json['pending_revision'] as Map<String, dynamic>,
+            ),
       confidence: (json['confidence'] as num?)?.toDouble(),
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
@@ -43,6 +49,8 @@ Map<String, dynamic> _$MedicalEventToJson(_MedicalEvent instance) =>
       'source': _$EventSourceEnumMap[instance.source]!,
       'source_document_id': instance.sourceDocumentId,
       'source_text': instance.sourceText,
+      'source_asset_count': instance.sourceAssetCount,
+      'pending_revision': instance.pendingRevision,
       'confidence': instance.confidence,
       'tags': instance.tags,
       'subject_id': instance.subjectId,
@@ -58,6 +66,7 @@ const _$MedicalEventTypeEnumMap = {
   MedicalEventType.procedure: 'procedure',
   MedicalEventType.hospitalization: 'hospitalization',
   MedicalEventType.treatmentOutcome: 'treatment_outcome',
+  MedicalEventType.medicalRecord: 'medical_record',
   MedicalEventType.note: 'note',
 };
 
@@ -66,3 +75,31 @@ const _$EventSourceEnumMap = {
   EventSource.aiDocument: 'ai_document',
   EventSource.aiVoice: 'ai_voice',
 };
+
+_EventRevision _$EventRevisionFromJson(Map<String, dynamic> json) =>
+    _EventRevision(
+      id: json['id'] as String,
+      currentSnapshot:
+          json['current_snapshot'] as Map<String, dynamic>? ??
+          const <String, dynamic>{},
+      suggestedChanges:
+          json['suggested_changes'] as Map<String, dynamic>? ??
+          const <String, dynamic>{},
+      status: json['status'] as String? ?? 'pending',
+      createdAt: json['created_at'] == null
+          ? null
+          : DateTime.parse(json['created_at'] as String),
+      resolvedAt: json['resolved_at'] == null
+          ? null
+          : DateTime.parse(json['resolved_at'] as String),
+    );
+
+Map<String, dynamic> _$EventRevisionToJson(_EventRevision instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'current_snapshot': instance.currentSnapshot,
+      'suggested_changes': instance.suggestedChanges,
+      'status': instance.status,
+      'created_at': instance.createdAt?.toIso8601String(),
+      'resolved_at': instance.resolvedAt?.toIso8601String(),
+    };

@@ -141,26 +141,62 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     if (image == null) {
       return;
     }
-    await _setPickedFile(
-      path: image.path,
-      fileName: _friendlyCaptureFileName('medical-photo', image.mimeType),
-      displayName: _friendlyCaptureLabel(l10n.medicalPhotoCaptureLabel),
-      mimeType: image.mimeType ?? _mimeTypeForName(image.name),
-    );
+    if (!mounted) return;
+    final pages = await Navigator.of(context, rootNavigator: true)
+        .push<List<XFile>>(
+          MaterialPageRoute(
+            builder: (_) => _DocumentPagesReviewScreen(initialPages: [image]),
+          ),
+        );
+    if (pages != null && pages.isNotEmpty) {
+      await _enqueuePhotoBundle(
+        pages,
+        displayName: _friendlyCaptureLabel(l10n.medicalPhotoCaptureLabel),
+      );
+    }
   }
 
   Future<void> _pickGalleryImage() async {
     final l10n = context.l10n;
-    final image = await _imagePicker.pickImage(source: ImageSource.gallery);
-    if (image == null) {
+    final images = await _imagePicker.pickMultiImage();
+    if (images.isEmpty) {
       return;
     }
-    await _setPickedFile(
-      path: image.path,
-      fileName: _friendlyCaptureFileName('medical-photo', image.mimeType),
-      displayName: _friendlyCaptureLabel(l10n.medicalPhotoCaptureLabel),
-      mimeType: image.mimeType ?? _mimeTypeForName(image.name),
-    );
+    if (!mounted) return;
+    if (images.length == 1) {
+      await _enqueuePhotoBundle(
+        images,
+        displayName: _friendlyCaptureLabel(l10n.medicalPhotoCaptureLabel),
+      );
+      return;
+    }
+    final grouping = await Navigator.of(context, rootNavigator: true)
+        .push<_PhotoGrouping>(
+          MaterialPageRoute(
+            builder: (_) => _PhotoGroupingChoiceScreen(images: images),
+          ),
+        );
+    if (!mounted || grouping == null) return;
+    if (grouping == _PhotoGrouping.separateDocuments) {
+      for (final image in images) {
+        await _enqueuePhotoBundle([
+          image,
+        ], displayName: _friendlyCaptureLabel(l10n.medicalPhotoCaptureLabel));
+      }
+      return;
+    }
+    final pages = await Navigator.of(context, rootNavigator: true)
+        .push<List<XFile>>(
+          MaterialPageRoute(
+            builder: (_) => _DocumentPagesReviewScreen(initialPages: images),
+          ),
+        );
+    if (pages != null && pages.isNotEmpty) {
+      await _enqueuePhotoBundle(
+        pages,
+        displayName: _friendlyCaptureLabel(l10n.medicalPhotoCaptureLabel),
+      );
+    }
   }
 
   Future<void> _retrieveLostImageData() async {
@@ -173,16 +209,52 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       return;
     }
 
-    final image = response.files?.firstOrNull ?? response.file;
-    if (image != null) {
-      await _setPickedFile(
-        path: image.path,
-        fileName: _friendlyCaptureFileName('medical-photo', image.mimeType),
-        displayName: _friendlyCaptureLabel(
-          context.l10n.medicalPhotoCaptureLabel,
-        ),
-        mimeType: image.mimeType ?? _mimeTypeForName(image.name),
-      );
+    final images =
+        response.files ?? [if (response.file != null) response.file!];
+    if (images.isNotEmpty) {
+      if (images.length == 1) {
+        await _enqueuePhotoBundle(
+          images,
+          displayName: _friendlyCaptureLabel(
+            context.l10n.medicalPhotoCaptureLabel,
+          ),
+        );
+      } else {
+        final grouping = await Navigator.of(context, rootNavigator: true)
+            .push<_PhotoGrouping>(
+              MaterialPageRoute(
+                builder: (_) => _PhotoGroupingChoiceScreen(images: images),
+              ),
+            );
+        if (!mounted) return;
+        if (grouping == _PhotoGrouping.oneDocument) {
+          final pages = await Navigator.of(context, rootNavigator: true)
+              .push<List<XFile>>(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      _DocumentPagesReviewScreen(initialPages: images),
+                ),
+              );
+          if (!mounted) return;
+          if (pages != null && pages.isNotEmpty) {
+            await _enqueuePhotoBundle(
+              pages,
+              displayName: _friendlyCaptureLabel(
+                context.l10n.medicalPhotoCaptureLabel,
+              ),
+            );
+          }
+        } else if (grouping == _PhotoGrouping.separateDocuments) {
+          for (final image in images) {
+            await _enqueuePhotoBundle(
+              [image],
+              displayName: _friendlyCaptureLabel(
+                context.l10n.medicalPhotoCaptureLabel,
+              ),
+            );
+          }
+        }
+      }
       return;
     }
 
@@ -218,14 +290,53 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     String? displayName,
     int? sizeBytes,
   }) async {
+    return _enqueueSources(
+      [DocumentSourceFile(path: path, fileName: fileName, mimeType: mimeType)],
+      displayName: displayName,
+      sizeBytes: sizeBytes,
+    );
+  }
+
+  Future<void> _enqueuePhotoBundle(
+    List<XFile> images, {
+    required String displayName,
+  }) async {
+    final sources = <DocumentSourceFile>[];
+    for (var index = 0; index < images.length; index++) {
+      final image = images[index];
+      sources.add(
+        DocumentSourceFile(
+          path: image.path,
+          fileName: image.name.trim().isEmpty
+              ? _friendlyCaptureFileName(
+                  'medical-page-${index + 1}',
+                  image.mimeType,
+                )
+              : image.name,
+          mimeType: image.mimeType ?? _mimeTypeForName(image.name),
+        ),
+      );
+    }
+    await _enqueueSources(sources, displayName: displayName);
+  }
+
+  Future<void> _enqueueSources(
+    List<DocumentSourceFile> sources, {
+    String? displayName,
+    int? sizeBytes,
+  }) async {
     final l10n = context.l10n;
     final language = Localizations.localeOf(context).languageCode;
-    if (!_isSupportedMimeType(mimeType)) {
+    if (sources.any((source) => !_isSupportedMimeType(source.mimeType))) {
       _showSnack(l10n.documentUnsupportedFileMessage);
       return;
     }
 
-    final resolvedSize = sizeBytes ?? await File(path).length();
+    final resolvedSize =
+        sizeBytes ??
+        (await Future.wait(
+          sources.map((source) => File(source.path).length()),
+        )).fold<int>(0, (total, size) => total + size);
     if (resolvedSize > _maxDocumentBytes) {
       _showSnack(l10n.documentFileTooLargeMessage);
       return;
@@ -241,16 +352,12 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             title:
                 displayName ??
                 _titleFromFileName(
-                  fileName,
+                  sources.first.fileName,
                   fallback: l10n.documentUntitledTitle,
                 ),
             docType: DocumentType.medicalRecord,
             subjectId: subjectState?.selectedSubjectId,
-            source: DocumentSourceFile(
-              path: path,
-              fileName: fileName,
-              mimeType: mimeType,
-            ),
+            sources: sources,
             language: language,
           ),
         );
@@ -276,6 +383,308 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       _ => 'jpg',
     };
     return '$prefix-${DateFormat('yyyy-MM-dd-HHmmss').format(DateTime.now())}.$extension';
+  }
+}
+
+enum _PhotoGrouping { oneDocument, separateDocuments }
+
+class _PhotoGroupingChoiceScreen extends StatefulWidget {
+  const _PhotoGroupingChoiceScreen({required this.images});
+
+  final List<XFile> images;
+
+  @override
+  State<_PhotoGroupingChoiceScreen> createState() =>
+      _PhotoGroupingChoiceScreenState();
+}
+
+class _PhotoGroupingChoiceScreenState
+    extends State<_PhotoGroupingChoiceScreen> {
+  _PhotoGrouping _selection = _PhotoGrouping.oneDocument;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Scaffold(
+      appBar: AppBar(),
+      body: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.sm,
+            AppSpacing.xl,
+            AppSpacing.xl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.photoGroupingTitle,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                l10n.photoGroupingDescription(widget.images.length),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppColors.secondaryInk,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              _GroupingOption(
+                selected: _selection == _PhotoGrouping.oneDocument,
+                title: l10n.photoGroupingOneTitle,
+                description: l10n.photoGroupingOneDescription,
+                images: widget.images,
+                onTap: () =>
+                    setState(() => _selection = _PhotoGrouping.oneDocument),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _GroupingOption(
+                selected: _selection == _PhotoGrouping.separateDocuments,
+                title: l10n.photoGroupingSeparateTitle,
+                description: l10n.photoGroupingSeparateDescription,
+                images: widget.images,
+                onTap: () => setState(
+                  () => _selection = _PhotoGrouping.separateDocuments,
+                ),
+              ),
+              const Spacer(),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(_selection),
+                child: Text(l10n.photoGroupingContinueAction),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GroupingOption extends StatelessWidget {
+  const _GroupingOption({
+    required this.selected,
+    required this.title,
+    required this.description,
+    required this.images,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final String title;
+  final String description;
+  final List<XFile> images;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.selectedSurface
+                : AppColors.clinicalWhite,
+            border: Border.all(
+              color: selected
+                  ? AppColors.controlledCrimson
+                  : AppColors.clinicalLine,
+              width: selected ? 1.5 : 1,
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: selected
+                    ? AppColors.controlledCrimson
+                    : AppColors.secondaryInk,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              SizedBox(
+                width: 76,
+                height: 56,
+                child: Stack(
+                  children: [
+                    for (var index = 0; index < images.take(3).length; index++)
+                      Positioned(
+                        left: index * 18,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: Image.file(
+                            File(images[index].path),
+                            width: 40,
+                            height: 54,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.secondaryInk,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DocumentPagesReviewScreen extends StatefulWidget {
+  const _DocumentPagesReviewScreen({required this.initialPages});
+
+  final List<XFile> initialPages;
+
+  @override
+  State<_DocumentPagesReviewScreen> createState() =>
+      _DocumentPagesReviewScreenState();
+}
+
+class _DocumentPagesReviewScreenState
+    extends State<_DocumentPagesReviewScreen> {
+  late final List<XFile> _pages = [...widget.initialPages];
+  final _picker = ImagePicker();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.documentPagesReviewTitle)),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.md,
+                AppSpacing.xl,
+                AppSpacing.sm,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.documentPagesCount(_pages.length),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ReorderableListView.builder(
+                buildDefaultDragHandles: false,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                itemCount: _pages.length,
+                onReorderItem: (oldIndex, newIndex) {
+                  setState(() {
+                    final page = _pages.removeAt(oldIndex);
+                    _pages.insert(newIndex, page);
+                  });
+                },
+                itemBuilder: (context, index) => ListTile(
+                  key: ValueKey(_pages[index].path),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.sm,
+                  ),
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(_pages[index].path),
+                      width: 56,
+                      height: 72,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  title: Text(
+                    l10n.documentPageLabel(index + 1),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(l10n.documentPageReorderHint),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ReorderableDragStartListener(
+                        index: index,
+                        child: Tooltip(
+                          message: l10n.documentPageReorderHint,
+                          child: const SizedBox.square(
+                            dimension: 48,
+                            child: Icon(Icons.drag_indicator_rounded),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: l10n.documentPageRemoveAction,
+                        onPressed: _pages.length == 1
+                            ? null
+                            : () => setState(() => _pages.removeAt(index)),
+                        icon: const Icon(Icons.delete_outline_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _addPage,
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    label: Text(l10n.documentPageAddAction),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).pop(_pages),
+                    child: Text(l10n.documentPagesProcessAction),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addPage() async {
+    final page = await _picker.pickImage(source: ImageSource.camera);
+    if (page != null && mounted) setState(() => _pages.add(page));
   }
 }
 

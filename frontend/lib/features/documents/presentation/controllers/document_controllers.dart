@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' show OrderingTerm, Value;
@@ -45,8 +46,10 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
 
   Future<UploadEnqueueResult> enqueue(DocumentUploadDraft draft) async {
     final database = ref.read(db.localDatabaseProvider);
-    final sourceSize = await _sourceSize(draft.source.path);
-    final fingerprint = _fingerprint(draft.source.fileName, sourceSize);
+    final sourceSizes = await Future.wait(
+      draft.sources.map((source) => _sourceSize(source.path)),
+    );
+    final fingerprint = _fingerprint(draft.sources, sourceSizes);
     final duplicate =
         await (database.select(database.uploadQueueItems)
               ..where((item) => item.fingerprint.equals(fingerprint))
@@ -56,16 +59,18 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
       return UploadEnqueueResult.duplicate;
     }
 
-    final localFile = await ref
+    final localFiles = await ref
         .read(documentRepositoryProvider)
         .localFileStore
-        .save(draft.source);
+        .saveAll(draft.sources);
     final now = DateTime.now();
     final item = QueuedUpload(
       id: now.microsecondsSinceEpoch.toString(),
-      displayName: draft.source.fileName,
+      displayName: draft.sources.length == 1
+          ? draft.source.fileName
+          : '${draft.sources.length} pages',
       fingerprint: fingerprint,
-      localFile: localFile,
+      localFiles: localFiles,
       draft: draft,
       stage: UploadQueueStage.uploading,
       createdAt: now,
@@ -121,7 +126,7 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
       final repository = ref.read(documentRepositoryProvider);
       final result = await repository.createAndUploadStored(
         item.draft,
-        item.localFile,
+        item.localFiles,
         onUploadProgress: (sent, total) {
           if (total > 0) {
             _setUploadProgress(item.id, sent / total);
@@ -205,10 +210,13 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
       id: item.id,
       displayName: item.displayName,
       fingerprint: item.fingerprint,
-      localPath: item.localFile.path,
-      storedFileName: item.localFile.fileName,
-      mimeType: item.localFile.mimeType,
-      sizeBytes: item.localFile.sizeBytes,
+      localPath: item.localFiles.first.path,
+      storedFileName: item.localFiles.first.fileName,
+      mimeType: item.localFiles.first.mimeType,
+      sizeBytes: item.localFiles.fold(
+        0,
+        (total, file) => total + file.sizeBytes,
+      ),
       docType: item.draft.docType.name,
       title: item.draft.title,
       subjectId: Value(item.draft.subjectId),
@@ -219,31 +227,62 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
       isDismissed: Value(item.isDismissed),
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
+      assetsJson: Value(
+        jsonEncode([
+          for (final file in item.localFiles)
+            {
+              'path': file.path,
+              'file_name': file.fileName,
+              'mime_type': file.mimeType,
+              'size_bytes': file.sizeBytes,
+            },
+        ]),
+      ),
     );
   }
 
   QueuedUpload _fromRow(db.UploadQueueItem row) {
+    final decodedAssets = (jsonDecode(row.assetsJson) as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (asset) => StoredDocumentFile(
+            path: asset['path'] as String,
+            fileName: asset['file_name'] as String,
+            mimeType: asset['mime_type'] as String,
+            sizeBytes: asset['size_bytes'] as int,
+            localUriHint: 'app://documents/${asset['file_name']}',
+          ),
+        )
+        .toList();
+    final localFiles = decodedAssets.isEmpty
+        ? [
+            StoredDocumentFile(
+              path: row.localPath,
+              fileName: row.storedFileName,
+              mimeType: row.mimeType,
+              sizeBytes: row.sizeBytes,
+              localUriHint: 'app://documents/${row.storedFileName}',
+            ),
+          ]
+        : decodedAssets;
     return QueuedUpload(
       id: row.id,
       displayName: row.displayName,
       fingerprint: row.fingerprint,
-      localFile: StoredDocumentFile(
-        path: row.localPath,
-        fileName: row.storedFileName,
-        mimeType: row.mimeType,
-        sizeBytes: row.sizeBytes,
-        localUriHint: 'app://documents/${row.storedFileName}',
-      ),
+      localFiles: localFiles,
       draft: DocumentUploadDraft(
         title: row.title,
         docType: DocumentType.values.byName(row.docType),
         subjectId: row.subjectId,
         language: row.language,
-        source: DocumentSourceFile(
-          path: row.localPath,
-          fileName: row.displayName,
-          mimeType: row.mimeType,
-        ),
+        sources: [
+          for (final file in localFiles)
+            DocumentSourceFile(
+              path: file.path,
+              fileName: file.fileName,
+              mimeType: file.mimeType,
+            ),
+        ],
       ),
       stage: UploadQueueStage.values.byName(row.status),
       documentId: row.documentId,
@@ -256,8 +295,10 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
 
   Future<int> _sourceSize(String path) => File(path).length();
 
-  String _fingerprint(String fileName, int sizeBytes) =>
-      '${fileName.trim().toLowerCase()}::$sizeBytes';
+  String _fingerprint(List<DocumentSourceFile> files, List<int> sizes) => [
+    for (var index = 0; index < files.length; index++)
+      '${files[index].fileName.trim().toLowerCase()}::${sizes[index]}',
+  ].join('|');
 }
 
 enum UploadEnqueueResult { enqueued, duplicate }
@@ -269,7 +310,7 @@ class QueuedUpload {
     required this.id,
     required this.displayName,
     required this.fingerprint,
-    required this.localFile,
+    required this.localFiles,
     required this.draft,
     required this.stage,
     required this.createdAt,
@@ -283,7 +324,8 @@ class QueuedUpload {
   final String id;
   final String displayName;
   final String fingerprint;
-  final StoredDocumentFile localFile;
+  final List<StoredDocumentFile> localFiles;
+  StoredDocumentFile get localFile => localFiles.first;
   final DocumentUploadDraft draft;
   final UploadQueueStage stage;
   final String? documentId;
@@ -304,7 +346,7 @@ class QueuedUpload {
     id: id,
     displayName: displayName,
     fingerprint: fingerprint,
-    localFile: localFile,
+    localFiles: localFiles,
     draft: draft,
     stage: stage ?? this.stage,
     documentId: documentId ?? this.documentId,

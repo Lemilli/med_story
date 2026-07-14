@@ -797,6 +797,103 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get photoGroupingTitle => 'Как добавить эти фотографии?';
+
+  @override
+  String photoGroupingDescription(int count) {
+    return 'Вы выбрали $count фото. Укажите, как они связаны в MedStory.';
+  }
+
+  @override
+  String get photoGroupingOneTitle => 'Один документ';
+
+  @override
+  String get photoGroupingOneDescription => 'Это страницы одного документа.';
+
+  @override
+  String get photoGroupingSeparateTitle => 'Отдельные документы';
+
+  @override
+  String get photoGroupingSeparateDescription =>
+      'Каждое фото должно создать отдельное событие.';
+
+  @override
+  String get photoGroupingContinueAction => 'Продолжить';
+
+  @override
+  String get documentPagesReviewTitle => 'Проверьте страницы документа';
+
+  @override
+  String documentPagesCount(int count) {
+    return 'Страниц: $count';
+  }
+
+  @override
+  String documentPageLabel(int number) {
+    return 'Страница $number';
+  }
+
+  @override
+  String get documentPageReorderHint =>
+      'Удерживайте и перетащите, чтобы изменить порядок';
+
+  @override
+  String get documentPageRemoveAction => 'Удалить страницу';
+
+  @override
+  String get documentPageAddAction => 'Добавить страницу';
+
+  @override
+  String get documentPagesProcessAction => 'Обработать как один документ';
+
+  @override
+  String eventViewOriginalPagesAction(int count) {
+    return 'Открыть исходные страницы: $count';
+  }
+
+  @override
+  String get eventViewOriginalAction => 'Открыть оригинал';
+
+  @override
+  String get eventOriginalUnavailable =>
+      'Оригинал недоступен на этом устройстве.';
+
+  @override
+  String get eventOriginalLocalOnly =>
+      'Оригиналы остаются в приложении на этом устройстве. Загруженные данные обрабатываются временно.';
+
+  @override
+  String get eventRevisionCompareTitle => 'Сравнить предложенные изменения';
+
+  @override
+  String get eventRevisionSafetyNote =>
+      'Изменённое вами событие не поменяется, пока вы не примените изменения.';
+
+  @override
+  String get eventRevisionCurrent => 'Текущее событие';
+
+  @override
+  String get eventRevisionSuggested => 'Предложенная версия';
+
+  @override
+  String get eventRevisionApply => 'Применить выбранные изменения';
+
+  @override
+  String get eventRevisionKeep => 'Оставить текущее событие';
+
+  @override
+  String get eventRevisionRegenerateAction => 'Создать новое предложение';
+
+  @override
+  String get eventOriginalShareAction => 'Открыть или поделиться оригиналом';
+
+  @override
+  String get documentSingleEventValue => 'Одно событие в хронологии';
+
+  @override
+  String get documentNoEventValue => 'Событие не создано';
+
+  @override
   String get timelineHeadline => 'MedStory';
 
   @override
@@ -880,6 +977,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get eventTypeTreatmentOutcome => 'Результат лечения';
+
+  @override
+  String get eventTypeMedicalRecord => 'Медицинская запись';
 
   @override
   String get eventTypeNote => 'Заметка';

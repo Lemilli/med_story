@@ -3,7 +3,9 @@ from drf_spectacular.utils import extend_schema_field
 
 from medical.models import (
     Document,
+    DocumentAsset,
     DocumentExplanation,
+    EventRevision,
     MedicalEvent,
     MedicalSummary,
     ProcessingJob,
@@ -80,6 +82,8 @@ class MedicalEventSerializer(serializers.ModelSerializer):
     subject_id = serializers.UUIDField(required=False, write_only=True)
     source_document_id = serializers.SerializerMethodField()
     source_text = serializers.SerializerMethodField()
+    source_asset_count = serializers.SerializerMethodField()
+    pending_revision = serializers.SerializerMethodField()
     tags = TagNamesField(required=False)
 
     class Meta:
@@ -95,6 +99,8 @@ class MedicalEventSerializer(serializers.ModelSerializer):
             "source",
             "source_document_id",
             "source_text",
+            "source_asset_count",
+            "pending_revision",
             "confidence",
             "tags",
             "subject_id",
@@ -115,13 +121,25 @@ class MedicalEventSerializer(serializers.ModelSerializer):
         # organization. Keep transcripts off timeline/list payloads.
         request = self.context.get("request")
         if (
-            obj.source != MedicalEvent.Source.AI_VOICE
+            obj.source not in (MedicalEvent.Source.AI_VOICE, MedicalEvent.Source.USER_MANUAL)
             or not obj.source_document_id
             or not request
             or getattr(request.resolver_match, "url_name", None) != "event-detail"
         ):
             return None
         return obj.source_document.extracted_text or None
+
+    @extend_schema_field(serializers.IntegerField())
+    def get_source_asset_count(self, obj):
+        return obj.source_document.assets.count() if obj.source_document_id else 0
+
+    @extend_schema_field(serializers.DictField(allow_null=True))
+    def get_pending_revision(self, obj):
+        request = self.context.get("request")
+        if not request or getattr(request.resolver_match, "url_name", None) != "event-detail":
+            return None
+        revision = obj.revisions.filter(status=EventRevision.Status.PENDING).first()
+        return EventRevisionSerializer(revision).data if revision else None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -179,12 +197,28 @@ class MedicalEventSerializer(serializers.ModelSerializer):
         return instance
 
 
+class DocumentAssetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentAsset
+        fields = ("id", "position", "file_name", "mime_type", "size_bytes")
+        read_only_fields = fields
+
+
+class EventRevisionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventRevision
+        fields = ("id", "current_snapshot", "suggested_changes", "status", "created_at", "resolved_at")
+        read_only_fields = fields
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     subject_id = serializers.UUIDField(required=False, write_only=True)
     local_only = serializers.SerializerMethodField()
     extracted_text_available = serializers.SerializerMethodField()
     explanation_available = serializers.SerializerMethodField()
     event_count = serializers.SerializerMethodField()
+    event_id = serializers.SerializerMethodField()
+    assets = DocumentAssetSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document
@@ -204,6 +238,8 @@ class DocumentSerializer(serializers.ModelSerializer):
             "local_only",
             "explanation_available",
             "event_count",
+            "event_id",
+            "assets",
             "created_at",
             "updated_at",
         )
@@ -215,6 +251,8 @@ class DocumentSerializer(serializers.ModelSerializer):
             "local_only",
             "explanation_available",
             "event_count",
+            "event_id",
+            "assets",
             "created_at",
             "updated_at",
         )
@@ -243,6 +281,11 @@ class DocumentSerializer(serializers.ModelSerializer):
         if not obj.pk:
             return 0
         return obj.medical_events.filter(deleted_at__isnull=True).count()
+
+    @extend_schema_field(serializers.UUIDField(allow_null=True))
+    def get_event_id(self, obj):
+        event = obj.medical_events.filter(deleted_at__isnull=True).only("id").first()
+        return str(event.id) if event else None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

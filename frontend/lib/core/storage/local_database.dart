@@ -85,9 +85,22 @@ class UploadQueueItems extends Table {
   BoolColumn get isDismissed => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
+  TextColumn get assetsJson => text().withDefault(const Constant('[]'))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
+}
+
+class DocumentLocalAssets extends Table {
+  TextColumn get documentId => text()();
+  IntColumn get position => integer()();
+  TextColumn get localPath => text()();
+  TextColumn get fileName => text()();
+  TextColumn get mimeType => text()();
+  IntColumn get sizeBytes => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {documentId, position};
 }
 
 @DriftDatabase(
@@ -96,6 +109,7 @@ class UploadQueueItems extends Table {
     CachedMedicalEvents,
     CachedMedicalSummaries,
     UploadQueueItems,
+    DocumentLocalAssets,
   ],
 )
 class LocalDatabase extends _$LocalDatabase {
@@ -105,7 +119,7 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -127,6 +141,13 @@ class LocalDatabase extends _$LocalDatabase {
         if (from < 5) {
           await migrator.dropColumn(cachedMedicalEvents, 'is_confirmed');
         }
+        if (from < 6) {
+          await migrator.addColumn(
+            uploadQueueItems,
+            uploadQueueItems.assetsJson,
+          );
+          await migrator.createTable(documentLocalAssets);
+        }
       },
     );
   }
@@ -137,7 +158,29 @@ class LocalDatabase extends _$LocalDatabase {
       await delete(cachedMedicalEvents).go();
       await delete(subjects).go();
       await delete(uploadQueueItems).go();
+      await delete(documentLocalAssets).go();
     });
+  }
+
+  Future<void> replaceDocumentLocalAssets(
+    String documentId,
+    Iterable<DocumentLocalAssetsCompanion> rows,
+  ) async {
+    await transaction(() async {
+      await (delete(
+        documentLocalAssets,
+      )..where((row) => row.documentId.equals(documentId))).go();
+      await batch(
+        (batch) => batch.insertAll(documentLocalAssets, rows.toList()),
+      );
+    });
+  }
+
+  Future<List<DocumentLocalAsset>> getDocumentLocalAssets(String documentId) {
+    return (select(documentLocalAssets)
+          ..where((row) => row.documentId.equals(documentId))
+          ..orderBy([(row) => OrderingTerm(expression: row.position)]))
+        .get();
   }
 
   Future<void> upsertSubjects(Iterable<SubjectsCompanion> rows) async {

@@ -23,6 +23,8 @@ abstract class MedicalDocument with _$MedicalDocument {
     @Default(false)
     bool extractedTextAvailable,
     @JsonKey(name: 'event_count') @Default(0) int eventCount,
+    @JsonKey(name: 'event_id') String? eventId,
+    @Default(<DocumentAssetMetadata>[]) List<DocumentAssetMetadata> assets,
     @JsonKey(name: 'error_message') @Default('') String errorMessage,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
@@ -30,6 +32,20 @@ abstract class MedicalDocument with _$MedicalDocument {
 
   factory MedicalDocument.fromJson(Map<String, dynamic> json) =>
       _$MedicalDocumentFromJson(json);
+}
+
+@freezed
+abstract class DocumentAssetMetadata with _$DocumentAssetMetadata {
+  const factory DocumentAssetMetadata({
+    required String id,
+    required int position,
+    @JsonKey(name: 'file_name') required String fileName,
+    @JsonKey(name: 'mime_type') required String mimeType,
+    @JsonKey(name: 'size_bytes') required int sizeBytes,
+  }) = _DocumentAssetMetadata;
+
+  factory DocumentAssetMetadata.fromJson(Map<String, dynamic> json) =>
+      _$DocumentAssetMetadataFromJson(json);
 }
 
 @freezed

@@ -11,6 +11,7 @@ extension EventTypeL10n on MedicalEventType {
       MedicalEventType.procedure => l10n.eventTypeProcedure,
       MedicalEventType.hospitalization => l10n.eventTypeHospitalization,
       MedicalEventType.treatmentOutcome => l10n.eventTypeTreatmentOutcome,
+      MedicalEventType.medicalRecord => l10n.eventTypeMedicalRecord,
       MedicalEventType.note => l10n.eventTypeNote,
     };
   }

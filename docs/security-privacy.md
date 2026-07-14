@@ -102,6 +102,9 @@ control. This document defines the controls to achieve that.
 
 ## 9. Logging, Monitoring & Auditing
 
+The Flutter debug HTTP logger records request method/URL/status only. Authorization headers,
+request/response bodies, extracted text, transcripts, and other medical content are disabled.
+
 - **No health content in logs**; logs carry IDs/metadata only.
 - **AuditLog** table records sensitive actions (login and deletion) with IP + timestamp.
 - Error tracking (e.g. Sentry) with PII scrubbing enabled.

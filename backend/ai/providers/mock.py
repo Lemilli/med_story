@@ -42,8 +42,7 @@ class MockLLMProvider:
                 "is_medical_document": True,
                 "document_date": "2026-05-12",
                 "suggested_title": "CBC and CRP lab results",
-                "events": [
-                    {
+                "event": {
                         "event_type": "examination",
                         "title": "CBC and CRP lab results",
                         "description": "Blood count and inflammation marker results from the document.",
@@ -60,16 +59,14 @@ class MockLLMProvider:
                             ],
                         },
                         "confidence": 0.92,
-                    }
-                ],
+                    },
             }
         if "mesalazine" in normalized:
             return {
                 "is_medical_document": True,
                 "document_date": "2026-05-13",
                 "suggested_title": "Gastroenterology prescription",
-                "events": [
-                    {
+                "event": {
                         "event_type": "medication",
                         "title": "Started Mesalazine",
                         "description": "Prescription for Mesalazine 800 mg tablet three times daily for 30 days.",
@@ -83,14 +80,13 @@ class MockLLMProvider:
                             "prescriber": "Dr. Example",
                         },
                         "confidence": 0.94,
-                    }
-                ],
+                    },
             }
         return {
             "is_medical_document": False,
             "document_date": None,
             "suggested_title": None,
-            "events": [],
+            "event": None,
         }
 
 

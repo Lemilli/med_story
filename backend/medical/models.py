@@ -114,6 +114,32 @@ class Document(models.Model):
         return self.title
 
 
+class DocumentAsset(models.Model):
+    """Metadata for one device-local original within a logical document.
+
+    The backend never stores the original bytes. Assets make page ordering and
+    integrity explicit while the mobile client retains the local originals.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="assets")
+    position = models.PositiveIntegerField()
+    file_name = models.CharField(max_length=255)
+    mime_type = models.CharField(max_length=255)
+    size_bytes = models.BigIntegerField()
+    content_hash = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("position",)
+        constraints = [
+            models.UniqueConstraint(fields=("document", "position"), name="unique_document_asset_position"),
+        ]
+
+    def __str__(self):
+        return f"{self.document_id}:{self.position}"
+
+
 class ProcessingJob(models.Model):
     class JobType(models.TextChoices):
         INGESTION = "ingestion", "Ingestion"
@@ -252,6 +278,7 @@ class MedicalEvent(models.Model):
         PROCEDURE = "procedure", "Procedure"
         HOSPITALIZATION = "hospitalization", "Hospitalization"
         TREATMENT_OUTCOME = "treatment_outcome", "Treatment outcome"
+        MEDICAL_RECORD = "medical_record", "Medical record"
         NOTE = "note", "Note"
 
     class Source(models.TextChoices):
@@ -289,9 +316,41 @@ class MedicalEvent(models.Model):
             models.Index(fields=("event_type",), name="event_type_idx"),
             models.Index(fields=("deleted_at",), name="event_deleted_at_idx"),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("source_document",),
+                condition=Q(source_document__isnull=False, deleted_at__isnull=True),
+                name="unique_active_event_per_document",
+            ),
+        ]
 
     def __str__(self):
         return self.title
+
+
+class EventRevision(models.Model):
+    """A proposed AI revision which never mutates an event until applied."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        APPLIED = "applied", "Applied"
+        DISCARDED = "discarded", "Discarded"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    event = models.ForeignKey(MedicalEvent, on_delete=models.CASCADE, related_name="revisions")
+    current_snapshot = models.JSONField(default=dict)
+    suggested_changes = models.JSONField(default=dict)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    model_name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [models.Index(fields=("event", "status", "-created_at"), name="revision_event_status_idx")]
+
+    def __str__(self):
+        return f"{self.event_id}:{self.status}"
 
 
 class AuditLog(models.Model):

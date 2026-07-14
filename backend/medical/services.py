@@ -1,10 +1,12 @@
 import logging
+from datetime import date
 from io import BytesIO
 from textwrap import wrap
 
 from django.conf import settings
 from django.db.models import Max
 from django.db import transaction
+from django.utils import timezone
 
 from ai.providers.factory import get_llm_provider, get_ocr_provider, get_stt_provider
 from ai.schemas import (
@@ -20,6 +22,7 @@ from ai.schemas import (
 from medical.models import (
     AuditLog,
     Document,
+    EventRevision,
     MedicalEvent,
     MedicalSummary,
     ProcessingJob,
@@ -81,6 +84,73 @@ class DocumentRejectionError(ValueError):
     """A safe, user-facing reason an upload cannot become medical history."""
 
 
+EVENT_REVISION_FIELDS = ("event_type", "title", "description", "event_date", "attributes", "confidence")
+
+
+def create_event_revision(*, event):
+    if not event.source_document_id or not event.source_document.extracted_text.strip():
+        raise DocumentRejectionError("event_source_unavailable")
+
+    provider = get_llm_provider()
+    payload = provider.complete_json(
+        system=STRUCTURING_SYSTEM_PROMPT,
+        user=event.source_document.extracted_text,
+        schema=EVENT_EXTRACTION_JSON_SCHEMA,
+    )
+    extraction = validate_event_extraction(payload, default_date=event.event_date)
+    suggestion = extraction["event"]
+    if not extraction["is_medical_document"] or suggestion is None:
+        raise DocumentRejectionError("medical_events_not_found")
+
+    current = {
+        "event_type": event.event_type,
+        "title": event.title,
+        "description": event.description,
+        "event_date": event.event_date.isoformat(),
+        "attributes": event.attributes,
+        "confidence": event.confidence,
+    }
+    proposed = {
+        **suggestion,
+        "event_date": suggestion["event_date"].isoformat(),
+    }
+    changes = {field: proposed[field] for field in EVENT_REVISION_FIELDS if proposed[field] != current[field]}
+    with transaction.atomic():
+        event.revisions.filter(status=EventRevision.Status.PENDING).update(
+            status=EventRevision.Status.DISCARDED,
+            resolved_at=timezone.now(),
+        )
+        return EventRevision.objects.create(
+            event=event,
+            current_snapshot=current,
+            suggested_changes=changes,
+            model_name=getattr(provider, "model", settings.AI_OPENAI_MODEL),
+        )
+
+
+def apply_event_revision(*, revision, fields):
+    selected = [field for field in fields if field in EVENT_REVISION_FIELDS]
+    if revision.status != EventRevision.Status.PENDING:
+        raise ValueError("revision_not_pending")
+    if not selected:
+        raise ValueError("revision_fields_required")
+
+    changes = revision.suggested_changes
+    with transaction.atomic():
+        event = MedicalEvent.objects.select_for_update().get(id=revision.event_id)
+        for field in selected:
+            if field in changes:
+                value = changes[field]
+                if field == "event_date" and isinstance(value, str):
+                    value = date.fromisoformat(value)
+                setattr(event, field, value)
+        event.save(update_fields=tuple(field for field in selected if field in changes) + ("updated_at",))
+        revision.status = EventRevision.Status.APPLIED
+        revision.resolved_at = timezone.now()
+        revision.save(update_fields=("status", "resolved_at"))
+    return event
+
+
 def get_or_create_default_subject(user):
     default_subject = Subject.objects.filter(user=user, is_default=True).first()
     if default_subject:
@@ -95,7 +165,10 @@ def get_or_create_default_subject(user):
     )
 
 
-def process_document_ingestion(*, document, file_bytes, mime_type, job=None, language=None, extracted_text_override=None):
+def process_document_ingestion(
+    *, document, file_bytes=b"", mime_type="", file_parts=None, job=None,
+    language=None, extracted_text_override=None
+):
     from medical.models import Document, MedicalEvent, ProcessingJob
 
     job_id = getattr(job, "id", None)
@@ -131,6 +204,8 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
             if not extracted_text.strip():
                 raise DocumentRejectionError("note_empty")
         elif is_audio:
+            if file_parts:
+                file_bytes, mime_type = file_parts[0]
             source_language = _resolve_audio_language(document=document, requested_language=language)
             extracted_text = get_stt_provider().transcribe(
                 audio_bytes=file_bytes,
@@ -149,9 +224,16 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
             if not extracted_text or not extracted_text.strip():
                 raise DocumentRejectionError("audio_unreadable")
         else:
-            ocr_result = get_ocr_provider().extract_text(file_bytes=file_bytes, mime=mime_type)
-            extracted_text = ocr_result.text
-            extracted_language = ocr_result.language or ""
+            parts = file_parts or [(file_bytes, mime_type)]
+            extracted_pages = []
+            extracted_language = ""
+            for position, (part_bytes, part_mime) in enumerate(parts, start=1):
+                ocr_result = get_ocr_provider().extract_text(file_bytes=part_bytes, mime=part_mime)
+                if not extracted_language:
+                    extracted_language = ocr_result.language or ""
+                if ocr_result.text and ocr_result.text.strip():
+                    extracted_pages.append(f"--- Page {position} ---\n{ocr_result.text.strip()}")
+            extracted_text = "\n\n".join(extracted_pages)
             event_source = MedicalEvent.Source.AI_DOCUMENT
             logger.info(
                 "Document ingestion phase=ocr_complete document_id=%s job_id=%s extracted_text_length=%s language=%s",
@@ -178,13 +260,13 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
             raise DocumentRejectionError(
                 "audio_not_medical" if is_audio else "document_not_medical"
             )
-        if not extraction["events"]:
+        if extraction["event"] is None:
             raise DocumentRejectionError("medical_events_not_found")
         logger.info(
             "Document ingestion phase=validation_complete document_id=%s job_id=%s event_count=%s document_date=%s",
             document.id,
             job_id,
-            len(extraction["events"]),
+            1,
             extraction["document_date"],
         )
         explanation = None
@@ -196,6 +278,25 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
             )
 
         with transaction.atomic():
+            event_data = extraction["event"]
+            event_date = event_data["event_date"] or extraction["document_date"] or document.document_date
+            if event_date is None:
+                raise DocumentRejectionError("medical_events_not_found")
+
+            document.medical_events.filter(deleted_at__isnull=True).update(deleted_at=timezone.now())
+            event = MedicalEvent.objects.create(
+                user=document.user,
+                subject=document.subject,
+                source_document=document,
+                event_type=event_data["event_type"],
+                title=event_data["title"],
+                description=event_data["description"],
+                event_date=event_date,
+                attributes=event_data["attributes"],
+                source=event_source,
+                confidence=event_data["confidence"],
+            )
+
             document.extracted_text = extracted_text
             document.language = extracted_language
             if extraction["document_date"] is not None:
@@ -216,28 +317,6 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
                 )
             )
 
-            document.medical_events.filter(
-                source=event_source,
-                deleted_at__isnull=True,
-            ).update(deleted_at=timezone.now())
-
-            for event_data in extraction["events"]:
-                event_date = event_data["event_date"] or extraction["document_date"] or document.document_date
-                if event_date is None:
-                    continue
-                MedicalEvent.objects.create(
-                    user=document.user,
-                    subject=document.subject,
-                    source_document=document,
-                    event_type=event_data["event_type"],
-                    title=event_data["title"],
-                    description=event_data["description"],
-                    event_date=event_date,
-                    attributes=event_data["attributes"],
-                    source=event_source,
-                    confidence=event_data["confidence"],
-                )
-
             if explanation is not None:
                 document.explanations.create(**explanation)
 
@@ -250,8 +329,9 @@ def process_document_ingestion(*, document, file_bytes, mime_type, job=None, lan
             "Document ingestion phase=complete document_id=%s job_id=%s event_count=%s",
             document.id,
             job_id,
-            len(extraction["events"]),
+            1,
         )
+        return event
     except (SchemaValidationError, ValueError) as exc:
         logger.exception(
             "Document ingestion phase=failed document_id=%s job_id=%s exception_type=%s error=%s",

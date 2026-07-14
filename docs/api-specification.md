@@ -109,15 +109,21 @@ The backend does not persist the raw file.
 `Content-Type: multipart/form-data`
 ```
 file=<binary>; mime_type=application/pdf|image/png|audio/mpeg
+# or, for pages of one photographed document:
+files=<image page 1>; files=<image page 2>; ...
 ```
 
 Constraints:
-- Max file size: **5 MB** (`413 file_too_large` beyond this limit).
+- Max total bundle size: **5 MB** (`413 file_too_large` beyond this limit).
+- Multi-asset bundles accept images only and preserve multipart order as page order.
 - Non-audio documents allow PDFs and image files.
 - Audio documents (`doc_type=audio`) allow `audio/mpeg`, `audio/mp3`, `audio/mp4`,
   `audio/mpga`, `audio/m4a`, `audio/wav`, and `audio/webm`.
 
-→ `202 { "id": "uuid", "status": "processing" }`
+→ `202 { "id": "uuid", "status": "processing", "event_id": null, "assets": [...] }`
+
+Processing succeeds only after exactly one active event is created atomically. A terminal document
+therefore has either `status=processed` with one `event_id`, or `status=failed` with no event.
 
 If the exact same PDF or image was already processed for the account and produced active events,
 the request returns `409 document_already_processed` with the existing `document_id` in
@@ -139,7 +145,9 @@ titles and extracted text while list responses continue to return metadata only.
   "local_only": true,
   "extracted_text_available": true,
   "explanation_available": true,
-  "event_count": 4,
+  "event_count": 1, "event_id": "uuid",
+  "assets": [{ "id": "uuid", "position": 1, "file_name": "page-1.jpg",
+    "mime_type": "image/jpeg", "size_bytes": 12345 }],
   "created_at": "...", "updated_at": "..." }
 ```
 `status` is polled by the client until `processed` or `failed`.
@@ -214,8 +222,16 @@ Cursor paginated, default newest-first.
   ],
   "next": "cursor...", "previous": null }
 ```
-For an `ai_voice` event, the event detail response also includes `source_text`: the authenticated
-user's transcription, so clients can distinguish the original words from the AI-organized summary.
+For `ai_voice` and source-backed text events, the event detail response also includes `source_text`.
+It also includes `source_asset_count` and the latest `pending_revision` when present.
+
+### GET/POST /events/{id}/revisions
+`POST` reprocesses the immutable source into a pending draft revision. The active event is not
+changed. `GET` lists recent revisions.
+
+### POST/DELETE /events/{id}/revisions/{revision_id}
+`POST { "fields": ["title", "description"] }` applies only selected suggested fields. `DELETE`
+discards a pending revision and keeps the current event unchanged.
 
 ### POST /events
 Manually create an event.

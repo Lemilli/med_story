@@ -11,10 +11,16 @@ logger = get_task_logger(__name__)
 
 
 @shared_task
-def ingest_document_task(document_id, job_id, file_bytes_b64, mime_type, language=None):
+def ingest_document_task(document_id, job_id, file_bytes_b64, mime_type, language=None, file_parts=None):
     document = Document.objects.select_related("user", "subject").get(id=document_id, deleted_at__isnull=True)
     job = ProcessingJob.objects.filter(id=job_id, document=document).first()
-    file_bytes = base64.b64decode(file_bytes_b64.encode("ascii"))
+    file_bytes = base64.b64decode(file_bytes_b64.encode("ascii")) if file_bytes_b64 else b""
+    decoded_parts = None
+    if file_parts:
+        decoded_parts = [
+            (base64.b64decode(part["bytes_b64"].encode("ascii")), part["mime_type"])
+            for part in file_parts
+        ]
 
     logger.info(
         "Starting document ingestion document_id=%s job_id=%s mime_type=%s size_bytes=%s language=%s",
@@ -25,10 +31,11 @@ def ingest_document_task(document_id, job_id, file_bytes_b64, mime_type, languag
         language or "",
     )
     try:
-        process_document_ingestion(
+        event = process_document_ingestion(
             document=document,
             file_bytes=file_bytes,
             mime_type=mime_type,
+            file_parts=decoded_parts,
             job=job,
             language=language,
         )
@@ -49,7 +56,7 @@ def ingest_document_task(document_id, job_id, file_bytes_b64, mime_type, languag
         }
 
     logger.info("Document ingestion processed document_id=%s job_id=%s", document.id, job_id)
-    return {"status": "processed", "document_id": str(document.id)}
+    return {"status": "processed", "document_id": str(document.id), "event_id": str(event.id)}
 
 
 @shared_task
@@ -57,7 +64,7 @@ def ingest_note_task(document_id, job_id, text, language=None):
     document = Document.objects.select_related("user", "subject").get(id=document_id, deleted_at__isnull=True)
     job = ProcessingJob.objects.filter(id=job_id, document=document).first()
     try:
-        process_document_ingestion(
+        event = process_document_ingestion(
             document=document,
             file_bytes=b"",
             mime_type="text/plain",
@@ -68,7 +75,7 @@ def ingest_note_task(document_id, job_id, text, language=None):
     except Exception:
         logger.exception("Note ingestion failed document_id=%s job_id=%s", document.id, job_id)
         return {"status": "failed", "document_id": str(document.id), "error": document.error_message}
-    return {"status": "processed", "document_id": str(document.id)}
+    return {"status": "processed", "document_id": str(document.id), "event_id": str(event.id)}
 
 
 @shared_task

@@ -1442,6 +1442,174 @@ abstract class AppLocalizations {
   /// **'{title}: {message}'**
   String pendingActionMessage(String title, String message);
 
+  /// No description provided for @photoGroupingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How should we add these photos?'**
+  String get photoGroupingTitle;
+
+  /// No description provided for @photoGroupingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'You selected {count} photos. Choose how they belong in MedStory.'**
+  String photoGroupingDescription(int count);
+
+  /// No description provided for @photoGroupingOneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'One document'**
+  String get photoGroupingOneTitle;
+
+  /// No description provided for @photoGroupingOneDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'They are pages of the same document.'**
+  String get photoGroupingOneDescription;
+
+  /// No description provided for @photoGroupingSeparateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Separate documents'**
+  String get photoGroupingSeparateTitle;
+
+  /// No description provided for @photoGroupingSeparateDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Each photo should create its own event.'**
+  String get photoGroupingSeparateDescription;
+
+  /// No description provided for @photoGroupingContinueAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get photoGroupingContinueAction;
+
+  /// No description provided for @documentPagesReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review document pages'**
+  String get documentPagesReviewTitle;
+
+  /// No description provided for @documentPagesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pages'**
+  String documentPagesCount(int count);
+
+  /// No description provided for @documentPageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {number}'**
+  String documentPageLabel(int number);
+
+  /// No description provided for @documentPageReorderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold and drag to reorder'**
+  String get documentPageReorderHint;
+
+  /// No description provided for @documentPageRemoveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove page'**
+  String get documentPageRemoveAction;
+
+  /// No description provided for @documentPageAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another page'**
+  String get documentPageAddAction;
+
+  /// No description provided for @documentPagesProcessAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Process one document'**
+  String get documentPagesProcessAction;
+
+  /// No description provided for @eventViewOriginalPagesAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View {count} original pages'**
+  String eventViewOriginalPagesAction(int count);
+
+  /// No description provided for @eventViewOriginalAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View original'**
+  String get eventViewOriginalAction;
+
+  /// No description provided for @eventOriginalUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The original is unavailable on this device.'**
+  String get eventOriginalUnavailable;
+
+  /// No description provided for @eventOriginalLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Originals stay in this app on this device. Uploaded bytes are processed transiently.'**
+  String get eventOriginalLocalOnly;
+
+  /// No description provided for @eventRevisionCompareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare suggested changes'**
+  String get eventRevisionCompareTitle;
+
+  /// No description provided for @eventRevisionSafetyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Your edited event stays unchanged until you apply changes.'**
+  String get eventRevisionSafetyNote;
+
+  /// No description provided for @eventRevisionCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current event'**
+  String get eventRevisionCurrent;
+
+  /// No description provided for @eventRevisionSuggested.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested revision'**
+  String get eventRevisionSuggested;
+
+  /// No description provided for @eventRevisionApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply selected changes'**
+  String get eventRevisionApply;
+
+  /// No description provided for @eventRevisionKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep current event'**
+  String get eventRevisionKeep;
+
+  /// No description provided for @eventRevisionRegenerateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate suggestion'**
+  String get eventRevisionRegenerateAction;
+
+  /// No description provided for @eventOriginalShareAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open or share original'**
+  String get eventOriginalShareAction;
+
+  /// No description provided for @documentSingleEventValue.
+  ///
+  /// In en, this message translates to:
+  /// **'One timeline event'**
+  String get documentSingleEventValue;
+
+  /// No description provided for @documentNoEventValue.
+  ///
+  /// In en, this message translates to:
+  /// **'No event created'**
+  String get documentNoEventValue;
+
   /// No description provided for @timelineHeadline.
   ///
   /// In en, this message translates to:
@@ -1603,6 +1771,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Treatment outcome'**
   String get eventTypeTreatmentOutcome;
+
+  /// No description provided for @eventTypeMedicalRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical record'**
+  String get eventTypeMedicalRecord;
 
   /// No description provided for @eventTypeNote.
   ///

@@ -54,6 +54,41 @@ class EventApi {
       throw mapDioException(error);
     }
   }
+
+  Future<EventRevision> regenerateEvent(String id) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/events/$id/revisions',
+      );
+      return EventRevision.fromJson(response.data ?? <String, dynamic>{});
+    } on DioException catch (error) {
+      throw mapDioException(error);
+    }
+  }
+
+  Future<MedicalEvent> applyRevision(
+    String eventId,
+    String revisionId,
+    List<String> fields,
+  ) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/events/$eventId/revisions/$revisionId',
+        data: {'fields': fields},
+      );
+      return MedicalEvent.fromJson(response.data ?? <String, dynamic>{});
+    } on DioException catch (error) {
+      throw mapDioException(error);
+    }
+  }
+
+  Future<void> discardRevision(String eventId, String revisionId) async {
+    try {
+      await _dio.delete<void>('/events/$eventId/revisions/$revisionId');
+    } on DioException catch (error) {
+      throw mapDioException(error);
+    }
+  }
 }
 
 class EventWriteRequest {

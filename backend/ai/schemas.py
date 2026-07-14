@@ -12,6 +12,7 @@ ALLOWED_EVENT_TYPES = {
     "procedure",
     "hospitalization",
     "treatment_outcome",
+    "medical_record",
     "note",
 }
 
@@ -86,32 +87,29 @@ EVENT_ATTRIBUTES_JSON_SCHEMA = {
 EVENT_EXTRACTION_JSON_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["is_medical_document", "document_date", "suggested_title", "events"],
+    "required": ["is_medical_document", "document_date", "suggested_title", "event"],
     "properties": {
         "is_medical_document": {"type": "boolean"},
         "document_date": {"type": ["string", "null"], "format": "date"},
         "suggested_title": {"type": ["string", "null"]},
-        "events": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": [
-                    "event_type",
-                    "title",
-                    "description",
-                    "event_date",
-                    "attributes",
-                    "confidence",
-                ],
-                "properties": {
-                    "event_type": {"type": "string", "enum": sorted(ALLOWED_EVENT_TYPES)},
-                    "title": {"type": "string", "minLength": 1, "maxLength": 255},
-                    "description": {"type": ["string", "null"]},
-                    "event_date": {"type": ["string", "null"], "format": "date"},
-                    "attributes": EVENT_ATTRIBUTES_JSON_SCHEMA,
-                    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-                },
+        "event": {
+            "type": ["object", "null"],
+            "additionalProperties": False,
+            "required": [
+                "event_type",
+                "title",
+                "description",
+                "event_date",
+                "attributes",
+                "confidence",
+            ],
+            "properties": {
+                "event_type": {"type": "string", "enum": sorted(ALLOWED_EVENT_TYPES)},
+                "title": {"type": "string", "minLength": 1, "maxLength": 255},
+                "description": {"type": ["string", "null"]},
+                "event_date": {"type": ["string", "null"], "format": "date"},
+                "attributes": EVENT_ATTRIBUTES_JSON_SCHEMA,
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
             },
         },
     },
@@ -200,29 +198,28 @@ def validate_event_extraction(payload: dict[str, Any], *, default_date: date | N
     if not isinstance(suggested_title, str):
         suggested_title = None
 
-    raw_events = payload.get("events")
-    if not isinstance(raw_events, list):
-        raise SchemaValidationError("events must be a list.")
-
-    events = []
-    for index, event in enumerate(raw_events):
-        try:
-            events.append(_validate_event(event, index, fallback_date=document_date))
-        except SchemaValidationError:
-            continue
+    raw_event = payload.get("event")
+    if "event" not in payload and isinstance(payload.get("events"), list):
+        legacy_events = payload["events"]
+        if len(legacy_events) > 1:
+            raise SchemaValidationError("A source must produce exactly one event.")
+        raw_event = legacy_events[0] if legacy_events else None
+    event = None
+    if raw_event is not None:
+        event = _validate_event(raw_event, "event", fallback_date=document_date)
 
     # Older provider responses may not include the relevance flag. Treat a
     # response containing events as medical so rolling provider upgrades do not
     # discard valid historical uploads.
     is_medical_document = payload.get("is_medical_document")
     if not isinstance(is_medical_document, bool):
-        is_medical_document = bool(events)
+        is_medical_document = event is not None
 
     return {
         "is_medical_document": is_medical_document,
         "document_date": document_date,
         "suggested_title": _truncate_text(suggested_title.strip(), 255) if isinstance(suggested_title, str) else None,
-        "events": events,
+        "event": event,
     }
 
 
@@ -294,7 +291,7 @@ def validate_medical_summary(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _validate_event(event: Any, index: int, *, fallback_date: date) -> dict[str, Any]:
+def _validate_event(event: Any, index: Any, *, fallback_date: date) -> dict[str, Any]:
     if not isinstance(event, dict):
         raise SchemaValidationError(f"events[{index}] must be an object.")
 

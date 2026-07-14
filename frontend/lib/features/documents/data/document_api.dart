@@ -33,16 +33,23 @@ class DocumentApi {
 
   Future<DocumentStatusUpdate> ingestDocument({
     required String documentId,
-    required String filePath,
-    required String fileName,
-    required String mimeType,
+    required List<({String path, String fileName, String mimeType})> files,
     void Function(int sent, int total)? onSendProgress,
   }) async {
     try {
-      final formData = FormData.fromMap({
-        'mime_type': mimeType,
-        'file': await MultipartFile.fromFile(filePath, filename: fileName),
-      });
+      final formData = FormData();
+      for (final file in files) {
+        formData.files.add(
+          MapEntry(
+            files.length == 1 ? 'file' : 'files',
+            await MultipartFile.fromFile(
+              file.path,
+              filename: file.fileName,
+              contentType: DioMediaType.parse(file.mimeType),
+            ),
+          ),
+        );
+      }
       final response = await _dio.post<Map<String, dynamic>>(
         '/documents/$documentId/ingest',
         data: formData,
@@ -127,11 +134,14 @@ class DocumentApi {
         '/capture/notes',
         data: {
           'text': text,
-          if (subjectId != null && subjectId.isNotEmpty) 'subject_id': subjectId,
+          if (subjectId != null && subjectId.isNotEmpty)
+            'subject_id': subjectId,
           if (language != null && language.isNotEmpty) 'language': language,
         },
       );
-      return DocumentStatusUpdate.fromJson(response.data ?? <String, dynamic>{});
+      return DocumentStatusUpdate.fromJson(
+        response.data ?? <String, dynamic>{},
+      );
     } on DioException catch (error) {
       throw mapDioException(error, fallback: 'note_processing_failed');
     }

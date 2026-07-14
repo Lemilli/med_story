@@ -125,10 +125,17 @@ idle → selecting → saving_local → creating(POST /documents) → ingesting(
      → processing(poll GET /documents/{id})
      → done(events + explanation ready) | failed(retry)
 ```
+- Gallery multi-selection always asks whether photos are pages of one document or separate
+  documents. Camera scanning enters a reorderable page review and allows more pages.
+- One logical document bundle contains ordered local assets and resolves to one timeline event.
+- Drift maps the backend document UUID to device-local originals; loss/change of device leaves the
+  event available while the UI reports that the original is unavailable locally.
 - The user can leave the screen; files remain on-device, and processing surfaces via the
   documents list / timeline once `processed`.
 - Newly extracted events show an **"AI-suggested, tap to confirm"** badge
   with edit and deletion controls to keep the user in control.
+- Regeneration opens a field-selectable draft comparison. The edited event remains unchanged until
+  the user applies selected changes.
 
 ### 7.2 Voice-First Capture
 Record → save locally → transient ingest as `doc_type=audio` → poll → review extracted events.

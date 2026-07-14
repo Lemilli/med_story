@@ -13,7 +13,8 @@ documents they come from, a chronological timeline, and a continuously-updated s
 Design choices:
 - A **unified `MedicalEvent`** table powers the timeline; type-specific attributes live in a
   JSONB `attributes` column, with a few promoted columns for querying/sorting.
-- **Documents** binaries remain on-device; the DB holds metadata + extracted text.
+- **Document assets** remain on-device; the DB holds ordered asset metadata + extracted text.
+- Every logical source (`Document`) produces **exactly one active `MedicalEvent`** or fails.
 - **Processing state** is tracked explicitly so the client can poll and the pipeline can retry.
 - Every row is **owned by a user** (and optionally a `Subject`) for strict data isolation.
 - Soft-delete (`deleted_at`) + hard-delete support for GDPR erasure.
@@ -105,8 +106,16 @@ A medical file or audio note tracked by metadata. Binary lives on the user's dev
 | created_at / updated_at | timestamptz | |
 | deleted_at | timestamptz (nullable) | Soft delete |
 
-### 3.4 MedicalEvent
-The core timeline item. One row per discrete medical fact.
+### 3.4 DocumentAsset
+Ordered metadata for each original in a logical source bundle. A PDF/audio/text source normally has
+one asset (text has none); a photographed multi-page document has multiple assets. Fields are
+`document_id`, `position`, `file_name`, `mime_type`, `size_bytes`, and `content_hash`. Original bytes
+and device paths are never stored by the backend.
+
+### 3.5 MedicalEvent
+The core timeline item. Source-backed captures have exactly one active event, enforced by a partial
+unique constraint on `source_document_id`. Mixed-content sources use `medical_record` and retain
+their supported facts inside structured attributes.
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -114,7 +123,7 @@ The core timeline item. One row per discrete medical fact.
 | user_id | FK → User | |
 | subject_id | FK → Subject | |
 | source_document_id | FK → Document (nullable) | If derived from a document |
-| event_type | enum | symptom, diagnosis, medication, examination, procedure, hospitalization, treatment_outcome, note |
+| event_type | enum | symptom, diagnosis, medication, examination, procedure, hospitalization, treatment_outcome, medical_record, note |
 | title | varchar | Short label, e.g. "Started Mesalazine" |
 | description | text (nullable) | Plain-language detail |
 | event_date | date | Primary date (drives timeline ordering) |
@@ -127,7 +136,12 @@ The core timeline item. One row per discrete medical fact.
 
 Indexes: `(user_id, subject_id, event_date desc)`, `(event_type)`, GIN on `attributes`.
 
-### 3.5 DocumentExplanation
+### 3.6 EventRevision
+An AI-proposed revision stores `current_snapshot` and `suggested_changes` separately from the active
+event. Its status is `pending`, `applied`, or `discarded`. Regeneration never overwrites user edits;
+only explicitly selected fields are applied.
+
+### 3.7 DocumentExplanation
 LLM-produced plain-language explanation of a document (Scenario B).
 
 | Field | Type | Notes |

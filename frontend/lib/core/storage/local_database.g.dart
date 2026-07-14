@@ -2290,6 +2290,18 @@ class $UploadQueueItemsTable extends UploadQueueItems
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _assetsJsonMeta = const VerificationMeta(
+    'assetsJson',
+  );
+  @override
+  late final GeneratedColumn<String> assetsJson = GeneratedColumn<String>(
+    'assets_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2309,6 +2321,7 @@ class $UploadQueueItemsTable extends UploadQueueItems
     isDismissed,
     createdAt,
     updatedAt,
+    assetsJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2460,6 +2473,12 @@ class $UploadQueueItemsTable extends UploadQueueItems
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('assets_json')) {
+      context.handle(
+        _assetsJsonMeta,
+        assetsJson.isAcceptableOrUnknown(data['assets_json']!, _assetsJsonMeta),
+      );
+    }
     return context;
   }
 
@@ -2537,6 +2556,10 @@ class $UploadQueueItemsTable extends UploadQueueItems
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
       )!,
+      assetsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}assets_json'],
+      )!,
     );
   }
 
@@ -2564,6 +2587,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
   final bool isDismissed;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String assetsJson;
   const UploadQueueItem({
     required this.id,
     required this.displayName,
@@ -2582,6 +2606,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
     required this.isDismissed,
     required this.createdAt,
     required this.updatedAt,
+    required this.assetsJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2611,6 +2636,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
     map['is_dismissed'] = Variable<bool>(isDismissed);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['assets_json'] = Variable<String>(assetsJson);
     return map;
   }
 
@@ -2641,6 +2667,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
       isDismissed: Value(isDismissed),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      assetsJson: Value(assetsJson),
     );
   }
 
@@ -2667,6 +2694,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
       isDismissed: serializer.fromJson<bool>(json['isDismissed']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      assetsJson: serializer.fromJson<String>(json['assetsJson']),
     );
   }
   @override
@@ -2690,6 +2718,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
       'isDismissed': serializer.toJson<bool>(isDismissed),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'assetsJson': serializer.toJson<String>(assetsJson),
     };
   }
 
@@ -2711,6 +2740,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
     bool? isDismissed,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? assetsJson,
   }) => UploadQueueItem(
     id: id ?? this.id,
     displayName: displayName ?? this.displayName,
@@ -2729,6 +2759,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
     isDismissed: isDismissed ?? this.isDismissed,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    assetsJson: assetsJson ?? this.assetsJson,
   );
   UploadQueueItem copyWithCompanion(UploadQueueItemsCompanion data) {
     return UploadQueueItem(
@@ -2761,6 +2792,9 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
           : this.isDismissed,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      assetsJson: data.assetsJson.present
+          ? data.assetsJson.value
+          : this.assetsJson,
     );
   }
 
@@ -2783,7 +2817,8 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
           ..write('errorMessage: $errorMessage, ')
           ..write('isDismissed: $isDismissed, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('assetsJson: $assetsJson')
           ..write(')'))
         .toString();
   }
@@ -2807,6 +2842,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
     isDismissed,
     createdAt,
     updatedAt,
+    assetsJson,
   );
   @override
   bool operator ==(Object other) =>
@@ -2828,7 +2864,8 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
           other.errorMessage == this.errorMessage &&
           other.isDismissed == this.isDismissed &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.assetsJson == this.assetsJson);
 }
 
 class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
@@ -2849,6 +2886,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
   final Value<bool> isDismissed;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<String> assetsJson;
   final Value<int> rowid;
   const UploadQueueItemsCompanion({
     this.id = const Value.absent(),
@@ -2868,6 +2906,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
     this.isDismissed = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.assetsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   UploadQueueItemsCompanion.insert({
@@ -2888,6 +2927,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
     this.isDismissed = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
+    this.assetsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        displayName = Value(displayName),
@@ -2919,6 +2959,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
     Expression<bool>? isDismissed,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<String>? assetsJson,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2939,6 +2980,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
       if (isDismissed != null) 'is_dismissed': isDismissed,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (assetsJson != null) 'assets_json': assetsJson,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2961,6 +3003,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
     Value<bool>? isDismissed,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
+    Value<String>? assetsJson,
     Value<int>? rowid,
   }) {
     return UploadQueueItemsCompanion(
@@ -2981,6 +3024,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
       isDismissed: isDismissed ?? this.isDismissed,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      assetsJson: assetsJson ?? this.assetsJson,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3039,6 +3083,9 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (assetsJson.present) {
+      map['assets_json'] = Variable<String>(assetsJson.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3065,6 +3112,431 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
           ..write('isDismissed: $isDismissed, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('assetsJson: $assetsJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DocumentLocalAssetsTable extends DocumentLocalAssets
+    with TableInfo<$DocumentLocalAssetsTable, DocumentLocalAsset> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DocumentLocalAssetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _documentIdMeta = const VerificationMeta(
+    'documentId',
+  );
+  @override
+  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
+    'document_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localPathMeta = const VerificationMeta(
+    'localPath',
+  );
+  @override
+  late final GeneratedColumn<String> localPath = GeneratedColumn<String>(
+    'local_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileNameMeta = const VerificationMeta(
+    'fileName',
+  );
+  @override
+  late final GeneratedColumn<String> fileName = GeneratedColumn<String>(
+    'file_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mimeTypeMeta = const VerificationMeta(
+    'mimeType',
+  );
+  @override
+  late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
+    'mime_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeBytesMeta = const VerificationMeta(
+    'sizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> sizeBytes = GeneratedColumn<int>(
+    'size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    documentId,
+    position,
+    localPath,
+    fileName,
+    mimeType,
+    sizeBytes,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'document_local_assets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DocumentLocalAsset> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('document_id')) {
+      context.handle(
+        _documentIdMeta,
+        documentId.isAcceptableOrUnknown(data['document_id']!, _documentIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_documentIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('local_path')) {
+      context.handle(
+        _localPathMeta,
+        localPath.isAcceptableOrUnknown(data['local_path']!, _localPathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_localPathMeta);
+    }
+    if (data.containsKey('file_name')) {
+      context.handle(
+        _fileNameMeta,
+        fileName.isAcceptableOrUnknown(data['file_name']!, _fileNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileNameMeta);
+    }
+    if (data.containsKey('mime_type')) {
+      context.handle(
+        _mimeTypeMeta,
+        mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mimeTypeMeta);
+    }
+    if (data.containsKey('size_bytes')) {
+      context.handle(
+        _sizeBytesMeta,
+        sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeBytesMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {documentId, position};
+  @override
+  DocumentLocalAsset map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DocumentLocalAsset(
+      documentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      localPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_path'],
+      )!,
+      fileName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_name'],
+      )!,
+      mimeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime_type'],
+      )!,
+      sizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_bytes'],
+      )!,
+    );
+  }
+
+  @override
+  $DocumentLocalAssetsTable createAlias(String alias) {
+    return $DocumentLocalAssetsTable(attachedDatabase, alias);
+  }
+}
+
+class DocumentLocalAsset extends DataClass
+    implements Insertable<DocumentLocalAsset> {
+  final String documentId;
+  final int position;
+  final String localPath;
+  final String fileName;
+  final String mimeType;
+  final int sizeBytes;
+  const DocumentLocalAsset({
+    required this.documentId,
+    required this.position,
+    required this.localPath,
+    required this.fileName,
+    required this.mimeType,
+    required this.sizeBytes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['document_id'] = Variable<String>(documentId);
+    map['position'] = Variable<int>(position);
+    map['local_path'] = Variable<String>(localPath);
+    map['file_name'] = Variable<String>(fileName);
+    map['mime_type'] = Variable<String>(mimeType);
+    map['size_bytes'] = Variable<int>(sizeBytes);
+    return map;
+  }
+
+  DocumentLocalAssetsCompanion toCompanion(bool nullToAbsent) {
+    return DocumentLocalAssetsCompanion(
+      documentId: Value(documentId),
+      position: Value(position),
+      localPath: Value(localPath),
+      fileName: Value(fileName),
+      mimeType: Value(mimeType),
+      sizeBytes: Value(sizeBytes),
+    );
+  }
+
+  factory DocumentLocalAsset.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DocumentLocalAsset(
+      documentId: serializer.fromJson<String>(json['documentId']),
+      position: serializer.fromJson<int>(json['position']),
+      localPath: serializer.fromJson<String>(json['localPath']),
+      fileName: serializer.fromJson<String>(json['fileName']),
+      mimeType: serializer.fromJson<String>(json['mimeType']),
+      sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'documentId': serializer.toJson<String>(documentId),
+      'position': serializer.toJson<int>(position),
+      'localPath': serializer.toJson<String>(localPath),
+      'fileName': serializer.toJson<String>(fileName),
+      'mimeType': serializer.toJson<String>(mimeType),
+      'sizeBytes': serializer.toJson<int>(sizeBytes),
+    };
+  }
+
+  DocumentLocalAsset copyWith({
+    String? documentId,
+    int? position,
+    String? localPath,
+    String? fileName,
+    String? mimeType,
+    int? sizeBytes,
+  }) => DocumentLocalAsset(
+    documentId: documentId ?? this.documentId,
+    position: position ?? this.position,
+    localPath: localPath ?? this.localPath,
+    fileName: fileName ?? this.fileName,
+    mimeType: mimeType ?? this.mimeType,
+    sizeBytes: sizeBytes ?? this.sizeBytes,
+  );
+  DocumentLocalAsset copyWithCompanion(DocumentLocalAssetsCompanion data) {
+    return DocumentLocalAsset(
+      documentId: data.documentId.present
+          ? data.documentId.value
+          : this.documentId,
+      position: data.position.present ? data.position.value : this.position,
+      localPath: data.localPath.present ? data.localPath.value : this.localPath,
+      fileName: data.fileName.present ? data.fileName.value : this.fileName,
+      mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
+      sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DocumentLocalAsset(')
+          ..write('documentId: $documentId, ')
+          ..write('position: $position, ')
+          ..write('localPath: $localPath, ')
+          ..write('fileName: $fileName, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('sizeBytes: $sizeBytes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    documentId,
+    position,
+    localPath,
+    fileName,
+    mimeType,
+    sizeBytes,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DocumentLocalAsset &&
+          other.documentId == this.documentId &&
+          other.position == this.position &&
+          other.localPath == this.localPath &&
+          other.fileName == this.fileName &&
+          other.mimeType == this.mimeType &&
+          other.sizeBytes == this.sizeBytes);
+}
+
+class DocumentLocalAssetsCompanion extends UpdateCompanion<DocumentLocalAsset> {
+  final Value<String> documentId;
+  final Value<int> position;
+  final Value<String> localPath;
+  final Value<String> fileName;
+  final Value<String> mimeType;
+  final Value<int> sizeBytes;
+  final Value<int> rowid;
+  const DocumentLocalAssetsCompanion({
+    this.documentId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.localPath = const Value.absent(),
+    this.fileName = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DocumentLocalAssetsCompanion.insert({
+    required String documentId,
+    required int position,
+    required String localPath,
+    required String fileName,
+    required String mimeType,
+    required int sizeBytes,
+    this.rowid = const Value.absent(),
+  }) : documentId = Value(documentId),
+       position = Value(position),
+       localPath = Value(localPath),
+       fileName = Value(fileName),
+       mimeType = Value(mimeType),
+       sizeBytes = Value(sizeBytes);
+  static Insertable<DocumentLocalAsset> custom({
+    Expression<String>? documentId,
+    Expression<int>? position,
+    Expression<String>? localPath,
+    Expression<String>? fileName,
+    Expression<String>? mimeType,
+    Expression<int>? sizeBytes,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (documentId != null) 'document_id': documentId,
+      if (position != null) 'position': position,
+      if (localPath != null) 'local_path': localPath,
+      if (fileName != null) 'file_name': fileName,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DocumentLocalAssetsCompanion copyWith({
+    Value<String>? documentId,
+    Value<int>? position,
+    Value<String>? localPath,
+    Value<String>? fileName,
+    Value<String>? mimeType,
+    Value<int>? sizeBytes,
+    Value<int>? rowid,
+  }) {
+    return DocumentLocalAssetsCompanion(
+      documentId: documentId ?? this.documentId,
+      position: position ?? this.position,
+      localPath: localPath ?? this.localPath,
+      fileName: fileName ?? this.fileName,
+      mimeType: mimeType ?? this.mimeType,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (documentId.present) {
+      map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (localPath.present) {
+      map['local_path'] = Variable<String>(localPath.value);
+    }
+    if (fileName.present) {
+      map['file_name'] = Variable<String>(fileName.value);
+    }
+    if (mimeType.present) {
+      map['mime_type'] = Variable<String>(mimeType.value);
+    }
+    if (sizeBytes.present) {
+      map['size_bytes'] = Variable<int>(sizeBytes.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DocumentLocalAssetsCompanion(')
+          ..write('documentId: $documentId, ')
+          ..write('position: $position, ')
+          ..write('localPath: $localPath, ')
+          ..write('fileName: $fileName, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('sizeBytes: $sizeBytes, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3082,6 +3554,8 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
   late final $UploadQueueItemsTable uploadQueueItems = $UploadQueueItemsTable(
     this,
   );
+  late final $DocumentLocalAssetsTable documentLocalAssets =
+      $DocumentLocalAssetsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3091,6 +3565,7 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
     cachedMedicalEvents,
     cachedMedicalSummaries,
     uploadQueueItems,
+    documentLocalAssets,
   ];
 }
 
@@ -4127,6 +4602,7 @@ typedef $$UploadQueueItemsTableCreateCompanionBuilder =
       Value<bool> isDismissed,
       required DateTime createdAt,
       required DateTime updatedAt,
+      Value<String> assetsJson,
       Value<int> rowid,
     });
 typedef $$UploadQueueItemsTableUpdateCompanionBuilder =
@@ -4148,6 +4624,7 @@ typedef $$UploadQueueItemsTableUpdateCompanionBuilder =
       Value<bool> isDismissed,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
+      Value<String> assetsJson,
       Value<int> rowid,
     });
 
@@ -4242,6 +4719,11 @@ class $$UploadQueueItemsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get assetsJson => $composableBuilder(
+    column: $table.assetsJson,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4339,6 +4821,11 @@ class $$UploadQueueItemsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get assetsJson => $composableBuilder(
+    column: $table.assetsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$UploadQueueItemsTableAnnotationComposer
@@ -4412,6 +4899,11 @@ class $$UploadQueueItemsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get assetsJson => $composableBuilder(
+    column: $table.assetsJson,
+    builder: (column) => column,
+  );
 }
 
 class $$UploadQueueItemsTableTableManager
@@ -4468,6 +4960,7 @@ class $$UploadQueueItemsTableTableManager
                 Value<bool> isDismissed = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> assetsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UploadQueueItemsCompanion(
                 id: id,
@@ -4487,6 +4980,7 @@ class $$UploadQueueItemsTableTableManager
                 isDismissed: isDismissed,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                assetsJson: assetsJson,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4508,6 +5002,7 @@ class $$UploadQueueItemsTableTableManager
                 Value<bool> isDismissed = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
+                Value<String> assetsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UploadQueueItemsCompanion.insert(
                 id: id,
@@ -4527,6 +5022,7 @@ class $$UploadQueueItemsTableTableManager
                 isDismissed: isDismissed,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                assetsJson: assetsJson,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -4558,6 +5054,243 @@ typedef $$UploadQueueItemsTableProcessedTableManager =
       UploadQueueItem,
       PrefetchHooks Function()
     >;
+typedef $$DocumentLocalAssetsTableCreateCompanionBuilder =
+    DocumentLocalAssetsCompanion Function({
+      required String documentId,
+      required int position,
+      required String localPath,
+      required String fileName,
+      required String mimeType,
+      required int sizeBytes,
+      Value<int> rowid,
+    });
+typedef $$DocumentLocalAssetsTableUpdateCompanionBuilder =
+    DocumentLocalAssetsCompanion Function({
+      Value<String> documentId,
+      Value<int> position,
+      Value<String> localPath,
+      Value<String> fileName,
+      Value<String> mimeType,
+      Value<int> sizeBytes,
+      Value<int> rowid,
+    });
+
+class $$DocumentLocalAssetsTableFilterComposer
+    extends Composer<_$LocalDatabase, $DocumentLocalAssetsTable> {
+  $$DocumentLocalAssetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localPath => $composableBuilder(
+    column: $table.localPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DocumentLocalAssetsTableOrderingComposer
+    extends Composer<_$LocalDatabase, $DocumentLocalAssetsTable> {
+  $$DocumentLocalAssetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localPath => $composableBuilder(
+    column: $table.localPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DocumentLocalAssetsTableAnnotationComposer
+    extends Composer<_$LocalDatabase, $DocumentLocalAssetsTable> {
+  $$DocumentLocalAssetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get localPath =>
+      $composableBuilder(column: $table.localPath, builder: (column) => column);
+
+  GeneratedColumn<String> get fileName =>
+      $composableBuilder(column: $table.fileName, builder: (column) => column);
+
+  GeneratedColumn<String> get mimeType =>
+      $composableBuilder(column: $table.mimeType, builder: (column) => column);
+
+  GeneratedColumn<int> get sizeBytes =>
+      $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+}
+
+class $$DocumentLocalAssetsTableTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          $DocumentLocalAssetsTable,
+          DocumentLocalAsset,
+          $$DocumentLocalAssetsTableFilterComposer,
+          $$DocumentLocalAssetsTableOrderingComposer,
+          $$DocumentLocalAssetsTableAnnotationComposer,
+          $$DocumentLocalAssetsTableCreateCompanionBuilder,
+          $$DocumentLocalAssetsTableUpdateCompanionBuilder,
+          (
+            DocumentLocalAsset,
+            BaseReferences<
+              _$LocalDatabase,
+              $DocumentLocalAssetsTable,
+              DocumentLocalAsset
+            >,
+          ),
+          DocumentLocalAsset,
+          PrefetchHooks Function()
+        > {
+  $$DocumentLocalAssetsTableTableManager(
+    _$LocalDatabase db,
+    $DocumentLocalAssetsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DocumentLocalAssetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DocumentLocalAssetsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$DocumentLocalAssetsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> documentId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<String> localPath = const Value.absent(),
+                Value<String> fileName = const Value.absent(),
+                Value<String> mimeType = const Value.absent(),
+                Value<int> sizeBytes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DocumentLocalAssetsCompanion(
+                documentId: documentId,
+                position: position,
+                localPath: localPath,
+                fileName: fileName,
+                mimeType: mimeType,
+                sizeBytes: sizeBytes,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String documentId,
+                required int position,
+                required String localPath,
+                required String fileName,
+                required String mimeType,
+                required int sizeBytes,
+                Value<int> rowid = const Value.absent(),
+              }) => DocumentLocalAssetsCompanion.insert(
+                documentId: documentId,
+                position: position,
+                localPath: localPath,
+                fileName: fileName,
+                mimeType: mimeType,
+                sizeBytes: sizeBytes,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DocumentLocalAssetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      $DocumentLocalAssetsTable,
+      DocumentLocalAsset,
+      $$DocumentLocalAssetsTableFilterComposer,
+      $$DocumentLocalAssetsTableOrderingComposer,
+      $$DocumentLocalAssetsTableAnnotationComposer,
+      $$DocumentLocalAssetsTableCreateCompanionBuilder,
+      $$DocumentLocalAssetsTableUpdateCompanionBuilder,
+      (
+        DocumentLocalAsset,
+        BaseReferences<
+          _$LocalDatabase,
+          $DocumentLocalAssetsTable,
+          DocumentLocalAsset
+        >,
+      ),
+      DocumentLocalAsset,
+      PrefetchHooks Function()
+    >;
 
 class $LocalDatabaseManager {
   final _$LocalDatabase _db;
@@ -4573,4 +5306,6 @@ class $LocalDatabaseManager {
       );
   $$UploadQueueItemsTableTableManager get uploadQueueItems =>
       $$UploadQueueItemsTableTableManager(_db, _db.uploadQueueItems);
+  $$DocumentLocalAssetsTableTableManager get documentLocalAssets =>
+      $$DocumentLocalAssetsTableTableManager(_db, _db.documentLocalAssets);
 }

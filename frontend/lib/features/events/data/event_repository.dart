@@ -40,4 +40,19 @@ class EventRepository {
     await api.deleteEvent(id);
     await database.removeEvent(id);
   }
+
+  Future<EventRevision> regenerateEvent(String id) => api.regenerateEvent(id);
+
+  Future<MedicalEvent> applyRevision(
+    String eventId,
+    String revisionId,
+    List<String> fields,
+  ) async {
+    final event = await api.applyRevision(eventId, revisionId, fields);
+    await database.upsertEvents([event.toCacheCompanion()]);
+    return event;
+  }
+
+  Future<void> discardRevision(String eventId, String revisionId) =>
+      api.discardRevision(eventId, revisionId);
 }

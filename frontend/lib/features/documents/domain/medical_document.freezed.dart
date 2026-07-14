@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MedicalDocument {
 
- String get id; String get title;@JsonKey(name: 'doc_type') DocumentType get docType;@JsonKey(name: 'mime_type') String get mimeType;@JsonKey(name: 'local_uri_hint') String get localUriHint;@JsonKey(name: 'size_bytes') int get sizeBytes; DocumentStatus get status;@JsonKey(name: 'subject_id') String? get subjectId;@JsonKey(name: 'document_date') String? get documentDate; String get language;@JsonKey(name: 'local_only') bool get localOnly;@JsonKey(name: 'extracted_text_available') bool get extractedTextAvailable;@JsonKey(name: 'event_count') int get eventCount;@JsonKey(name: 'error_message') String get errorMessage;@JsonKey(name: 'created_at') DateTime? get createdAt;@JsonKey(name: 'updated_at') DateTime? get updatedAt;
+ String get id; String get title;@JsonKey(name: 'doc_type') DocumentType get docType;@JsonKey(name: 'mime_type') String get mimeType;@JsonKey(name: 'local_uri_hint') String get localUriHint;@JsonKey(name: 'size_bytes') int get sizeBytes; DocumentStatus get status;@JsonKey(name: 'subject_id') String? get subjectId;@JsonKey(name: 'document_date') String? get documentDate; String get language;@JsonKey(name: 'local_only') bool get localOnly;@JsonKey(name: 'extracted_text_available') bool get extractedTextAvailable;@JsonKey(name: 'event_count') int get eventCount;@JsonKey(name: 'event_id') String? get eventId; List<DocumentAssetMetadata> get assets;@JsonKey(name: 'error_message') String get errorMessage;@JsonKey(name: 'created_at') DateTime? get createdAt;@JsonKey(name: 'updated_at') DateTime? get updatedAt;
 /// Create a copy of MedicalDocument
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $MedicalDocumentCopyWith<MedicalDocument> get copyWith => _$MedicalDocumentCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MedicalDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.status, status) || other.status == status)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.language, language) || other.language == language)&&(identical(other.localOnly, localOnly) || other.localOnly == localOnly)&&(identical(other.extractedTextAvailable, extractedTextAvailable) || other.extractedTextAvailable == extractedTextAvailable)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MedicalDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.status, status) || other.status == status)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.language, language) || other.language == language)&&(identical(other.localOnly, localOnly) || other.localOnly == localOnly)&&(identical(other.extractedTextAvailable, extractedTextAvailable) || other.extractedTextAvailable == extractedTextAvailable)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&const DeepCollectionEquality().equals(other.assets, assets)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,docType,mimeType,localUriHint,sizeBytes,status,subjectId,documentDate,language,localOnly,extractedTextAvailable,eventCount,errorMessage,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,title,docType,mimeType,localUriHint,sizeBytes,status,subjectId,documentDate,language,localOnly,extractedTextAvailable,eventCount,eventId,const DeepCollectionEquality().hash(assets),errorMessage,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'MedicalDocument(id: $id, title: $title, docType: $docType, mimeType: $mimeType, localUriHint: $localUriHint, sizeBytes: $sizeBytes, status: $status, subjectId: $subjectId, documentDate: $documentDate, language: $language, localOnly: $localOnly, extractedTextAvailable: $extractedTextAvailable, eventCount: $eventCount, errorMessage: $errorMessage, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'MedicalDocument(id: $id, title: $title, docType: $docType, mimeType: $mimeType, localUriHint: $localUriHint, sizeBytes: $sizeBytes, status: $status, subjectId: $subjectId, documentDate: $documentDate, language: $language, localOnly: $localOnly, extractedTextAvailable: $extractedTextAvailable, eventCount: $eventCount, eventId: $eventId, assets: $assets, errorMessage: $errorMessage, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $MedicalDocumentCopyWith<$Res>  {
   factory $MedicalDocumentCopyWith(MedicalDocument value, $Res Function(MedicalDocument) _then) = _$MedicalDocumentCopyWithImpl;
 @useResult
 $Res call({
- String id, String title,@JsonKey(name: 'doc_type') DocumentType docType,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'local_uri_hint') String localUriHint,@JsonKey(name: 'size_bytes') int sizeBytes, DocumentStatus status,@JsonKey(name: 'subject_id') String? subjectId,@JsonKey(name: 'document_date') String? documentDate, String language,@JsonKey(name: 'local_only') bool localOnly,@JsonKey(name: 'extracted_text_available') bool extractedTextAvailable,@JsonKey(name: 'event_count') int eventCount,@JsonKey(name: 'error_message') String errorMessage,@JsonKey(name: 'created_at') DateTime? createdAt,@JsonKey(name: 'updated_at') DateTime? updatedAt
+ String id, String title,@JsonKey(name: 'doc_type') DocumentType docType,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'local_uri_hint') String localUriHint,@JsonKey(name: 'size_bytes') int sizeBytes, DocumentStatus status,@JsonKey(name: 'subject_id') String? subjectId,@JsonKey(name: 'document_date') String? documentDate, String language,@JsonKey(name: 'local_only') bool localOnly,@JsonKey(name: 'extracted_text_available') bool extractedTextAvailable,@JsonKey(name: 'event_count') int eventCount,@JsonKey(name: 'event_id') String? eventId, List<DocumentAssetMetadata> assets,@JsonKey(name: 'error_message') String errorMessage,@JsonKey(name: 'created_at') DateTime? createdAt,@JsonKey(name: 'updated_at') DateTime? updatedAt
 });
 
 
@@ -65,7 +65,7 @@ class _$MedicalDocumentCopyWithImpl<$Res>
 
 /// Create a copy of MedicalDocument
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? docType = null,Object? mimeType = null,Object? localUriHint = null,Object? sizeBytes = null,Object? status = null,Object? subjectId = freezed,Object? documentDate = freezed,Object? language = null,Object? localOnly = null,Object? extractedTextAvailable = null,Object? eventCount = null,Object? errorMessage = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? docType = null,Object? mimeType = null,Object? localUriHint = null,Object? sizeBytes = null,Object? status = null,Object? subjectId = freezed,Object? documentDate = freezed,Object? language = null,Object? localOnly = null,Object? extractedTextAvailable = null,Object? eventCount = null,Object? eventId = freezed,Object? assets = null,Object? errorMessage = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -80,7 +80,9 @@ as String?,language: null == language ? _self.language : language // ignore: cas
 as String,localOnly: null == localOnly ? _self.localOnly : localOnly // ignore: cast_nullable_to_non_nullable
 as bool,extractedTextAvailable: null == extractedTextAvailable ? _self.extractedTextAvailable : extractedTextAvailable // ignore: cast_nullable_to_non_nullable
 as bool,eventCount: null == eventCount ? _self.eventCount : eventCount // ignore: cast_nullable_to_non_nullable
-as int,errorMessage: null == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as int,eventId: freezed == eventId ? _self.eventId : eventId // ignore: cast_nullable_to_non_nullable
+as String?,assets: null == assets ? _self.assets : assets // ignore: cast_nullable_to_non_nullable
+as List<DocumentAssetMetadata>,errorMessage: null == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -168,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'local_uri_hint')  String localUriHint, @JsonKey(name: 'size_bytes')  int sizeBytes,  DocumentStatus status, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate,  String language, @JsonKey(name: 'local_only')  bool localOnly, @JsonKey(name: 'extracted_text_available')  bool extractedTextAvailable, @JsonKey(name: 'event_count')  int eventCount, @JsonKey(name: 'error_message')  String errorMessage, @JsonKey(name: 'created_at')  DateTime? createdAt, @JsonKey(name: 'updated_at')  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'local_uri_hint')  String localUriHint, @JsonKey(name: 'size_bytes')  int sizeBytes,  DocumentStatus status, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate,  String language, @JsonKey(name: 'local_only')  bool localOnly, @JsonKey(name: 'extracted_text_available')  bool extractedTextAvailable, @JsonKey(name: 'event_count')  int eventCount, @JsonKey(name: 'event_id')  String? eventId,  List<DocumentAssetMetadata> assets, @JsonKey(name: 'error_message')  String errorMessage, @JsonKey(name: 'created_at')  DateTime? createdAt, @JsonKey(name: 'updated_at')  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MedicalDocument() when $default != null:
-return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUriHint,_that.sizeBytes,_that.status,_that.subjectId,_that.documentDate,_that.language,_that.localOnly,_that.extractedTextAvailable,_that.eventCount,_that.errorMessage,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUriHint,_that.sizeBytes,_that.status,_that.subjectId,_that.documentDate,_that.language,_that.localOnly,_that.extractedTextAvailable,_that.eventCount,_that.eventId,_that.assets,_that.errorMessage,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -189,10 +191,10 @@ return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUri
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'local_uri_hint')  String localUriHint, @JsonKey(name: 'size_bytes')  int sizeBytes,  DocumentStatus status, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate,  String language, @JsonKey(name: 'local_only')  bool localOnly, @JsonKey(name: 'extracted_text_available')  bool extractedTextAvailable, @JsonKey(name: 'event_count')  int eventCount, @JsonKey(name: 'error_message')  String errorMessage, @JsonKey(name: 'created_at')  DateTime? createdAt, @JsonKey(name: 'updated_at')  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'local_uri_hint')  String localUriHint, @JsonKey(name: 'size_bytes')  int sizeBytes,  DocumentStatus status, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate,  String language, @JsonKey(name: 'local_only')  bool localOnly, @JsonKey(name: 'extracted_text_available')  bool extractedTextAvailable, @JsonKey(name: 'event_count')  int eventCount, @JsonKey(name: 'event_id')  String? eventId,  List<DocumentAssetMetadata> assets, @JsonKey(name: 'error_message')  String errorMessage, @JsonKey(name: 'created_at')  DateTime? createdAt, @JsonKey(name: 'updated_at')  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _MedicalDocument():
-return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUriHint,_that.sizeBytes,_that.status,_that.subjectId,_that.documentDate,_that.language,_that.localOnly,_that.extractedTextAvailable,_that.eventCount,_that.errorMessage,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUriHint,_that.sizeBytes,_that.status,_that.subjectId,_that.documentDate,_that.language,_that.localOnly,_that.extractedTextAvailable,_that.eventCount,_that.eventId,_that.assets,_that.errorMessage,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -209,10 +211,10 @@ return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUri
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'local_uri_hint')  String localUriHint, @JsonKey(name: 'size_bytes')  int sizeBytes,  DocumentStatus status, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate,  String language, @JsonKey(name: 'local_only')  bool localOnly, @JsonKey(name: 'extracted_text_available')  bool extractedTextAvailable, @JsonKey(name: 'event_count')  int eventCount, @JsonKey(name: 'error_message')  String errorMessage, @JsonKey(name: 'created_at')  DateTime? createdAt, @JsonKey(name: 'updated_at')  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title, @JsonKey(name: 'doc_type')  DocumentType docType, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'local_uri_hint')  String localUriHint, @JsonKey(name: 'size_bytes')  int sizeBytes,  DocumentStatus status, @JsonKey(name: 'subject_id')  String? subjectId, @JsonKey(name: 'document_date')  String? documentDate,  String language, @JsonKey(name: 'local_only')  bool localOnly, @JsonKey(name: 'extracted_text_available')  bool extractedTextAvailable, @JsonKey(name: 'event_count')  int eventCount, @JsonKey(name: 'event_id')  String? eventId,  List<DocumentAssetMetadata> assets, @JsonKey(name: 'error_message')  String errorMessage, @JsonKey(name: 'created_at')  DateTime? createdAt, @JsonKey(name: 'updated_at')  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _MedicalDocument() when $default != null:
-return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUriHint,_that.sizeBytes,_that.status,_that.subjectId,_that.documentDate,_that.language,_that.localOnly,_that.extractedTextAvailable,_that.eventCount,_that.errorMessage,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUriHint,_that.sizeBytes,_that.status,_that.subjectId,_that.documentDate,_that.language,_that.localOnly,_that.extractedTextAvailable,_that.eventCount,_that.eventId,_that.assets,_that.errorMessage,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -224,7 +226,7 @@ return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUri
 @JsonSerializable()
 
 class _MedicalDocument implements MedicalDocument {
-  const _MedicalDocument({required this.id, this.title = '', @JsonKey(name: 'doc_type') this.docType = DocumentType.other, @JsonKey(name: 'mime_type') this.mimeType = '', @JsonKey(name: 'local_uri_hint') this.localUriHint = '', @JsonKey(name: 'size_bytes') this.sizeBytes = 0, this.status = DocumentStatus.pendingIngest, @JsonKey(name: 'subject_id') this.subjectId, @JsonKey(name: 'document_date') this.documentDate, this.language = '', @JsonKey(name: 'local_only') this.localOnly = true, @JsonKey(name: 'extracted_text_available') this.extractedTextAvailable = false, @JsonKey(name: 'event_count') this.eventCount = 0, @JsonKey(name: 'error_message') this.errorMessage = '', @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt});
+  const _MedicalDocument({required this.id, this.title = '', @JsonKey(name: 'doc_type') this.docType = DocumentType.other, @JsonKey(name: 'mime_type') this.mimeType = '', @JsonKey(name: 'local_uri_hint') this.localUriHint = '', @JsonKey(name: 'size_bytes') this.sizeBytes = 0, this.status = DocumentStatus.pendingIngest, @JsonKey(name: 'subject_id') this.subjectId, @JsonKey(name: 'document_date') this.documentDate, this.language = '', @JsonKey(name: 'local_only') this.localOnly = true, @JsonKey(name: 'extracted_text_available') this.extractedTextAvailable = false, @JsonKey(name: 'event_count') this.eventCount = 0, @JsonKey(name: 'event_id') this.eventId, final  List<DocumentAssetMetadata> assets = const <DocumentAssetMetadata>[], @JsonKey(name: 'error_message') this.errorMessage = '', @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt}): _assets = assets;
   factory _MedicalDocument.fromJson(Map<String, dynamic> json) => _$MedicalDocumentFromJson(json);
 
 @override final  String id;
@@ -240,6 +242,14 @@ class _MedicalDocument implements MedicalDocument {
 @override@JsonKey(name: 'local_only') final  bool localOnly;
 @override@JsonKey(name: 'extracted_text_available') final  bool extractedTextAvailable;
 @override@JsonKey(name: 'event_count') final  int eventCount;
+@override@JsonKey(name: 'event_id') final  String? eventId;
+ final  List<DocumentAssetMetadata> _assets;
+@override@JsonKey() List<DocumentAssetMetadata> get assets {
+  if (_assets is EqualUnmodifiableListView) return _assets;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_assets);
+}
+
 @override@JsonKey(name: 'error_message') final  String errorMessage;
 @override@JsonKey(name: 'created_at') final  DateTime? createdAt;
 @override@JsonKey(name: 'updated_at') final  DateTime? updatedAt;
@@ -257,16 +267,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MedicalDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.status, status) || other.status == status)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.language, language) || other.language == language)&&(identical(other.localOnly, localOnly) || other.localOnly == localOnly)&&(identical(other.extractedTextAvailable, extractedTextAvailable) || other.extractedTextAvailable == extractedTextAvailable)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MedicalDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.status, status) || other.status == status)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.language, language) || other.language == language)&&(identical(other.localOnly, localOnly) || other.localOnly == localOnly)&&(identical(other.extractedTextAvailable, extractedTextAvailable) || other.extractedTextAvailable == extractedTextAvailable)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&const DeepCollectionEquality().equals(other._assets, _assets)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,docType,mimeType,localUriHint,sizeBytes,status,subjectId,documentDate,language,localOnly,extractedTextAvailable,eventCount,errorMessage,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,title,docType,mimeType,localUriHint,sizeBytes,status,subjectId,documentDate,language,localOnly,extractedTextAvailable,eventCount,eventId,const DeepCollectionEquality().hash(_assets),errorMessage,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'MedicalDocument(id: $id, title: $title, docType: $docType, mimeType: $mimeType, localUriHint: $localUriHint, sizeBytes: $sizeBytes, status: $status, subjectId: $subjectId, documentDate: $documentDate, language: $language, localOnly: $localOnly, extractedTextAvailable: $extractedTextAvailable, eventCount: $eventCount, errorMessage: $errorMessage, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'MedicalDocument(id: $id, title: $title, docType: $docType, mimeType: $mimeType, localUriHint: $localUriHint, sizeBytes: $sizeBytes, status: $status, subjectId: $subjectId, documentDate: $documentDate, language: $language, localOnly: $localOnly, extractedTextAvailable: $extractedTextAvailable, eventCount: $eventCount, eventId: $eventId, assets: $assets, errorMessage: $errorMessage, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -277,7 +287,7 @@ abstract mixin class _$MedicalDocumentCopyWith<$Res> implements $MedicalDocument
   factory _$MedicalDocumentCopyWith(_MedicalDocument value, $Res Function(_MedicalDocument) _then) = __$MedicalDocumentCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title,@JsonKey(name: 'doc_type') DocumentType docType,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'local_uri_hint') String localUriHint,@JsonKey(name: 'size_bytes') int sizeBytes, DocumentStatus status,@JsonKey(name: 'subject_id') String? subjectId,@JsonKey(name: 'document_date') String? documentDate, String language,@JsonKey(name: 'local_only') bool localOnly,@JsonKey(name: 'extracted_text_available') bool extractedTextAvailable,@JsonKey(name: 'event_count') int eventCount,@JsonKey(name: 'error_message') String errorMessage,@JsonKey(name: 'created_at') DateTime? createdAt,@JsonKey(name: 'updated_at') DateTime? updatedAt
+ String id, String title,@JsonKey(name: 'doc_type') DocumentType docType,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'local_uri_hint') String localUriHint,@JsonKey(name: 'size_bytes') int sizeBytes, DocumentStatus status,@JsonKey(name: 'subject_id') String? subjectId,@JsonKey(name: 'document_date') String? documentDate, String language,@JsonKey(name: 'local_only') bool localOnly,@JsonKey(name: 'extracted_text_available') bool extractedTextAvailable,@JsonKey(name: 'event_count') int eventCount,@JsonKey(name: 'event_id') String? eventId, List<DocumentAssetMetadata> assets,@JsonKey(name: 'error_message') String errorMessage,@JsonKey(name: 'created_at') DateTime? createdAt,@JsonKey(name: 'updated_at') DateTime? updatedAt
 });
 
 
@@ -294,7 +304,7 @@ class __$MedicalDocumentCopyWithImpl<$Res>
 
 /// Create a copy of MedicalDocument
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? docType = null,Object? mimeType = null,Object? localUriHint = null,Object? sizeBytes = null,Object? status = null,Object? subjectId = freezed,Object? documentDate = freezed,Object? language = null,Object? localOnly = null,Object? extractedTextAvailable = null,Object? eventCount = null,Object? errorMessage = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? docType = null,Object? mimeType = null,Object? localUriHint = null,Object? sizeBytes = null,Object? status = null,Object? subjectId = freezed,Object? documentDate = freezed,Object? language = null,Object? localOnly = null,Object? extractedTextAvailable = null,Object? eventCount = null,Object? eventId = freezed,Object? assets = null,Object? errorMessage = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_MedicalDocument(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -309,10 +319,287 @@ as String?,language: null == language ? _self.language : language // ignore: cas
 as String,localOnly: null == localOnly ? _self.localOnly : localOnly // ignore: cast_nullable_to_non_nullable
 as bool,extractedTextAvailable: null == extractedTextAvailable ? _self.extractedTextAvailable : extractedTextAvailable // ignore: cast_nullable_to_non_nullable
 as bool,eventCount: null == eventCount ? _self.eventCount : eventCount // ignore: cast_nullable_to_non_nullable
-as int,errorMessage: null == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as int,eventId: freezed == eventId ? _self.eventId : eventId // ignore: cast_nullable_to_non_nullable
+as String?,assets: null == assets ? _self._assets : assets // ignore: cast_nullable_to_non_nullable
+as List<DocumentAssetMetadata>,errorMessage: null == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$DocumentAssetMetadata {
+
+ String get id; int get position;@JsonKey(name: 'file_name') String get fileName;@JsonKey(name: 'mime_type') String get mimeType;@JsonKey(name: 'size_bytes') int get sizeBytes;
+/// Create a copy of DocumentAssetMetadata
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DocumentAssetMetadataCopyWith<DocumentAssetMetadata> get copyWith => _$DocumentAssetMetadataCopyWithImpl<DocumentAssetMetadata>(this as DocumentAssetMetadata, _$identity);
+
+  /// Serializes this DocumentAssetMetadata to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentAssetMetadata&&(identical(other.id, id) || other.id == id)&&(identical(other.position, position) || other.position == position)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,position,fileName,mimeType,sizeBytes);
+
+@override
+String toString() {
+  return 'DocumentAssetMetadata(id: $id, position: $position, fileName: $fileName, mimeType: $mimeType, sizeBytes: $sizeBytes)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DocumentAssetMetadataCopyWith<$Res>  {
+  factory $DocumentAssetMetadataCopyWith(DocumentAssetMetadata value, $Res Function(DocumentAssetMetadata) _then) = _$DocumentAssetMetadataCopyWithImpl;
+@useResult
+$Res call({
+ String id, int position,@JsonKey(name: 'file_name') String fileName,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'size_bytes') int sizeBytes
+});
+
+
+
+
+}
+/// @nodoc
+class _$DocumentAssetMetadataCopyWithImpl<$Res>
+    implements $DocumentAssetMetadataCopyWith<$Res> {
+  _$DocumentAssetMetadataCopyWithImpl(this._self, this._then);
+
+  final DocumentAssetMetadata _self;
+  final $Res Function(DocumentAssetMetadata) _then;
+
+/// Create a copy of DocumentAssetMetadata
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? position = null,Object? fileName = null,Object? mimeType = null,Object? sizeBytes = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
+as int,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
+as String,mimeType: null == mimeType ? _self.mimeType : mimeType // ignore: cast_nullable_to_non_nullable
+as String,sizeBytes: null == sizeBytes ? _self.sizeBytes : sizeBytes // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [DocumentAssetMetadata].
+extension DocumentAssetMetadataPatterns on DocumentAssetMetadata {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DocumentAssetMetadata value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DocumentAssetMetadata() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DocumentAssetMetadata value)  $default,){
+final _that = this;
+switch (_that) {
+case _DocumentAssetMetadata():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DocumentAssetMetadata value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DocumentAssetMetadata() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int position, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DocumentAssetMetadata() when $default != null:
+return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.sizeBytes);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int position, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes)  $default,) {final _that = this;
+switch (_that) {
+case _DocumentAssetMetadata():
+return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.sizeBytes);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int position, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes)?  $default,) {final _that = this;
+switch (_that) {
+case _DocumentAssetMetadata() when $default != null:
+return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.sizeBytes);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _DocumentAssetMetadata implements DocumentAssetMetadata {
+  const _DocumentAssetMetadata({required this.id, required this.position, @JsonKey(name: 'file_name') required this.fileName, @JsonKey(name: 'mime_type') required this.mimeType, @JsonKey(name: 'size_bytes') required this.sizeBytes});
+  factory _DocumentAssetMetadata.fromJson(Map<String, dynamic> json) => _$DocumentAssetMetadataFromJson(json);
+
+@override final  String id;
+@override final  int position;
+@override@JsonKey(name: 'file_name') final  String fileName;
+@override@JsonKey(name: 'mime_type') final  String mimeType;
+@override@JsonKey(name: 'size_bytes') final  int sizeBytes;
+
+/// Create a copy of DocumentAssetMetadata
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DocumentAssetMetadataCopyWith<_DocumentAssetMetadata> get copyWith => __$DocumentAssetMetadataCopyWithImpl<_DocumentAssetMetadata>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$DocumentAssetMetadataToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentAssetMetadata&&(identical(other.id, id) || other.id == id)&&(identical(other.position, position) || other.position == position)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,position,fileName,mimeType,sizeBytes);
+
+@override
+String toString() {
+  return 'DocumentAssetMetadata(id: $id, position: $position, fileName: $fileName, mimeType: $mimeType, sizeBytes: $sizeBytes)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DocumentAssetMetadataCopyWith<$Res> implements $DocumentAssetMetadataCopyWith<$Res> {
+  factory _$DocumentAssetMetadataCopyWith(_DocumentAssetMetadata value, $Res Function(_DocumentAssetMetadata) _then) = __$DocumentAssetMetadataCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, int position,@JsonKey(name: 'file_name') String fileName,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'size_bytes') int sizeBytes
+});
+
+
+
+
+}
+/// @nodoc
+class __$DocumentAssetMetadataCopyWithImpl<$Res>
+    implements _$DocumentAssetMetadataCopyWith<$Res> {
+  __$DocumentAssetMetadataCopyWithImpl(this._self, this._then);
+
+  final _DocumentAssetMetadata _self;
+  final $Res Function(_DocumentAssetMetadata) _then;
+
+/// Create a copy of DocumentAssetMetadata
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? position = null,Object? fileName = null,Object? mimeType = null,Object? sizeBytes = null,}) {
+  return _then(_DocumentAssetMetadata(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
+as int,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
+as String,mimeType: null == mimeType ? _self.mimeType : mimeType // ignore: cast_nullable_to_non_nullable
+as String,sizeBytes: null == sizeBytes ? _self.sizeBytes : sizeBytes // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction
 from django.test import SimpleTestCase, override_settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
@@ -12,7 +13,7 @@ from rest_framework.test import APITestCase
 
 from ai.providers.base import OCRResult
 from ai.schemas import SchemaValidationError
-from medical.models import Document, DocumentExplanation, MedicalEvent, MedicalSummary, ProcessingJob, Subject, VisitPreparation
+from medical.models import Document, DocumentAsset, DocumentExplanation, EventRevision, MedicalEvent, MedicalSummary, ProcessingJob, Subject, VisitPreparation
 
 
 TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
@@ -1188,6 +1189,82 @@ class MedicalApiTests(APITestCase):
         document.save(update_fields=("extracted_text", "language", "status", "updated_at"))
         return document
 
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_multi_page_upload_creates_one_document_event_and_ordered_assets(self):
+        document = self._create_document(Document.DocumentType.MEDICAL_RECORD)
+        response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {
+                "files": [
+                    self._upload("page-1.png", b"CRP 12 mg/L", "image/png"),
+                    self._upload("page-2.png", b"Reference < 5 mg/L", "image/png"),
+                ]
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.PROCESSED)
+        self.assertEqual(document.medical_events.filter(deleted_at__isnull=True).count(), 1)
+        self.assertEqual(list(document.assets.values_list("position", flat=True)), [1, 2])
+        self.assertEqual(response.data["event_count"], 1)
+        self.assertIsNotNone(response.data["event_id"])
+
+    def test_database_rejects_two_active_events_for_one_source(self):
+        document = self._create_processed_document(extracted_text="CRP 12 mg/L")
+        subject = document.subject
+        MedicalEvent.objects.create(
+            user=self.user, subject=subject, source_document=document,
+            event_type=MedicalEvent.EventType.EXAMINATION, title="First",
+            event_date=date(2026, 5, 12), source=MedicalEvent.Source.AI_DOCUMENT,
+        )
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            MedicalEvent.objects.create(
+                user=self.user, subject=subject, source_document=document,
+                event_type=MedicalEvent.EventType.NOTE, title="Second",
+                event_date=date(2026, 5, 12), source=MedicalEvent.Source.AI_DOCUMENT,
+            )
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_text_capture_preserves_original_text_on_event_detail(self):
+        original = "CRP 12 mg/L on 2026-05-12"
+        response = self.client.post("/api/v1/capture/notes", {"text": original}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document = Document.objects.get(id=response.data["id"])
+        event = document.medical_events.get(deleted_at__isnull=True)
+
+        detail = self.client.get(f"/api/v1/events/{event.id}")
+        self.assertEqual(detail.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail.data["source_text"], original)
+
+    def test_event_regeneration_creates_draft_and_does_not_overwrite_edit(self):
+        document = self._create_processed_document(extracted_text="CRP 12 mg/L on 2026-05-12")
+        event = MedicalEvent.objects.create(
+            user=self.user, subject=document.subject, source_document=document,
+            event_type=MedicalEvent.EventType.EXAMINATION, title="My edited title",
+            description="My edited description", event_date=date(2026, 5, 12),
+            source=MedicalEvent.Source.AI_DOCUMENT,
+        )
+
+        response = self.client.post(f"/api/v1/events/{event.id}/revisions", {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        event.refresh_from_db()
+        self.assertEqual(event.title, "My edited title")
+        revision = EventRevision.objects.get(id=response.data["id"])
+        self.assertEqual(revision.status, EventRevision.Status.PENDING)
+        self.assertIn("title", revision.suggested_changes)
+
+        applied = self.client.post(
+            f"/api/v1/events/{event.id}/revisions/{revision.id}",
+            {"fields": ["description"]},
+            format="json",
+        )
+        self.assertEqual(applied.status_code, status.HTTP_200_OK)
+        event.refresh_from_db()
+        self.assertEqual(event.title, "My edited title")
+        self.assertNotEqual(event.description, "My edited description")
+
     def _default_subject(self):
         subject = Subject.objects.filter(user=self.user, is_default=True).first()
         if subject is not None:
@@ -1257,7 +1334,7 @@ class AIProviderTests(SimpleTestCase):
     def test_event_extraction_schema_is_strict_for_openai_structured_outputs(self):
         from ai.schemas import EVENT_EXTRACTION_JSON_SCHEMA
 
-        event_schema = EVENT_EXTRACTION_JSON_SCHEMA["properties"]["events"]["items"]
+        event_schema = EVENT_EXTRACTION_JSON_SCHEMA["properties"]["event"]
         attributes_schema = event_schema["properties"]["attributes"]
         measurement_schema = attributes_schema["properties"]["measurements"]["items"]
         medication_schema = attributes_schema["properties"]["medications"]["items"]
@@ -1276,8 +1353,7 @@ class AIProviderTests(SimpleTestCase):
             {
                 "document_date": "03.05.2024",
                 "suggested_title": long_title,
-                "events": [
-                    {
+                "event": {
                         "event_type": "lab_result",
                         "title": long_title,
                         "description": 123,
@@ -1285,44 +1361,19 @@ class AIProviderTests(SimpleTestCase):
                         "attributes": [],
                         "confidence": 1.7,
                     },
-                    {
-                        "event_type": "not a known type",
-                        "title": "  Unknown thing  ",
-                        "description": None,
-                        "event_date": "bad date",
-                        "attributes": {"notes": "kept"},
-                        "confidence": "0.42",
-                    },
-                    {
-                        "event_type": "note",
-                        "title": "",
-                        "description": "Skipped because title is required",
-                        "event_date": "2024-05-06",
-                        "attributes": {},
-                        "confidence": 0.5,
-                    },
-                ],
             },
             default_date=date(2026, 6, 28),
         )
 
         self.assertEqual(extraction["document_date"], date(2024, 5, 3))
         self.assertEqual(len(extraction["suggested_title"]), 255)
-        self.assertEqual(len(extraction["events"]), 2)
-
-        first_event = extraction["events"][0]
+        first_event = extraction["event"]
         self.assertEqual(first_event["event_type"], "examination")
         self.assertEqual(first_event["event_date"], date(2024, 5, 4))
         self.assertEqual(len(first_event["title"]), 255)
         self.assertEqual(first_event["description"], "123")
         self.assertEqual(first_event["attributes"], {})
         self.assertEqual(first_event["confidence"], 1.0)
-
-        second_event = extraction["events"][1]
-        self.assertEqual(second_event["event_type"], "note")
-        self.assertEqual(second_event["title"], "Unknown thing")
-        self.assertEqual(second_event["event_date"], date(2024, 5, 3))
-        self.assertEqual(second_event["confidence"], 0.42)
 
     def test_event_extraction_defaults_missing_dates_to_today(self):
         from ai.schemas import validate_event_extraction
@@ -1331,8 +1382,7 @@ class AIProviderTests(SimpleTestCase):
             {
                 "document_date": None,
                 "suggested_title": None,
-                "events": [
-                    {
+                "event": {
                         "event_type": "note",
                         "title": "Undated note",
                         "description": None,
@@ -1340,14 +1390,13 @@ class AIProviderTests(SimpleTestCase):
                         "attributes": {},
                         "confidence": None,
                     },
-                ],
             },
             default_date=date(2026, 6, 28),
         )
 
         self.assertEqual(extraction["document_date"], date(2026, 6, 28))
-        self.assertEqual(extraction["events"][0]["event_date"], date(2026, 6, 28))
-        self.assertEqual(extraction["events"][0]["confidence"], 0.5)
+        self.assertEqual(extraction["event"]["event_date"], date(2026, 6, 28))
+        self.assertEqual(extraction["event"]["confidence"], 0.5)
 
     def test_document_explanation_validation_normalizes_recoverable_output(self):
         from ai.schemas import validate_document_explanation

@@ -119,15 +119,15 @@ plus a cloud OCR and STT service.
 1. App stores file locally and creates metadata record        → POST /documents
 2. App sends file bytes for one-time processing              → POST /documents/{id}/ingest
 3. API streams bytes to worker pipeline; no server file save
-4. Worker: OCR/STT → LLM structuring → create MedicalEvent(s) + DocumentExplanation
-5. Worker updates document.status = processed
+4. Worker: OCR/STT → LLM structuring → create exactly one MedicalEvent + DocumentExplanation
+5. Worker updates document.status = processed only after the event exists
 6. App polls GET /documents/{id} until status = processed
-7. New events appear on the timeline; explanation is available
+7. The new event appears on the timeline; explanation is available
 ```
 
 ### 4.2 Voice Capture (voice-first NFR)
 ```
-Record audio → save locally → transient ingest upload → STT → LLM structuring → events
+Record audio → save locally → transient ingest upload → STT → LLM structuring → one event
 ```
 
 ### 4.3 Summary / Medical Memory (Scenario D)

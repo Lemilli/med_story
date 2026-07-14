@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../core/error/app_failure.dart';
+import '../../../core/storage/local_database.dart' as db;
 import '../domain/medical_document.dart';
 import 'document_api.dart';
 
@@ -17,28 +18,35 @@ final documentRepositoryProvider = Provider<DocumentRepository>((ref) {
   return DocumentRepository(
     api: ref.watch(documentApiProvider),
     localFileStore: ref.watch(documentLocalFileStoreProvider),
+    database: ref.watch(db.localDatabaseProvider),
   );
 });
 
 class DocumentRepository {
-  const DocumentRepository({required this.api, required this.localFileStore});
+  const DocumentRepository({
+    required this.api,
+    required this.localFileStore,
+    this.database,
+  });
 
   final DocumentApi api;
   final DocumentLocalFileStore localFileStore;
+  final db.LocalDatabase? database;
 
   Future<DocumentIngestionResult> createAndUpload(
     DocumentUploadDraft draft,
   ) async {
-    final localFile = await localFileStore.save(draft.source);
-    return createAndUploadStored(draft, localFile);
+    final localFiles = await localFileStore.saveAll(draft.sources);
+    return createAndUploadStored(draft, localFiles);
   }
 
   Future<DocumentIngestionResult> createAndUploadStored(
     DocumentUploadDraft draft,
-    StoredDocumentFile localFile, {
+    List<StoredDocumentFile> localFiles, {
     void Function(int sent, int total)? onUploadProgress,
   }) async {
     if (draft.docType == DocumentType.audio) {
+      final localFile = localFiles.single;
       final uploaded = await api.uploadAudio(
         filePath: localFile.path,
         fileName: localFile.fileName,
@@ -50,9 +58,19 @@ class DocumentRepository {
         documentDate: draft.documentDate,
         onSendProgress: onUploadProgress,
       );
+      await database?.replaceDocumentLocalAssets(uploaded.id, [
+        db.DocumentLocalAssetsCompanion.insert(
+          documentId: uploaded.id,
+          position: 1,
+          localPath: localFile.path,
+          fileName: localFile.fileName,
+          mimeType: localFile.mimeType,
+          sizeBytes: localFile.sizeBytes,
+        ),
+      ]);
       return DocumentIngestionResult(
         documentId: uploaded.id,
-        localFile: localFile,
+        localFiles: localFiles,
         status: uploaded.status,
       );
     }
@@ -61,21 +79,32 @@ class DocumentRepository {
       DocumentCreateRequest(
         title: draft.title,
         docType: draft.docType,
-        mimeType: localFile.mimeType,
-        sizeBytes: localFile.sizeBytes,
+        mimeType: localFiles.first.mimeType,
+        sizeBytes: localFiles.fold(0, (total, file) => total + file.sizeBytes),
         subjectId: draft.subjectId,
         documentDate: draft.documentDate,
-        localUriHint: localFile.localUriHint,
         language: draft.language,
       ),
     );
+    await database?.replaceDocumentLocalAssets(created.id, [
+      for (var index = 0; index < localFiles.length; index++)
+        db.DocumentLocalAssetsCompanion.insert(
+          documentId: created.id,
+          position: index + 1,
+          localPath: localFiles[index].path,
+          fileName: localFiles[index].fileName,
+          mimeType: localFiles[index].mimeType,
+          sizeBytes: localFiles[index].sizeBytes,
+        ),
+    ]);
     late final DocumentStatusUpdate ingest;
     try {
       ingest = await api.ingestDocument(
         documentId: created.id,
-        filePath: localFile.path,
-        fileName: localFile.fileName,
-        mimeType: localFile.mimeType,
+        files: [
+          for (final file in localFiles)
+            (path: file.path, fileName: file.fileName, mimeType: file.mimeType),
+        ],
         onSendProgress: onUploadProgress,
       );
     } on Object {
@@ -84,7 +113,7 @@ class DocumentRepository {
     }
     return DocumentIngestionResult(
       documentId: created.id,
-      localFile: localFile,
+      localFiles: localFiles,
       status: ingest.status,
     );
   }
@@ -154,6 +183,7 @@ class DocumentRepository {
 
 abstract interface class DocumentLocalFileStore {
   Future<StoredDocumentFile> save(DocumentSourceFile source);
+  Future<List<StoredDocumentFile>> saveAll(List<DocumentSourceFile> sources);
 }
 
 class AppSandboxDocumentFileStore implements DocumentLocalFileStore {
@@ -186,6 +216,17 @@ class AppSandboxDocumentFileStore implements DocumentLocalFileStore {
     );
   }
 
+  @override
+  Future<List<StoredDocumentFile>> saveAll(
+    List<DocumentSourceFile> sources,
+  ) async {
+    final saved = <StoredDocumentFile>[];
+    for (final source in sources) {
+      saved.add(await save(source));
+    }
+    return saved;
+  }
+
   String _safeFileName(String value) {
     final name = p.basename(value.trim());
     final fallback = name.isEmpty ? 'document' : name;
@@ -197,7 +238,7 @@ class DocumentUploadDraft {
   const DocumentUploadDraft({
     required this.title,
     required this.docType,
-    required this.source,
+    required this.sources,
     this.subjectId,
     this.documentDate,
     this.language,
@@ -205,7 +246,8 @@ class DocumentUploadDraft {
 
   final String title;
   final DocumentType docType;
-  final DocumentSourceFile source;
+  final List<DocumentSourceFile> sources;
+  DocumentSourceFile get source => sources.first;
   final String? subjectId;
   final String? documentDate;
   final String? language;
@@ -242,11 +284,11 @@ class StoredDocumentFile {
 class DocumentIngestionResult {
   const DocumentIngestionResult({
     required this.documentId,
-    required this.localFile,
+    required this.localFiles,
     required this.status,
   });
 
   final String documentId;
-  final StoredDocumentFile localFile;
+  final List<StoredDocumentFile> localFiles;
   final DocumentStatus status;
 }

@@ -9,12 +9,14 @@ from django.conf import settings
 from ai.providers.base import OCRResult
 
 
-EVENT_EXTRACTION_USER_PROMPT = """Extract structured medical timeline events from this source text.
+EVENT_EXTRACTION_USER_PROMPT = """Create exactly one structured medical timeline event from this source text.
 
 Return only facts that are explicitly present. If a date is missing, use null. Prefer concise,
 patient-readable titles. Put lab values, medications, dosages, clinicians, facilities, and other
-source details in attributes when present. Return every date as ISO 8601 YYYY-MM-DD; convert visible
-dates like 03.05.2024 to 2024-05-03."""
+source details in attributes when present. When a source contains several kinds of medical facts,
+use event_type medical_record and organize all supported facts within the single event. Return every
+date as ISO 8601 YYYY-MM-DD; convert visible dates like 03.05.2024 to 2024-05-03. Return event as null
+when the source cannot create a medical-history event."""
 
 OCR_SYSTEM_PROMPT = (
     "You extract readable text from medical documents for the user's private medical organizer. "

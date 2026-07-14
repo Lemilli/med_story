@@ -797,6 +797,103 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get photoGroupingTitle => 'How should we add these photos?';
+
+  @override
+  String photoGroupingDescription(int count) {
+    return 'You selected $count photos. Choose how they belong in MedStory.';
+  }
+
+  @override
+  String get photoGroupingOneTitle => 'One document';
+
+  @override
+  String get photoGroupingOneDescription =>
+      'They are pages of the same document.';
+
+  @override
+  String get photoGroupingSeparateTitle => 'Separate documents';
+
+  @override
+  String get photoGroupingSeparateDescription =>
+      'Each photo should create its own event.';
+
+  @override
+  String get photoGroupingContinueAction => 'Continue';
+
+  @override
+  String get documentPagesReviewTitle => 'Review document pages';
+
+  @override
+  String documentPagesCount(int count) {
+    return '$count pages';
+  }
+
+  @override
+  String documentPageLabel(int number) {
+    return 'Page $number';
+  }
+
+  @override
+  String get documentPageReorderHint => 'Hold and drag to reorder';
+
+  @override
+  String get documentPageRemoveAction => 'Remove page';
+
+  @override
+  String get documentPageAddAction => 'Add another page';
+
+  @override
+  String get documentPagesProcessAction => 'Process one document';
+
+  @override
+  String eventViewOriginalPagesAction(int count) {
+    return 'View $count original pages';
+  }
+
+  @override
+  String get eventViewOriginalAction => 'View original';
+
+  @override
+  String get eventOriginalUnavailable =>
+      'The original is unavailable on this device.';
+
+  @override
+  String get eventOriginalLocalOnly =>
+      'Originals stay in this app on this device. Uploaded bytes are processed transiently.';
+
+  @override
+  String get eventRevisionCompareTitle => 'Compare suggested changes';
+
+  @override
+  String get eventRevisionSafetyNote =>
+      'Your edited event stays unchanged until you apply changes.';
+
+  @override
+  String get eventRevisionCurrent => 'Current event';
+
+  @override
+  String get eventRevisionSuggested => 'Suggested revision';
+
+  @override
+  String get eventRevisionApply => 'Apply selected changes';
+
+  @override
+  String get eventRevisionKeep => 'Keep current event';
+
+  @override
+  String get eventRevisionRegenerateAction => 'Regenerate suggestion';
+
+  @override
+  String get eventOriginalShareAction => 'Open or share original';
+
+  @override
+  String get documentSingleEventValue => 'One timeline event';
+
+  @override
+  String get documentNoEventValue => 'No event created';
+
+  @override
   String get timelineHeadline => 'MedStory';
 
   @override
@@ -880,6 +977,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventTypeTreatmentOutcome => 'Treatment outcome';
+
+  @override
+  String get eventTypeMedicalRecord => 'Medical record';
 
   @override
   String get eventTypeNote => 'Note';

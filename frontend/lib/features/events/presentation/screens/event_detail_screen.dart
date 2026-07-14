@@ -1,11 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../../core/storage/local_database.dart' as db;
+import '../../data/event_repository.dart';
 import '../../domain/medical_event.dart';
 import '../controllers/event_controllers.dart';
 import '../event_type_l10n.dart';
@@ -114,6 +119,22 @@ class _EventDetailBody extends ConsumerWidget {
               ),
             ),
           ],
+          if (event.sourceDocumentId != null &&
+              event.source != EventSource.aiDocument &&
+              event.sourceAssetCount > 0) ...[
+            const SizedBox(height: AppSpacing.md),
+            _Panel(
+              child: TextButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => _OriginalSourceScreen(event: event),
+                  ),
+                ),
+                icon: const Icon(Icons.attach_file_rounded),
+                label: Text(l10n.eventViewOriginalAction),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
@@ -137,6 +158,21 @@ class _EventDetailBody extends ConsumerWidget {
           if (event.source == EventSource.aiDocument) ...[
             const SizedBox(height: AppSpacing.md),
             _AiSourcePanel(event: event),
+          ],
+          if (event.pendingRevision != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => _RevisionComparisonScreen(
+                    event: event,
+                    revision: event.pendingRevision!,
+                  ),
+                ),
+              ),
+              icon: const Icon(Icons.compare_arrows_rounded),
+              label: Text(l10n.eventRevisionCompareTitle),
+            ),
           ],
         ],
       ),
@@ -261,13 +297,13 @@ class _AttributeRow extends StatelessWidget {
   }
 }
 
-class _AiSourcePanel extends StatelessWidget {
+class _AiSourcePanel extends ConsumerWidget {
   const _AiSourcePanel({required this.event});
 
   final MedicalEvent event;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final confidence = event.confidence;
@@ -304,15 +340,270 @@ class _AiSourcePanel extends StatelessWidget {
           if (event.sourceDocumentId != null) ...[
             const SizedBox(height: AppSpacing.sm),
             TextButton.icon(
-              onPressed: () =>
-                  context.push('/documents/${event.sourceDocumentId}'),
-              icon: const Icon(Icons.description_outlined),
-              label: Text(l10n.eventOpenSourceDocumentAction),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => _OriginalSourceScreen(event: event),
+                ),
+              ),
+              icon: const Icon(Icons.collections_outlined),
+              label: Text(
+                event.sourceAssetCount > 1
+                    ? l10n.eventViewOriginalPagesAction(event.sourceAssetCount)
+                    : l10n.eventViewOriginalAction,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: event.pendingRevision != null
+                  ? null
+                  : () async {
+                      final revision = await ref
+                          .read(eventRepositoryProvider)
+                          .regenerateEvent(event.id);
+                      ref.invalidate(eventDetailProvider(event.id));
+                      if (context.mounted) {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => _RevisionComparisonScreen(
+                              event: event,
+                              revision: revision,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+              icon: const Icon(Icons.auto_fix_high_outlined),
+              label: Text(l10n.eventRevisionRegenerateAction),
             ),
           ],
         ],
       ),
     );
+  }
+}
+
+class _OriginalSourceScreen extends ConsumerWidget {
+  const _OriginalSourceScreen({required this.event});
+
+  final MedicalEvent event;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final documentId = event.sourceDocumentId;
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.eventViewOriginalAction)),
+      body: documentId == null
+          ? Center(
+              child: Text(event.sourceText ?? l10n.eventOriginalUnavailable),
+            )
+          : FutureBuilder<List<db.DocumentLocalAsset>>(
+              future: ref
+                  .read(db.localDatabaseProvider)
+                  .getDocumentLocalAssets(documentId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final assets = snapshot.data ?? const [];
+                if (assets.isEmpty) {
+                  if (event.sourceText != null) {
+                    return ListView(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      children: [
+                        Text(
+                          event.sourceText!,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.copyWith(height: 1.5),
+                        ),
+                      ],
+                    );
+                  }
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Text(
+                        l10n.eventOriginalUnavailable,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }
+                return Column(
+                  children: [
+                    Expanded(
+                      child: PageView.builder(
+                        itemCount: assets.length,
+                        itemBuilder: (context, index) {
+                          final asset = assets[index];
+                          if (asset.mimeType.startsWith('image/')) {
+                            return InteractiveViewer(
+                              child: Padding(
+                                padding: const EdgeInsets.all(AppSpacing.lg),
+                                child: Image.file(
+                                  File(asset.localPath),
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, _, _) => Center(
+                                    child: Text(l10n.eventOriginalUnavailable),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return Center(
+                            child: ListTile(
+                              leading: const Icon(
+                                Icons.insert_drive_file_outlined,
+                              ),
+                              title: Text(asset.fileName),
+                              subtitle: Text(asset.mimeType),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            l10n.eventOriginalLocalOnly,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.secondaryInk),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          OutlinedButton.icon(
+                            onPressed: () => SharePlus.instance.share(
+                              ShareParams(
+                                files: [
+                                  for (final asset in assets)
+                                    XFile(asset.localPath),
+                                ],
+                                fileNameOverrides: [
+                                  for (final asset in assets) asset.fileName,
+                                ],
+                              ),
+                            ),
+                            icon: const Icon(Icons.ios_share_rounded),
+                            label: Text(l10n.eventOriginalShareAction),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+    );
+  }
+}
+
+class _RevisionComparisonScreen extends ConsumerStatefulWidget {
+  const _RevisionComparisonScreen({
+    required this.event,
+    required this.revision,
+  });
+
+  final MedicalEvent event;
+  final EventRevision revision;
+
+  @override
+  ConsumerState<_RevisionComparisonScreen> createState() =>
+      _RevisionComparisonScreenState();
+}
+
+class _RevisionComparisonScreenState
+    extends ConsumerState<_RevisionComparisonScreen> {
+  late final Set<String> _selected = {...widget.revision.suggestedChanges.keys};
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final changes = widget.revision.suggestedChanges.entries.toList();
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.eventRevisionCompareTitle)),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          children: [
+            Text(
+              l10n.eventRevisionSafetyNote,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppColors.secondaryInk,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Text(
+              l10n.eventRevisionCurrent,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _Panel(
+              child: _AttributeList(
+                attributes: widget.revision.currentSnapshot,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Text(
+              l10n.eventRevisionSuggested,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final change in changes)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _selected.contains(change.key),
+                title: Text(_humanizeAttributeKey(change.key)),
+                subtitle: Text(_formatAttributeValue(change.value)),
+                onChanged: _busy
+                    ? null
+                    : (selected) => setState(() {
+                        if (selected == true) {
+                          _selected.add(change.key);
+                        } else {
+                          _selected.remove(change.key);
+                        }
+                      }),
+              ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(
+              onPressed: _busy || _selected.isEmpty ? null : _apply,
+              child: Text(l10n.eventRevisionApply),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton(
+              onPressed: _busy ? null : _discard,
+              child: Text(l10n.eventRevisionKeep),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _apply() async {
+    setState(() => _busy = true);
+    await ref
+        .read(eventRepositoryProvider)
+        .applyRevision(widget.event.id, widget.revision.id, _selected.toList());
+    ref.invalidate(eventDetailProvider(widget.event.id));
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _discard() async {
+    setState(() => _busy = true);
+    await ref
+        .read(eventRepositoryProvider)
+        .discardRevision(widget.event.id, widget.revision.id);
+    ref.invalidate(eventDetailProvider(widget.event.id));
+    if (mounted) Navigator.of(context).pop();
   }
 }
 

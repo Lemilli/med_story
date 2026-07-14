@@ -69,8 +69,8 @@ as a duplicate rather than processed again; deleted documents do not block re-up
    ▼
 (3) LLM Structuring  (structured JSON output, schema-validated)
      input: extracted_text (chunked if large)
-     output: list of candidate MedicalEvents + document_date + suggested title
-     → create MedicalEvent rows (source=ai_document, confidence)
+     output: exactly one candidate MedicalEvent + document_date + suggested title
+     → create one MedicalEvent (source=ai_document, confidence)
    │
    ▼
 (4) LLM Explanation  (parallel to or after structuring)
@@ -81,8 +81,13 @@ as a duplicate rather than processed again; deleted documents do not block re-up
 (5) Trigger summary refresh (debounced) → see 3.4
    │
    ▼
-[Document.status = processed]   (any step failure → status=failed + error_message; retriable)
+[Document.status = processed only after one event exists]
+   (no event or any step failure → status=failed + error_message; retriable)
 ```
+
+For photographed multi-page sources, OCR runs once per ordered image and joins the extracted page
+text before structuring. AI does not silently group unrelated gallery photos; the client asks the
+user whether a multi-selection is one document or separate documents.
 
 ### 3.2 Voice Capture Pipeline
 ```
@@ -94,6 +99,9 @@ and store only the transcript/extracted text, not the raw audio.
 
 ### 3.3 On-Demand Explanation
 `POST /documents/{id}/explanation/regenerate` re-runs step (4), e.g. in another language.
+
+Event regeneration creates an `EventRevision` draft from the immutable source. It never overwrites
+the active event. Users compare the draft and explicitly apply selected fields.
 
 ### 3.4 Summary (Medical Memory) Pipeline
 Triggered on meaningful change (debounced) or via `POST /summary/regenerate`.

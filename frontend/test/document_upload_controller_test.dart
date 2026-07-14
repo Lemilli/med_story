@@ -35,7 +35,9 @@ void main() {
       'med_story_upload_test',
     );
     when(() => repository.localFileStore).thenReturn(fileStore);
-    when(() => fileStore.save(any())).thenAnswer((_) async => _storedFile());
+    when(
+      () => fileStore.saveAll(any()),
+    ).thenAnswer((_) async => [_storedFile()]);
   });
 
   tearDown(() async {
@@ -60,7 +62,7 @@ void main() {
         (_) async => DocumentIngestionResult(
           documentId: 'document-1',
           status: DocumentStatus.processing,
-          localFile: _storedFile(),
+          localFiles: [_storedFile()],
         ),
       );
       when(
@@ -108,7 +110,7 @@ void main() {
       (_) async => DocumentIngestionResult(
         documentId: 'document-1',
         status: DocumentStatus.processing,
-        localFile: _storedFile(),
+        localFiles: [_storedFile()],
       ),
     );
     when(
@@ -160,7 +162,7 @@ void main() {
         (_) async => DocumentIngestionResult(
           documentId: 'document-1',
           status: DocumentStatus.processing,
-          localFile: _storedFile(),
+          localFiles: [_storedFile()],
         ),
       );
       when(
@@ -276,11 +278,13 @@ DocumentUploadDraft _draft([String path = '/source/lab.pdf']) =>
     DocumentUploadDraft(
       title: 'Lab results',
       docType: DocumentType.labResult,
-      source: DocumentSourceFile(
-        path: path,
-        fileName: 'lab.pdf',
-        mimeType: 'application/pdf',
-      ),
+      sources: [
+        DocumentSourceFile(
+          path: path,
+          fileName: 'lab.pdf',
+          mimeType: 'application/pdf',
+        ),
+      ],
     );
 
 StoredDocumentFile _storedFile() => const StoredDocumentFile(

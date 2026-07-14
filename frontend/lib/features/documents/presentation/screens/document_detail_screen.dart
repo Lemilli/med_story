@@ -104,7 +104,9 @@ class _DocumentDetailBody extends ConsumerWidget {
                   ),
                   _DetailRow(
                     label: l10n.documentEventCountLabel,
-                    value: l10n.documentEventCountValue(document.eventCount),
+                    value: document.eventCount == 1
+                        ? l10n.documentSingleEventValue
+                        : l10n.documentNoEventValue,
                   ),
                   if (createdAt != null)
                     _DetailRow(
@@ -171,6 +173,14 @@ class _DocumentDetailBody extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
+            if (document.eventId != null) ...[
+              FilledButton.icon(
+                onPressed: () => context.push('/events/${document.eventId}'),
+                icon: const Icon(Icons.timeline_rounded),
+                label: Text(l10n.documentViewResultAction),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             OutlinedButton.icon(
               onPressed: () => _confirmDelete(context, ref),
               icon: const Icon(Icons.delete_outline_rounded),

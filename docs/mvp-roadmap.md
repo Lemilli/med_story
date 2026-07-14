@@ -77,6 +77,9 @@ remain for deterministic local tests.
 - **Provider notes:** set `AI_LLM_PROVIDER=openai`, `AI_OCR_PROVIDER=openai`, and
   `AI_OPENAI_API_KEY` for real document extraction. Set `AI_STT_PROVIDER=openai` and
   `AI_OPENAI_STT_MODEL` for real Phase 5 voice transcription.
+- **Single-source milestone:** implemented one logical capture bundle → one active event, ordered
+  multi-photo pages, explicit gallery grouping, device-local original navigation, preserved source
+  text, and non-destructive AI event revisions.
 
 ### Phase 3 — Understanding (Explanations)
 **Status:** Implemented.

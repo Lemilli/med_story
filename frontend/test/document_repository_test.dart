@@ -15,6 +15,11 @@ class _FakeDocumentLocalFileStore implements DocumentLocalFileStore {
   Future<StoredDocumentFile> save(DocumentSourceFile source) async {
     return file;
   }
+
+  @override
+  Future<List<StoredDocumentFile>> saveAll(
+    List<DocumentSourceFile> sources,
+  ) async => [file];
 }
 
 void main() {
@@ -63,11 +68,13 @@ void main() {
           docType: DocumentType.audio,
           subjectId: 'subject-1',
           language: 'en',
-          source: DocumentSourceFile(
-            path: '/tmp/voice.m4a',
-            fileName: 'voice.m4a',
-            mimeType: 'audio/m4a',
-          ),
+          sources: [
+            DocumentSourceFile(
+              path: '/tmp/voice.m4a',
+              fileName: 'voice.m4a',
+              mimeType: 'audio/m4a',
+            ),
+          ],
         ),
       );
 
@@ -89,9 +96,7 @@ void main() {
       verifyNever(
         () => api.ingestDocument(
           documentId: any(named: 'documentId'),
-          filePath: any(named: 'filePath'),
-          fileName: any(named: 'fileName'),
-          mimeType: any(named: 'mimeType'),
+          files: any(named: 'files'),
         ),
       );
     },

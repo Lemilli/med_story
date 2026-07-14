@@ -154,7 +154,9 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
       );
       await _waitForResult(queued.id);
     } catch (_) {
-      if (mounted) setState(() => _message = context.l10n.audioNotMedicalMessage);
+      if (mounted) {
+        setState(() => _message = context.l10n.audioNotMedicalMessage);
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -170,7 +172,9 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
         if (mounted) Navigator.of(context).pop();
         return;
       }
-      if (mounted) setState(() => _message = document.errorMessage.isEmpty ? context.l10n.audioNotMedicalMessage : document.errorMessage);
+      if (mounted) {
+        setState(() => _message = document.errorMessage.isEmpty ? context.l10n.audioNotMedicalMessage : document.errorMessage);
+      }
       return;
     }
   }

@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from drf_spectacular.utils import extend_schema
 
-from medical.models import AuditLog, Document, MedicalEvent, MedicalSummary, ProcessingJob, Subject, VisitPreparation
+from medical.models import AuditLog, Document, DocumentAsset, EventRevision, MedicalEvent, MedicalSummary, ProcessingJob, Subject, VisitPreparation
 from medical.pagination import TimelineCursorPagination
 from medical.serializers import (
     MAX_DOCUMENT_SIZE_BYTES,
@@ -23,6 +23,7 @@ from medical.serializers import (
     SUPPORTED_DOCUMENT_MIME_TYPES,
     DocumentSerializer,
     DocumentExplanationSerializer,
+    EventRevisionSerializer,
     MedicalEventSerializer,
     MedicalSummarySerializer,
     ProcessingJobSerializer,
@@ -31,6 +32,8 @@ from medical.serializers import (
 )
 from medical.services import (
     build_summary_export_pdf,
+    apply_event_revision,
+    create_event_revision,
     enqueue_summary_regeneration,
     get_or_create_default_subject,
     log_audit_event,
@@ -95,8 +98,8 @@ class MedicalEventQuerysetMixin:
     def get_base_queryset(self):
         return (
             MedicalEvent.objects.filter(user=self.request.user, deleted_at__isnull=True)
-            .select_related("subject")
-            .prefetch_related("tags")
+            .select_related("subject", "source_document")
+            .prefetch_related("tags", "source_document__assets")
         )
 
     def resolve_subject(self):
@@ -169,6 +172,62 @@ class EventDetailView(MedicalEventQuerysetMixin, generics.RetrieveUpdateDestroyA
         instance.deleted_at = timezone.now()
         instance.save(update_fields=("deleted_at", "updated_at"))
         enqueue_summary_regeneration(user=instance.user, subject=instance.subject, reason="event_deleted")
+
+
+class EventRevisionListCreateView(MedicalEventQuerysetMixin, generics.GenericAPIView):
+    serializer_class = EventRevisionSerializer
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "ai"
+
+    def _event(self):
+        return self.get_base_queryset().select_related("source_document").get(id=self.kwargs["id"])
+
+    def get(self, request, *args, **kwargs):
+        revisions = self._event().revisions.all()[:20]
+        return Response(self.get_serializer(revisions, many=True).data)
+
+    @extend_schema(operation_id="event_revision_create", responses=EventRevisionSerializer)
+    def post(self, request, *args, **kwargs):
+        try:
+            revision = create_event_revision(event=self._event())
+        except ValueError as exc:
+            return Response(
+                {"error": {"code": str(exc), "message": "We could not create a suggested revision."}},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        return Response(self.get_serializer(revision).data, status=status.HTTP_201_CREATED)
+
+
+class EventRevisionDetailView(MedicalEventQuerysetMixin, generics.GenericAPIView):
+    serializer_class = EventRevisionSerializer
+
+    def _revision(self):
+        return EventRevision.objects.select_related("event").get(
+            id=self.kwargs["revision_id"],
+            event_id=self.kwargs["id"],
+            event__user=self.request.user,
+            event__deleted_at__isnull=True,
+        )
+
+    @extend_schema(operation_id="event_revision_apply", responses=MedicalEventSerializer)
+    def post(self, request, *args, **kwargs):
+        fields = request.data.get("fields")
+        if not isinstance(fields, list):
+            raise ValidationError({"fields": ["Select at least one suggested field."]})
+        try:
+            event = apply_event_revision(revision=self._revision(), fields=fields)
+        except ValueError as exc:
+            raise ValidationError({"revision": [str(exc)]}) from exc
+        enqueue_summary_regeneration(user=event.user, subject=event.subject, reason="event_revision_applied")
+        return Response(MedicalEventSerializer(event, context={"request": request}).data)
+
+    def delete(self, request, *args, **kwargs):
+        revision = self._revision()
+        if revision.status == EventRevision.Status.PENDING:
+            revision.status = EventRevision.Status.DISCARDED
+            revision.resolved_at = timezone.now()
+            revision.save(update_fields=("status", "resolved_at"))
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TimelineView(MedicalEventQuerysetMixin, generics.ListAPIView):
@@ -264,8 +323,8 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
         if document.status in (Document.Status.PROCESSING, Document.Status.PROCESSED):
             return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
 
-        upload = request.FILES.get("file")
-        if upload is None:
+        uploads = request.FILES.getlist("files") or request.FILES.getlist("file")
+        if not uploads:
             return self._error_response(
                 code="validation_error",
                 message="file is required.",
@@ -273,15 +332,22 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
                 details={"file": ["This field is required."]},
             )
 
-        if upload.size > MAX_DOCUMENT_SIZE_BYTES:
+        total_size = sum(upload.size for upload in uploads)
+        if total_size > MAX_DOCUMENT_SIZE_BYTES:
             return self._error_response(
                 code="file_too_large",
                 message="File must be 5 MB or smaller.",
                 http_status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             )
 
-        mime_type = self._resolve_mime_type(request, upload, document)
-        if not self._is_supported_mime_type(document, mime_type):
+        mime_types = [self._resolve_mime_type(request, upload, document) for upload in uploads]
+        if len(uploads) > 1 and any(not mime_type.startswith("image/") for mime_type in mime_types):
+            return self._error_response(
+                code="unsupported_mime_type",
+                message="Multi-page uploads must contain images only.",
+                http_status=status.HTTP_400_BAD_REQUEST,
+            )
+        if any(not self._is_supported_mime_type(document, mime_type) for mime_type in mime_types):
             return self._error_response(
                 code="unsupported_mime_type",
                 message="Unsupported MIME type.",
@@ -289,8 +355,13 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
                 details={"mime_type": [self._unsupported_mime_type_message(document)]},
             )
 
-        file_bytes = upload.read()
-        content_hash = hashlib.sha256(file_bytes).hexdigest()
+        file_parts = [(upload.read(), mime_type) for upload, mime_type in zip(uploads, mime_types)]
+        content_hasher = hashlib.sha256()
+        for file_bytes, mime_type in file_parts:
+            content_hasher.update(len(file_bytes).to_bytes(8, "big"))
+            content_hasher.update(mime_type.encode("utf-8"))
+            content_hasher.update(file_bytes)
+        content_hash = content_hasher.hexdigest()
         duplicate = self._processed_duplicate(document=document, content_hash=content_hash)
         if duplicate is not None:
             # The first, pending document exists only to receive an upload. It
@@ -305,15 +376,16 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
             )
         job = self._mark_processing_and_create_job(
             document=document,
-            upload=upload,
-            mime_type=mime_type,
+            uploads=uploads,
+            mime_types=mime_types,
             content_hash=content_hash,
+            file_parts=file_parts,
         )
         self._dispatch_ingestion(
             document=document,
             job=job,
-            file_bytes=file_bytes,
-            mime_type=mime_type,
+            file_parts=file_parts,
+            mime_type=mime_types[0],
             language=self._resolve_language(request),
         )
         document.refresh_from_db()
@@ -334,27 +406,50 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
             .first()
         )
 
-    def _mark_processing_and_create_job(self, *, document, upload, mime_type, content_hash):
+    def _mark_processing_and_create_job(
+        self, *, document, content_hash, upload=None, mime_type=None,
+        uploads=None, mime_types=None, file_parts=None
+    ):
+        uploads = uploads or [upload]
+        mime_types = mime_types or [mime_type]
         with transaction.atomic():
             document.status = Document.Status.PROCESSING
             document.error_message = ""
-            document.mime_type = mime_type
-            document.size_bytes = upload.size
+            document.mime_type = mime_types[0]
+            document.size_bytes = sum(item.size for item in uploads)
             document.content_hash = content_hash
             document.save(update_fields=("status", "error_message", "mime_type", "size_bytes", "content_hash", "updated_at"))
+            document.assets.all().delete()
+            for position, (asset_upload, asset_mime) in enumerate(zip(uploads, mime_types), start=1):
+                asset_bytes = file_parts[position - 1][0] if file_parts else b""
+                DocumentAsset.objects.create(
+                    document=document,
+                    position=position,
+                    file_name=Path(asset_upload.name).name[:255],
+                    mime_type=asset_mime,
+                    size_bytes=asset_upload.size,
+                    content_hash=hashlib.sha256(asset_bytes).hexdigest() if asset_bytes else content_hash,
+                )
             return ProcessingJob.objects.create(
                 user=document.user,
                 document=document,
                 status=ProcessingJob.Status.QUEUED,
             )
 
-    def _dispatch_ingestion(self, *, document, job, file_bytes, mime_type, language=None):
+    def _dispatch_ingestion(self, *, document, job, mime_type, language=None, file_bytes=None, file_parts=None):
+        encoded_parts = None
+        if file_parts:
+            encoded_parts = [
+                {"bytes_b64": base64.b64encode(part_bytes).decode("ascii"), "mime_type": part_mime}
+                for part_bytes, part_mime in file_parts
+            ]
         result = ingest_document_task.delay(
             str(document.id),
             str(job.id),
-            base64.b64encode(file_bytes).decode("ascii"),
+            base64.b64encode(file_bytes).decode("ascii") if file_bytes is not None else "",
             mime_type,
             language,
+            encoded_parts,
         )
         job.task_id = result.id or ""
         job.save(update_fields=("task_id", "updated_at"))
@@ -491,6 +586,7 @@ class CaptureTranscriptionView(DocumentIngestView):
 
 
 class NoteProcessView(generics.GenericAPIView):
+    serializer_class = DocumentSerializer
     throttle_classes = (ScopedRateThrottle,)
     throttle_scope = "ai"
 
