@@ -47,6 +47,7 @@ AI_OCR_PROVIDER=openai
 AI_STT_PROVIDER=openai
 AI_OPENAI_API_KEY=<your-openai-api-key>
 AI_OPENAI_MODEL=<your-model>
+AI_OPENAI_SUMMARY_MODEL=<stronger-summary-model>
 AI_OPENAI_OCR_MODEL=<your-model>
 AI_OPENAI_STT_MODEL=gpt-4o-mini-transcribe
 ```
@@ -98,6 +99,7 @@ AI_OCR_PROVIDER=openai
 AI_STT_PROVIDER=openai
 AI_OPENAI_API_KEY=<your-openai-api-key>
 AI_OPENAI_MODEL=<your-model>
+AI_OPENAI_SUMMARY_MODEL=<stronger-summary-model>
 AI_OPENAI_OCR_MODEL=<your-model>
 AI_OPENAI_STT_MODEL=gpt-4o-mini-transcribe
 AI_OPENAI_TIMEOUT_SECONDS=60

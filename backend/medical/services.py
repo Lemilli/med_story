@@ -99,7 +99,8 @@ source text."""
 
 SUMMARY_SYSTEM_PROMPT = (
     "You are MedStory's assistant. You organize medical timeline events into a concise, "
-    "scan-friendly brief for a healthcare visit. Prioritize only from facts explicitly recorded "
+    "scan-friendly brief that both a patient and a healthcare professional can understand. "
+    "Prioritize only from facts explicitly recorded "
     "in the events, such as recency, repetition, duration, recorded intensity, ongoing status, "
     "or a concern the user explicitly noted. Do not use medical knowledge to infer urgency or "
     "importance. Do not diagnose, recommend treatments, rank medical options, prescribe, or infer "
@@ -123,7 +124,15 @@ Use only the timeline events below. Return JSON using the provided schema:
   medications; important test results; previous treatments and outcomes; procedures and hospitalizations.
 
 Within every section:
-- Target a 60-second scan. Prefer one very short plain-language line; use detail only when essential.
+- Target a 60-second scan. Write each item as a complete, plain-language statement that both a
+  patient and clinician can understand. Expand unexplained abbreviations on first use and keep the
+  medically meaningful name in Russian or the requested language. For example, write
+  "Антитела IgG к вирусу Эпштейна—Барр: положительно; IgM: отрицательно", not only
+  "EBV: VCA-IgG положительно, VCA-IgM отрицательно". This is a restatement of the report,
+  not an interpretation of what the result means.
+- Use `text` for the understandable result and `detail` only for compact supporting measurements,
+  such as "IgG к VCA: 27,1 (реф. < 0,9); IgM к VCA: 0,176 (реф. < 0,9)". Do not repeat the
+  same result in another section: choose the single most appropriate section.
 - Put current and unresolved items first. Keep allergies, current medications, persistent diagnoses,
   and major procedures regardless of age. Mark a resolved older item "Historical" only when recorded.
 - For repeated results from the same analysis, use only the newest. If results meaningfully changed,
@@ -660,17 +669,22 @@ def _build_document_explanation(*, document, extracted_text, language):
 
 def _build_medical_summary(*, events, language, visit_reason=""):
     provider = get_llm_provider()
+    summary_model = settings.AI_OPENAI_SUMMARY_MODEL
     payload = provider.complete_json(
         system=SUMMARY_SYSTEM_PROMPT,
         user=_serialize_events_for_summary(events, visit_reason=visit_reason),
         schema=MEDICAL_SUMMARY_JSON_SCHEMA,
         user_prompt=SUMMARY_USER_PROMPT.format(language=language),
         schema_name="medical_summary",
+        model=summary_model,
     )
     events_by_id = {str(event.id): event for event in events}
     summary = validate_medical_summary(payload, allowed_event_ids=set(events_by_id))
     summary["content"] = _enrich_summary_sources(summary["content"], events_by_id=events_by_id)
-    summary["model_name"] = getattr(provider, "model", settings.AI_LLM_PROVIDER)
+    summary["model_name"] = (
+        summary_model if settings.AI_LLM_PROVIDER == "openai"
+        else getattr(provider, "model", settings.AI_LLM_PROVIDER)
+    )
     return summary
 
 

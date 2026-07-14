@@ -73,11 +73,12 @@ class OpenAILLMProvider:
         schema: dict,
         user_prompt: str | None = None,
         schema_name: str = "medical_event_extraction",
+        model: str | None = None,
     ) -> dict:
         prompt = user_prompt or EVENT_EXTRACTION_USER_PROMPT
         try:
             response = self.client.responses.create(
-                model=self.model,
+                model=model or self.model,
                 input=[
                     {
                         "role": "system",

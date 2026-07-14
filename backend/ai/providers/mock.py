@@ -14,6 +14,7 @@ class MockLLMProvider:
         schema: dict,
         user_prompt: str | None = None,
         schema_name: str = "medical_event_extraction",
+        model: str | None = None,
     ) -> dict:
         if "summary_text" in schema.get("properties", {}):
             return {

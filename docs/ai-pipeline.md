@@ -123,6 +123,9 @@ The prior current summary remains available during generation and after any fail
 transient model-produced item cites only supplied `source_event_ids`; the backend rejects unknown or
 cross-user/cross-subject IDs, replaces them with authoritative `sources`, and persists/API-returns
 only `text`, `detail`, and those enriched sources for each item.
+`AI_OPENAI_SUMMARY_MODEL` may be configured independently of `AI_OPENAI_MODEL`: the production
+example uses the stronger `gpt-5.4` for this lower-volume synthesis step, while high-volume
+document extraction can remain on a smaller model. If unset, it falls back to `AI_OPENAI_MODEL`.
 
 ## 4. Handling Large / Long Documents
 
@@ -197,9 +200,11 @@ Use plain, simple language. Never invent values that are not present in the sour
   change when it matters; show a conflict with all relevant sources when results are not equivalent.
   Omit normal results unless they explain an important change or conflict.
 - Detail: retain compact abnormal value, unit, and stated reference range; retain medication dose
-  and schedule when known; simplify technical names without losing a medically meaningful test name.
-  Dates appear only when they affect interpretation (tests, changes, procedures, hospitalizations,
-  and historical items).
+  and schedule when known; expand unexplained abbreviations into plain-language test names without
+  losing medically meaningful terminology. Put the understandable finding in the primary line and
+  compact numbers in the detail line. A finding appears in one appropriate section only. Dates
+  appear only when they affect interpretation (tests, changes, procedures, hospitalizations, and
+  historical items).
 - Language and safety: a source-explicit diagnosis or classification may be restated; a value alone
   remains a finding. Use `reported` for patient-originated uncertainty and `possible` for uncertainty
   in a medical source. Never infer a diagnosis, urgency, treatment, or recommendation.

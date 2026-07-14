@@ -17,6 +17,7 @@ class LLMProvider(Protocol):
         schema: dict,
         user_prompt: str | None = None,
         schema_name: str = "medical_event_extraction",
+        model: str | None = None,
     ) -> dict:
         """Return schema-constrained JSON from an LLM provider."""
 

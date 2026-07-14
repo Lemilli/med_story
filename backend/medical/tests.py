@@ -1692,6 +1692,60 @@ class AIProviderTests(SimpleTestCase):
         self.assertIn("state the direction", SUMMARY_USER_PROMPT)
         self.assertIn("sources conflict", SUMMARY_USER_PROMPT)
 
+    def test_summary_prompt_requires_plain_language_and_no_duplicate_results(self):
+        from medical.services import SUMMARY_USER_PROMPT
+
+        self.assertIn("Expand unexplained abbreviations", SUMMARY_USER_PROMPT)
+        self.assertIn("same result in another section", SUMMARY_USER_PROMPT)
+
+    @override_settings(AI_LLM_PROVIDER="openai", AI_OPENAI_SUMMARY_MODEL="gpt-test-summary")
+    def test_summary_uses_dedicated_openai_model(self):
+        from medical.services import _build_medical_summary
+
+        event_id = uuid.uuid4()
+        event = SimpleNamespace(
+            id=event_id,
+            event_type=MedicalEvent.EventType.EXAMINATION,
+            title="EBV serology",
+            description="",
+            event_date=date(2026, 6, 1),
+            attributes={},
+            source_document_id=None,
+            source_page_positions=[],
+            tags=SimpleNamespace(all=lambda: []),
+        )
+
+        class CapturingProvider:
+            model = "gpt-default"
+
+            def complete_json(self, **kwargs):
+                self.kwargs = kwargs
+                return {
+                    "content": {
+                        "current_concerns": [],
+                        "important_diagnoses_and_findings": [],
+                        "allergies": [],
+                        "current_medications": [],
+                        "important_test_results": [
+                            {
+                                "text": "Антитела IgG к вирусу Эпштейна—Барр: положительно; IgM: отрицательно",
+                                "detail": "",
+                                "source_event_ids": [str(event_id)],
+                            }
+                        ],
+                        "previous_treatments_and_outcomes": [],
+                        "procedures_and_hospitalizations": [],
+                    },
+                    "narrative_text": "Краткая сводка по сохранённым событиям.",
+                }
+
+        provider = CapturingProvider()
+        with patch("medical.services.get_llm_provider", return_value=provider):
+            summary = _build_medical_summary(events=[event], language="ru")
+
+        self.assertEqual(provider.kwargs["model"], "gpt-test-summary")
+        self.assertEqual(summary["model_name"], "gpt-test-summary")
+
     def test_reportlab_text_escapes_markup_characters(self):
         from medical.services import _reportlab_text
 

@@ -172,6 +172,10 @@ AI_OCR_PROVIDER = env("AI_OCR_PROVIDER", default="mock")
 AI_STT_PROVIDER = env("AI_STT_PROVIDER", default="mock")
 AI_OPENAI_API_KEY = env("AI_OPENAI_API_KEY", default="")
 AI_OPENAI_MODEL = env("AI_OPENAI_MODEL", default="gpt-5.1-mini")
+# Visit preparation benefits from stronger synthesis than high-volume document
+# extraction. Keep the fallback equal to the general model so existing deployments
+# do not change behavior until they opt in.
+AI_OPENAI_SUMMARY_MODEL = env("AI_OPENAI_SUMMARY_MODEL", default=AI_OPENAI_MODEL)
 AI_OPENAI_OCR_MODEL = env("AI_OPENAI_OCR_MODEL", default=AI_OPENAI_MODEL)
 AI_OPENAI_STT_MODEL = env("AI_OPENAI_STT_MODEL", default="gpt-4o-mini-transcribe")
 AI_OPENAI_TIMEOUT_SECONDS = env.int("AI_OPENAI_TIMEOUT_SECONDS", default=60)
