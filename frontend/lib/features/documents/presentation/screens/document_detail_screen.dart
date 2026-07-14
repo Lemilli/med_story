@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../app/widgets/app_alert_dialog.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../timeline/presentation/controllers/timeline_controller.dart';
@@ -202,19 +203,28 @@ class _DocumentDetailBody extends ConsumerWidget {
     final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.documentDeleteConfirmTitle),
-        content: Text(l10n.documentDeleteConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.eventCancelAction),
+      builder: (dialogContext) => AppAlertDialog(
+        title: l10n.documentDeleteConfirmTitle,
+        content: Text(
+          l10n.documentDeleteConfirmMessage,
+          textAlign: TextAlign.center,
+          style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
+            color: AppColors.secondaryInk,
+            height: 1.35,
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.documentDeleteAction),
+        ),
+        primaryAction: FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: Text(l10n.documentDeleteAction),
+        ),
+        secondaryAction: TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.secondaryInk,
+            minimumSize: const Size(0, 48),
           ),
-        ],
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: Text(l10n.eventCancelAction),
+        ),
       ),
     );
     if (confirmed != true) {

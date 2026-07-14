@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../app/widgets/app_alert_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/domain/auth_models.dart';
@@ -542,13 +543,20 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
     final canDelete =
         _controller.text.trim() == l10n.settingsDeleteAccountConfirmValue;
 
-    return AlertDialog(
-      title: Text(l10n.settingsDeleteAccountDialogTitle),
+    return AppAlertDialog(
+      title: l10n.settingsDeleteAccountDialogTitle,
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.settingsDeleteAccountDialogMessage),
+          Text(
+            l10n.settingsDeleteAccountDialogMessage,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.secondaryInk,
+              height: 1.35,
+            ),
+          ),
           const SizedBox(height: AppSpacing.lg),
           TextField(
             controller: _controller,
@@ -561,19 +569,21 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: Text(l10n.settingsDeleteAccountCancelAction),
+      primaryAction: FilledButton(
+        onPressed: canDelete ? () => Navigator.of(context).pop(true) : null,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.controlledCrimson,
         ),
-        FilledButton(
-          onPressed: canDelete ? () => Navigator.of(context).pop(true) : null,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.controlledCrimson,
-          ),
-          child: Text(l10n.settingsDeleteAccountConfirmAction),
+        child: Text(l10n.settingsDeleteAccountConfirmAction),
+      ),
+      secondaryAction: TextButton(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.secondaryInk,
+          minimumSize: const Size(0, 48),
         ),
-      ],
+        onPressed: () => Navigator.of(context).pop(false),
+        child: Text(l10n.settingsDeleteAccountCancelAction),
+      ),
     );
   }
 }

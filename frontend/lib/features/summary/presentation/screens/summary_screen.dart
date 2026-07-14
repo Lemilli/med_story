@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../app/widgets/app_alert_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../l10n/l10n.dart';
 import '../../domain/medical_summary.dart';
@@ -48,17 +49,11 @@ class SummaryScreen extends ConsumerWidget {
                     sliver: SliverList.list(
                       children: [
                         _SummaryHeader(state: state),
-                        const SizedBox(height: AppSpacing.lg),
-                        if (state.loadResult.fromCache) ...[
-                          _Notice(message: l10n.summaryOfflineNotice),
-                          const SizedBox(height: AppSpacing.lg),
-                        ],
                         if (state.visibleSummary == null)
                           _SummaryNotReady(state: state)
                         else
                           _SummaryContent(summary: state.visibleSummary!),
                         const SizedBox(height: AppSpacing.xxl),
-                        _Notice(message: l10n.summaryBoundaryNote),
                       ],
                     ),
                   ),
@@ -103,14 +98,20 @@ class _SummaryHeader extends ConsumerWidget {
             height: 1.08,
           ),
         ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          state.subject == null
-              ? l10n.summaryNoSubjectMessage
-              : l10n.summarySubjectLabel(state.subject!.displayName),
-          style: textTheme.bodyLarge?.copyWith(color: AppColors.secondaryInk),
-        ),
         const SizedBox(height: AppSpacing.lg),
+        if (summary != null) ...[
+          _SummaryStatusRow(
+            createdAt: summary.createdAt,
+            isBusy:
+                state.isRegenerating ||
+                state.isSavingReason ||
+                state.isRefreshing,
+            isRegenerating: state.isRegenerating,
+            onRegenerate: () =>
+                ref.read(summaryControllerProvider.notifier).regenerate(),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
         _VisitReasonRow(
           reason: state.reason,
           enabled:
@@ -119,35 +120,67 @@ class _SummaryHeader extends ConsumerWidget {
               !state.isRefreshing,
           isSaving: state.isSavingReason,
         ),
-        if (summary != null) ...[
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              if (summary.createdAt != null)
-                Flexible(
-                  child: Text(_formatDateTime(context, summary.createdAt!)),
+      ],
+    );
+  }
+}
+
+class _SummaryStatusRow extends StatelessWidget {
+  const _SummaryStatusRow({
+    required this.createdAt,
+    required this.isBusy,
+    required this.isRegenerating,
+    required this.onRegenerate,
+  });
+
+  final DateTime? createdAt;
+  final bool isBusy;
+  final bool isRegenerating;
+  final VoidCallback onRegenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    final updatedAt = createdAt == null
+        ? null
+        : _formatDateTime(context, createdAt!);
+    return Row(
+      children: [
+        Expanded(
+          child: updatedAt == null
+              ? const SizedBox.shrink()
+              : Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      color: AppColors.secondaryInk,
+                      size: 18,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        updatedAt,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.secondaryInk,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              const Spacer(),
-              IconButton.outlined(
-                tooltip: l10n.summaryRegenerateAction,
-                onPressed:
-                    state.isRegenerating ||
-                        state.isSavingReason ||
-                        state.isRefreshing
-                    ? null
-                    : () => ref
-                          .read(summaryControllerProvider.notifier)
-                          .regenerate(),
-                icon: state.isRegenerating
-                    ? const SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh_rounded),
-              ),
-            ],
-          ),
-        ],
+        ),
+        const SizedBox(width: AppSpacing.md),
+        IconButton.outlined(
+          tooltip: context.l10n.summaryRegenerateAction,
+          onPressed: isBusy ? null : onRegenerate,
+          icon: isRegenerating
+              ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.refresh_rounded),
+        ),
       ],
     );
   }
@@ -167,51 +200,71 @@ class _VisitReasonRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       onTap: enabled ? () => _editReason(context, ref, reason) : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        child: Row(
-          children: [
-            const Icon(Icons.chat_bubble_outline_rounded, size: 20),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.summaryVisitReasonLabel,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.secondaryInk,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    reason.isEmpty ? l10n.summaryVisitReasonEmpty : reason,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: reason.isEmpty
-                          ? AppColors.secondaryInk
-                          : AppColors.patientInk,
-                    ),
-                  ),
-                ],
+      child: Ink(
+        decoration: BoxDecoration(
+          color: AppColors.quietSurface,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: AppColors.deepClinicalBlue,
+                size: 21,
               ),
-            ),
-            IconButton(
-              tooltip: l10n.summaryVisitReasonEdit,
-              onPressed: enabled
-                  ? () => _editReason(context, ref, reason)
-                  : null,
-              icon: isSaving
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.edit_outlined, size: 20),
-            ),
-          ],
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.summaryVisitReasonLabel,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: AppColors.secondaryInk,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      reason.isEmpty ? l10n.summaryVisitReasonEmpty : reason,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: reason.isEmpty
+                            ? AppColors.secondaryInk
+                            : AppColors.patientInk,
+                        fontWeight: reason.isEmpty
+                            ? FontWeight.w400
+                            : FontWeight.w600,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: l10n.summaryVisitReasonEdit,
+                onPressed: enabled
+                    ? () => _editReason(context, ref, reason)
+                    : null,
+                icon: isSaving
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.edit_outlined, size: 20),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -252,27 +305,32 @@ class _VisitReasonDialogState extends State<_VisitReasonDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(context.l10n.summaryVisitReasonLabel),
+  Widget build(BuildContext context) => AppAlertDialog(
+    title: context.l10n.summaryVisitReasonLabel,
     content: TextField(
       controller: _controller,
       autofocus: true,
       maxLength: 300,
-      maxLines: 1,
+      minLines: 1,
+      maxLines: 3,
+      textCapitalization: TextCapitalization.sentences,
       decoration: InputDecoration(
         hintText: context.l10n.summaryVisitReasonHint,
+        alignLabelWithHint: true,
       ),
     ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: Text(context.l10n.eventCancelAction),
+    primaryAction: FilledButton(
+      onPressed: () => Navigator.pop(context, _controller.text.trim()),
+      child: Text(context.l10n.visitPrepSave),
+    ),
+    secondaryAction: TextButton(
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.secondaryInk,
+        minimumSize: const Size(0, 48),
       ),
-      FilledButton(
-        onPressed: () => Navigator.pop(context, _controller.text.trim()),
-        child: Text(context.l10n.visitPrepSave),
-      ),
-    ],
+      onPressed: () => Navigator.pop(context),
+      child: Text(context.l10n.eventCancelAction),
+    ),
   );
 }
 
@@ -331,10 +389,6 @@ class _SummaryContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Notice(
-          message: context.l10n.summaryAiOrganizedNote,
-          icon: Icons.auto_awesome_outlined,
-        ),
         if (sections.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.xxl),
           for (var index = 0; index < sections.length; index++) ...[
@@ -384,10 +438,7 @@ class _StructuredSection extends StatelessWidget {
 }
 
 class _SummaryItemRow extends StatelessWidget {
-  const _SummaryItemRow({
-    required this.item,
-    required this.showSourceAction,
-  });
+  const _SummaryItemRow({required this.item, required this.showSourceAction});
   final SummaryItem item;
   final bool showSourceAction;
 
@@ -509,32 +560,6 @@ Future<void> _openSources(
   );
   if (selected != null && context.mounted) {
     context.push('/events/${selected.eventId}');
-  }
-}
-
-class _Notice extends StatelessWidget {
-  const _Notice({required this.message, this.icon = Icons.shield_outlined});
-  final String message;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: AppColors.deepClinicalBlue, size: 20),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Text(
-            message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.secondaryInk,
-              height: 1.35,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }
 
