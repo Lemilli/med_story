@@ -56,6 +56,54 @@ void main() {
     expect(events.single.subjectId, 'subject-1');
   });
 
+  test(
+    'replaces a subject timeline so removed server events do not persist',
+    () async {
+      final now = DateTime.utc(2026, 6);
+      await database.upsertEvents([
+        _eventCompanion(
+          id: 'stale-event',
+          subjectId: 'subject-1',
+          title: 'Stale event',
+          now: now,
+        ),
+        _eventCompanion(
+          id: 'other-subject-event',
+          subjectId: 'subject-2',
+          title: 'Other subject event',
+          now: now,
+        ),
+      ]);
+
+      await database.replaceEventsForSubject('subject-1', [
+        _eventCompanion(
+          id: 'current-event',
+          subjectId: 'subject-1',
+          title: 'Current event',
+          now: now,
+        ),
+      ]);
+
+      final subjectOne = await database
+          .watchEvents(subjectId: 'subject-1')
+          .first;
+      final subjectTwo = await database
+          .watchEvents(subjectId: 'subject-2')
+          .first;
+      expect(subjectOne.map((event) => event.id), ['current-event']);
+      expect(subjectTwo.map((event) => event.id), ['other-subject-event']);
+
+      await database.replaceEventsForSubject(
+        'subject-1',
+        const <CachedMedicalEventsCompanion>[],
+      );
+      expect(
+        await database.watchEvents(subjectId: 'subject-1').first,
+        isEmpty,
+      );
+    },
+  );
+
   test('caches current summaries and removes them with subject data', () async {
     final now = DateTime.utc(2026, 6);
     await database.upsertSummaries([
@@ -85,3 +133,23 @@ void main() {
     expect(removed, null);
   });
 }
+
+CachedMedicalEventsCompanion _eventCompanion({
+  required String id,
+  required String subjectId,
+  required String title,
+  required DateTime now,
+}) => CachedMedicalEventsCompanion(
+  id: Value(id),
+  subjectId: Value(subjectId),
+  eventType: const Value('symptom'),
+  title: Value(title),
+  description: const Value(''),
+  eventDate: const Value('2026-06-01'),
+  attributesJson: Value(encodeJson(<String, dynamic>{})),
+  source: const Value('user_manual'),
+  tagsJson: Value(encodeJson(<String>[])),
+  createdAt: Value(now),
+  updatedAt: Value(now),
+  syncedAt: Value(now),
+);

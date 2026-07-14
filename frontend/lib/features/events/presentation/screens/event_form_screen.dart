@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,7 +25,6 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _tagsController = TextEditingController();
-  final _attributesController = TextEditingController();
 
   MedicalEventType _eventType = MedicalEventType.note;
   DateTime _eventDate = DateTime.now();
@@ -39,7 +36,6 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _tagsController.dispose();
-    _attributesController.dispose();
     super.dispose();
   }
 
@@ -150,17 +146,6 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                   helperText: l10n.eventTagsHelper,
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              TextFormField(
-                controller: _attributesController,
-                decoration: InputDecoration(
-                  labelText: l10n.eventAttributesLabel,
-                  helperText: l10n.eventAttributesHelper,
-                ),
-                minLines: 3,
-                maxLines: 6,
-                validator: (value) => _jsonObject(value, l10n),
-              ),
               const SizedBox(height: AppSpacing.lg),
               _BoundaryNote(text: l10n.eventBoundaryNote),
               const SizedBox(height: AppSpacing.lg),
@@ -198,9 +183,6 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     _titleController.text = event.title;
     _descriptionController.text = event.description;
     _tagsController.text = event.tags.join(', ');
-    _attributesController.text = event.attributes.isEmpty
-        ? ''
-        : const JsonEncoder.withIndent('  ').convert(event.attributes);
     _eventType = event.eventType;
     _eventDate = DateTime.tryParse(event.eventDate) ?? DateTime.now();
     _eventEndDate = event.eventEndDate == null
@@ -224,7 +206,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
       description: _descriptionController.text.trim(),
       eventDate: _dateOnly(_eventDate),
       eventEndDate: _eventEndDate == null ? null : _dateOnly(_eventEndDate!),
-      attributes: _parseAttributes(),
+      // Extracted structured data is kept for downstream summaries, but is not
+      // a user-editable field in this simple event editor.
+      attributes: existingEvent?.attributes ?? <String, dynamic>{},
       tags: _tagsController.text
           .split(',')
           .map((tag) => tag.trim())
@@ -242,35 +226,11 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     }
   }
 
-  Map<String, dynamic> _parseAttributes() {
-    final text = _attributesController.text.trim();
-    if (text.isEmpty) {
-      return <String, dynamic>{};
-    }
-    return jsonDecode(text) as Map<String, dynamic>;
-  }
-
   String? _required(String? value, dynamic l10n) {
     if (value == null || value.trim().isEmpty) {
       return l10n.eventRequiredValidation;
     }
     return null;
-  }
-
-  String? _jsonObject(String? value, dynamic l10n) {
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) {
-      return null;
-    }
-    try {
-      final decoded = jsonDecode(text);
-      if (decoded is Map<String, dynamic>) {
-        return null;
-      }
-    } on FormatException {
-      return l10n.eventInvalidJsonValidation;
-    }
-    return l10n.eventInvalidJsonValidation;
   }
 }
 

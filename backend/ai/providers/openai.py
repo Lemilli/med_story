@@ -11,12 +11,33 @@ from ai.providers.base import OCRResult
 
 EVENT_EXTRACTION_USER_PROMPT = """Create exactly one structured medical timeline event from this source text.
 
-Return only facts that are explicitly present. If a date is missing, use null. Prefer concise,
-patient-readable titles. Put lab values, medications, dosages, clinicians, facilities, and other
-source details in attributes when present. When a source contains several kinds of medical facts,
-use event_type medical_record and organize all supported facts within the single event. Return every
-date as ISO 8601 YYYY-MM-DD; convert visible dates like 03.05.2024 to 2024-05-03. Return event as null
-when the source cannot create a medical-history event."""
+Return only facts explicitly present in the source. If a date is missing, use null. Prefer concise,
+patient-readable titles. Write the description in the source's primary language as a high-signal,
+plain-language analysis of one to three short sentences. It must help a person understand the report
+without replacing the original document. When a date is included in the description, format it as
+DD.MM.YYYY.
+
+For laboratory and infection-related reports, use this priority order in the description:
+1. First state any named positive, reactive, detected, or abnormal infection/pathogen test result.
+   Name the test, virus, bacterium, or other condition exactly as the source identifies it.
+2. State named negative, non-reactive, or not-detected infection/pathogen results when they provide
+   useful contrast (for example, a panel testing several viruses).
+3. Then mention at most three other results explicitly outside their provided reference range or
+   marked high, low, or abnormal. Do not list every measurement or its raw numbers.
+4. Say that listed results appear within their stated reference ranges only when there are no
+   positive/detected results and no material abnormal findings to report.
+
+Describe the report's result, not a diagnosis: never say that the person has, is ill with, or is
+"most likely" to have an infection unless the source itself explicitly records that diagnosis. Do
+not infer infection from a blood-count pattern, combine test markers into a diagnosis, recommend
+treatment, or add risk assessment. If the source itself gives a clinical conclusion, attribute it
+clearly to the source (for example, "The report records ...").
+
+Put complete lab values, medications, dosages, clinicians, facilities, and other source details in
+attributes when present. When a source contains several kinds of medical facts, use event_type
+medical_record and organize all supported facts within the single event. Return every date as ISO
+8601 YYYY-MM-DD in the structured date fields; convert visible dates like 03.05.2024 to 2024-05-03.
+Return event as null when the source cannot create a medical-history event."""
 
 OCR_SYSTEM_PROMPT = (
     "You extract readable text from medical documents for the user's private medical organizer. "

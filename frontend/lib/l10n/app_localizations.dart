@@ -1538,6 +1538,24 @@ abstract class AppLocalizations {
   /// **'View original'**
   String get eventViewOriginalAction;
 
+  /// No description provided for @eventOriginalPageIndicator.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String eventOriginalPageIndicator(int current, int total);
+
+  /// No description provided for @eventPreviousOriginalPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get eventPreviousOriginalPage;
+
+  /// No description provided for @eventNextOriginalPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get eventNextOriginalPage;
+
   /// No description provided for @eventOriginalUnavailable.
   ///
   /// In en, this message translates to:

@@ -2,6 +2,7 @@ import base64
 import hashlib
 from pathlib import Path
 
+from celery import current_app
 from django.http import HttpResponse
 from django.db.models import Q
 from django.db import transaction
@@ -300,12 +301,83 @@ class DocumentDetailView(DocumentQuerysetMixin, generics.RetrieveDestroyAPIView)
     def get_queryset(self):
         return self.get_base_queryset()
 
+    def retrieve(self, request, *args, **kwargs):
+        document = self.get_object()
+        _reconcile_failed_ingestion_task(document)
+        return Response(self.get_serializer(document).data)
+
     def perform_destroy(self, instance):
         deleted_at = timezone.now()
         with transaction.atomic():
             instance.deleted_at = deleted_at
             instance.save(update_fields=("deleted_at", "updated_at"))
             instance.medical_events.filter(deleted_at__isnull=True).update(deleted_at=deleted_at)
+
+
+def _reconcile_failed_ingestion_task(document):
+    """Turn a broker-reported task failure into a visible document failure.
+
+    A task can fail before its body starts (for example, if a worker has not
+    been restarted after a task signature change). In that case the task cannot
+    update the document itself, so the client would otherwise poll forever.
+    """
+    if document.status != Document.Status.PROCESSING:
+        return
+
+    job = (
+        document.processing_jobs.filter(
+            job_type=ProcessingJob.JobType.INGESTION,
+            status__in=(
+                ProcessingJob.Status.QUEUED,
+                ProcessingJob.Status.RUNNING,
+                ProcessingJob.Status.RETRYING,
+            ),
+        )
+        .exclude(task_id="")
+        .order_by("-created_at")
+        .first()
+    )
+    if job is None:
+        return
+
+    try:
+        task_failed = current_app.AsyncResult(job.task_id).failed()
+    except Exception:
+        # A temporary broker/result-backend problem must not break document
+        # reads or turn a potentially running task into a false failure.
+        return
+    if not task_failed:
+        return
+
+    now = timezone.now()
+    with transaction.atomic():
+        changed = ProcessingJob.objects.filter(
+            id=job.id,
+            status__in=(
+                ProcessingJob.Status.QUEUED,
+                ProcessingJob.Status.RUNNING,
+                ProcessingJob.Status.RETRYING,
+            ),
+        ).update(
+            status=ProcessingJob.Status.FAILED,
+            error_message="Document processing failed.",
+            finished_at=now,
+            updated_at=now,
+        )
+        if not changed:
+            return
+        Document.objects.filter(
+            id=document.id,
+            status=Document.Status.PROCESSING,
+        ).update(
+            status=Document.Status.FAILED,
+            error_message="document_processing_failed",
+            updated_at=now,
+        )
+
+    document.status = Document.Status.FAILED
+    document.error_message = "document_processing_failed"
+    document.updated_at = now
 
 
 class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):

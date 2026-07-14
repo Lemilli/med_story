@@ -195,6 +195,25 @@ class LocalDatabase extends _$LocalDatabase {
     });
   }
 
+  /// Replaces the cached timeline for a subject with the server's current
+  /// first page so deleted events cannot survive in the local cache.
+  Future<void> replaceEventsForSubject(
+    String subjectId,
+    Iterable<CachedMedicalEventsCompanion> rows,
+  ) async {
+    final replacement = rows.toList(growable: false);
+    await transaction(() async {
+      await (delete(
+        cachedMedicalEvents,
+      )..where((event) => event.subjectId.equals(subjectId))).go();
+      if (replacement.isNotEmpty) {
+        await batch((batch) {
+          batch.insertAllOnConflictUpdate(cachedMedicalEvents, replacement);
+        });
+      }
+    });
+  }
+
   Future<void> upsertSummaries(
     Iterable<CachedMedicalSummariesCompanion> rows,
   ) async {
@@ -207,6 +226,12 @@ class LocalDatabase extends _$LocalDatabase {
     return (delete(
       cachedMedicalEvents,
     )..where((event) => event.id.equals(id))).go();
+  }
+
+  Future<void> removeEventsForDocument(String documentId) {
+    return (delete(cachedMedicalEvents)
+          ..where((event) => event.sourceDocumentId.equals(documentId)))
+        .go();
   }
 
   Future<void> removeSubject(String id) async {

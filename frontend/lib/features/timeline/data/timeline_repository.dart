@@ -49,9 +49,12 @@ class TimelineRepository {
       cursor: cursor,
       limit: limit,
     );
-    await database.upsertEvents(
-      page.results.map((event) => event.toCacheCompanion()),
-    );
+    final rows = page.results.map((event) => event.toCacheCompanion());
+    if (cursor == null) {
+      await database.replaceEventsForSubject(subjectId, rows);
+    } else {
+      await database.upsertEvents(rows);
+    }
     return page;
   }
 }

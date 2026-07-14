@@ -14,6 +14,8 @@ The AI features serve BRD §8: **Document Explanation**, **Structuring into even
   treatments, or generate prescriptions.
 - Output must be understandable by non-medical users (plain language).
 - Users stay in control: AI-extracted events remain editable and removable from their timeline.
+  The event view keeps the user-facing content concise; internal structured extraction remains
+  available to the summary/export pipeline rather than being exposed as editable JSON.
 
 All AI work runs **asynchronously in Celery workers** and calls external providers through a
 **provider-abstraction layer**, so vendors (LLM/OCR/STT) can be swapped freely.
@@ -154,7 +156,14 @@ Use plain, simple language. Never invent values that are not present in the sour
 ### 6.2 Structuring Prompt (intent)
 - Input: document text. Output: schema-valid JSON of candidate events.
 - Rules: extract only what is present; set low `confidence` when unsure; normalize dates;
-  do not infer diagnoses not stated in the text.
+  do not infer diagnoses not stated in the text. The event description is a plain-language
+  analysis of at most two or three sentences: say when shown results appear within their stated
+  ranges, or surface only material out-of-range results that may be worth discussing with a
+  clinician. For infection-related panels, surface named positive/detected results first and
+  useful named negative/not-detected results next. A test result is never rewritten as a diagnosis
+  unless the source explicitly contains that diagnosis. Dates shown in this user-facing description
+  use `DD.MM.YYYY`; structured event date fields remain ISO `YYYY-MM-DD`. Do not list every
+  measurement, diagnose, or recommend treatment.
 
 ### 6.3 Explanation Prompt (intent)
 - Input: document text. Output: `summary_text` (plain language), `key_points`, `glossary`.
@@ -170,8 +179,8 @@ Use plain, simple language. Never invent values that are not present in the sour
 ## 7. Safety, Quality & Disclaimers
 
 - **No-advice filter**: post-process to strip/forbid recommendation phrasing.
-- **Uncertainty surfaced**: low-confidence events are visually flagged and require user
-  editing and removal controls within the timeline.
+- **Uncertainty surfaced**: uncertain source information is represented in the extracted data;
+  users can edit the event's plain-language fields, remove it, and open the original document.
 - **Disclaimers**: the app consistently frames output as organizational, per BRD trust NFR.
 - **Human-in-the-loop**: nothing AI-derived is treated as authoritative without user review.
 - **Hallucination guardrails**: schema validation + "never invent values" instruction +

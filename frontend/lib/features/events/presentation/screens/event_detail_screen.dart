@@ -10,7 +10,6 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../../core/storage/local_database.dart' as db;
-import '../../data/event_repository.dart';
 import '../../domain/medical_event.dart';
 import '../controllers/event_controllers.dart';
 import '../event_type_l10n.dart';
@@ -107,39 +106,27 @@ class _EventDetailBody extends ConsumerWidget {
               ),
             ),
           ],
-          if (event.source == EventSource.aiDocument &&
-              _detailAttributes(event.attributes).isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.md),
-            _Panel(
-              child: _DetailSection(
-                title: l10n.eventStructuredDetailsTitle,
-                child: _AttributeList(
-                  attributes: _detailAttributes(event.attributes),
-                ),
-              ),
-            ),
-          ],
-          if (event.sourceDocumentId != null &&
-              event.source != EventSource.aiDocument &&
-              event.sourceAssetCount > 0) ...[
-            const SizedBox(height: AppSpacing.md),
-            _Panel(
-              child: TextButton.icon(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => _OriginalSourceScreen(event: event),
-                  ),
-                ),
-                icon: const Icon(Icons.attach_file_rounded),
-                label: Text(l10n.eventViewOriginalAction),
-              ),
-            ),
-          ],
           const SizedBox(height: AppSpacing.lg),
+          if (event.sourceDocumentId != null && event.sourceAssetCount > 0) ...[
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => _OriginalSourceScreen(event: event),
+                ),
+              ),
+              icon: const Icon(Icons.collections_outlined),
+              label: Text(
+                event.sourceAssetCount > 1
+                    ? l10n.eventViewOriginalPagesAction(event.sourceAssetCount)
+                    : l10n.eventViewOriginalAction,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
           Row(
             children: [
               Expanded(
-                child: FilledButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: () => context.push('/events/${event.id}/edit'),
                   icon: const Icon(Icons.edit_rounded),
                   label: Text(l10n.eventEditAction),
@@ -155,25 +142,6 @@ class _EventDetailBody extends ConsumerWidget {
               ),
             ],
           ),
-          if (event.source == EventSource.aiDocument) ...[
-            const SizedBox(height: AppSpacing.md),
-            _AiSourcePanel(event: event),
-          ],
-          if (event.pendingRevision != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => _RevisionComparisonScreen(
-                    event: event,
-                    revision: event.pendingRevision!,
-                  ),
-                ),
-              ),
-              icon: const Icon(Icons.compare_arrows_rounded),
-              label: Text(l10n.eventRevisionCompareTitle),
-            ),
-          ],
         ],
       ),
     );
@@ -241,177 +209,62 @@ class _DetailSection extends StatelessWidget {
   }
 }
 
-class _AttributeList extends StatelessWidget {
-  const _AttributeList({required this.attributes});
-
-  final Map<String, dynamic> attributes;
-
-  @override
-  Widget build(BuildContext context) {
-    final entries = attributes.entries.toList(growable: false);
-    return Column(
-      children: [
-        for (var index = 0; index < entries.length; index++) ...[
-          if (index > 0) const Divider(height: AppSpacing.lg),
-          _AttributeRow(entry: entries[index]),
-        ],
-      ],
-    );
-  }
-}
-
-class _AttributeRow extends StatelessWidget {
-  const _AttributeRow({required this.entry});
-
-  final MapEntry<String, dynamic> entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            _humanizeAttributeKey(entry.key),
-            style: textTheme.bodyMedium?.copyWith(
-              color: AppColors.secondaryInk,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          flex: 3,
-          child: Text(
-            _formatAttributeValue(entry.value),
-            style: textTheme.bodyMedium?.copyWith(
-              color: AppColors.patientInk,
-              height: 1.35,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AiSourcePanel extends ConsumerWidget {
-  const _AiSourcePanel({required this.event});
-
-  final MedicalEvent event;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final textTheme = Theme.of(context).textTheme;
-    final confidence = event.confidence;
-
-    return _Panel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(
-                Icons.auto_awesome_outlined,
-                color: AppColors.deepClinicalBlue,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  l10n.eventAiSuggestedNote,
-                  style: textTheme.bodyMedium?.copyWith(height: 1.35),
-                ),
-              ),
-            ],
-          ),
-          if (confidence != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              l10n.eventConfidenceValue('${(confidence * 100).round()}%'),
-              style: textTheme.bodyMedium?.copyWith(
-                color: AppColors.secondaryInk,
-              ),
-            ),
-          ],
-          if (event.sourceDocumentId != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            TextButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => _OriginalSourceScreen(event: event),
-                ),
-              ),
-              icon: const Icon(Icons.collections_outlined),
-              label: Text(
-                event.sourceAssetCount > 1
-                    ? l10n.eventViewOriginalPagesAction(event.sourceAssetCount)
-                    : l10n.eventViewOriginalAction,
-              ),
-            ),
-            TextButton.icon(
-              onPressed: event.pendingRevision != null
-                  ? null
-                  : () async {
-                      final revision = await ref
-                          .read(eventRepositoryProvider)
-                          .regenerateEvent(event.id);
-                      ref.invalidate(eventDetailProvider(event.id));
-                      if (context.mounted) {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => _RevisionComparisonScreen(
-                              event: event,
-                              revision: revision,
-                            ),
-                          ),
-                        );
-                      }
-                    },
-              icon: const Icon(Icons.auto_fix_high_outlined),
-              label: Text(l10n.eventRevisionRegenerateAction),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _OriginalSourceScreen extends ConsumerWidget {
+class _OriginalSourceScreen extends ConsumerStatefulWidget {
   const _OriginalSourceScreen({required this.event});
 
   final MedicalEvent event;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_OriginalSourceScreen> createState() =>
+      _OriginalSourceScreenState();
+}
+
+class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
+  final _pageController = PageController();
+  late final Future<List<db.DocumentLocalAsset>> _assetsFuture;
+  var _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final documentId = widget.event.sourceDocumentId;
+    _assetsFuture = documentId == null
+        ? Future.value(const [])
+        : ref.read(db.localDatabaseProvider).getDocumentLocalAssets(documentId);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final documentId = event.sourceDocumentId;
+    final documentId = widget.event.sourceDocumentId;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.eventViewOriginalAction)),
       body: documentId == null
           ? Center(
-              child: Text(event.sourceText ?? l10n.eventOriginalUnavailable),
+              child: Text(
+                widget.event.sourceText ?? l10n.eventOriginalUnavailable,
+              ),
             )
           : FutureBuilder<List<db.DocumentLocalAsset>>(
-              future: ref
-                  .read(db.localDatabaseProvider)
-                  .getDocumentLocalAssets(documentId),
+              future: _assetsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 final assets = snapshot.data ?? const [];
                 if (assets.isEmpty) {
-                  if (event.sourceText != null) {
+                  if (widget.event.sourceText != null) {
                     return ListView(
                       padding: const EdgeInsets.all(AppSpacing.xl),
                       children: [
                         Text(
-                          event.sourceText!,
+                          widget.event.sourceText!,
                           style: Theme.of(
                             context,
                           ).textTheme.bodyLarge?.copyWith(height: 1.5),
@@ -429,37 +282,90 @@ class _OriginalSourceScreen extends ConsumerWidget {
                     ),
                   );
                 }
+                final hasMultiplePages = assets.length > 1;
+                final currentPage = _currentPage.clamp(0, assets.length - 1);
                 return Column(
                   children: [
                     Expanded(
-                      child: PageView.builder(
-                        itemCount: assets.length,
-                        itemBuilder: (context, index) {
-                          final asset = assets[index];
-                          if (asset.mimeType.startsWith('image/')) {
-                            return InteractiveViewer(
-                              child: Padding(
-                                padding: const EdgeInsets.all(AppSpacing.lg),
-                                child: Image.file(
-                                  File(asset.localPath),
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, _, _) => Center(
-                                    child: Text(l10n.eventOriginalUnavailable),
+                      child: Stack(
+                        children: [
+                          PageView.builder(
+                            controller: _pageController,
+                            itemCount: assets.length,
+                            onPageChanged: (page) =>
+                                setState(() => _currentPage = page),
+                            itemBuilder: (context, index) {
+                              final asset = assets[index];
+                              if (asset.mimeType.startsWith('image/')) {
+                                return InteractiveViewer(
+                                  key: ValueKey(asset.localPath),
+                                  minScale: 1,
+                                  maxScale: 4,
+                                  boundaryMargin: const EdgeInsets.all(48),
+                                  child: Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(
+                                        AppSpacing.lg,
+                                      ),
+                                      child: Image.file(
+                                        key: ValueKey(asset.localPath),
+                                        File(asset.localPath),
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (_, _, _) => Center(
+                                          child: Text(
+                                            l10n.eventOriginalUnavailable,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return Center(
+                                child: ListTile(
+                                  leading: const Icon(
+                                    Icons.insert_drive_file_outlined,
+                                  ),
+                                  title: Text(asset.fileName),
+                                  subtitle: Text(asset.mimeType),
+                                ),
+                              );
+                            },
+                          ),
+                          if (hasMultiplePages) ...[
+                            Positioned(
+                              top: AppSpacing.md,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: _PageIndicator(
+                                  label: l10n.eventOriginalPageIndicator(
+                                    currentPage + 1,
+                                    assets.length,
                                   ),
                                 ),
                               ),
-                            );
-                          }
-                          return Center(
-                            child: ListTile(
-                              leading: const Icon(
-                                Icons.insert_drive_file_outlined,
-                              ),
-                              title: Text(asset.fileName),
-                              subtitle: Text(asset.mimeType),
                             ),
-                          );
-                        },
+                            if (currentPage > 0)
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: _PageNavigationButton(
+                                  icon: Icons.chevron_left_rounded,
+                                  tooltip: l10n.eventPreviousOriginalPage,
+                                  onPressed: () => _goToPage(currentPage - 1),
+                                ),
+                              ),
+                            if (currentPage < assets.length - 1)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: _PageNavigationButton(
+                                  icon: Icons.chevron_right_rounded,
+                                  tooltip: l10n.eventNextOriginalPage,
+                                  onPressed: () => _goToPage(currentPage + 1),
+                                ),
+                              ),
+                          ],
+                        ],
                       ),
                     ),
                     Padding(
@@ -497,113 +403,79 @@ class _OriginalSourceScreen extends ConsumerWidget {
             ),
     );
   }
+
+  void _goToPage(int page) {
+    if (!_pageController.hasClients || page == _currentPage) {
+      return;
+    }
+
+    // PageView's callback keeps the indicator and available arrows in sync
+    // for both button taps and swipe navigation.
+    _pageController.jumpToPage(page);
+  }
 }
 
-class _RevisionComparisonScreen extends ConsumerStatefulWidget {
-  const _RevisionComparisonScreen({
-    required this.event,
-    required this.revision,
-  });
+class _PageIndicator extends StatelessWidget {
+  const _PageIndicator({required this.label});
 
-  final MedicalEvent event;
-  final EventRevision revision;
-
-  @override
-  ConsumerState<_RevisionComparisonScreen> createState() =>
-      _RevisionComparisonScreenState();
-}
-
-class _RevisionComparisonScreenState
-    extends ConsumerState<_RevisionComparisonScreen> {
-  late final Set<String> _selected = {...widget.revision.suggestedChanges.keys};
-  bool _busy = false;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final changes = widget.revision.suggestedChanges.entries.toList();
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.eventRevisionCompareTitle)),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          children: [
-            Text(
-              l10n.eventRevisionSafetyNote,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.secondaryInk,
-                height: 1.4,
+    return Semantics(
+      liveRegion: true,
+      label: label,
+      child: ExcludeSemantics(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.quietSurface,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: AppColors.patientInk,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
-            Text(
-              l10n.eventRevisionCurrent,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _Panel(
-              child: _AttributeList(
-                attributes: widget.revision.currentSnapshot,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Text(
-              l10n.eventRevisionSuggested,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            for (final change in changes)
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                value: _selected.contains(change.key),
-                title: Text(_humanizeAttributeKey(change.key)),
-                subtitle: Text(_formatAttributeValue(change.value)),
-                onChanged: _busy
-                    ? null
-                    : (selected) => setState(() {
-                        if (selected == true) {
-                          _selected.add(change.key);
-                        } else {
-                          _selected.remove(change.key);
-                        }
-                      }),
-              ),
-            const SizedBox(height: AppSpacing.lg),
-            FilledButton(
-              onPressed: _busy || _selected.isEmpty ? null : _apply,
-              child: Text(l10n.eventRevisionApply),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            OutlinedButton(
-              onPressed: _busy ? null : _discard,
-              child: Text(l10n.eventRevisionKeep),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
 
-  Future<void> _apply() async {
-    setState(() => _busy = true);
-    await ref
-        .read(eventRepositoryProvider)
-        .applyRevision(widget.event.id, widget.revision.id, _selected.toList());
-    ref.invalidate(eventDetailProvider(widget.event.id));
-    if (mounted) Navigator.of(context).pop();
-  }
+class _PageNavigationButton extends StatelessWidget {
+  const _PageNavigationButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
 
-  Future<void> _discard() async {
-    setState(() => _busy = true);
-    await ref
-        .read(eventRepositoryProvider)
-        .discardRevision(widget.event.id, widget.revision.id);
-    ref.invalidate(eventDetailProvider(widget.event.id));
-    if (mounted) Navigator.of(context).pop();
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: IconButton.filledTonal(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        tooltip: tooltip,
+        style: IconButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          backgroundColor: AppColors.quietSurface,
+          foregroundColor: AppColors.patientInk,
+        ),
+      ),
+    );
   }
 }
 
@@ -626,75 +498,4 @@ class _Panel extends StatelessWidget {
       ),
     );
   }
-}
-
-String _humanizeAttributeKey(String key) {
-  final words = key
-      .replaceAll(RegExp(r'[_-]+'), ' ')
-      .replaceAllMapped(
-        RegExp(r'([a-z])([A-Z])'),
-        (match) => '${match.group(1)} ${match.group(2)}',
-      )
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((word) => word.isNotEmpty)
-      .toList(growable: false);
-  if (words.isEmpty) {
-    return key;
-  }
-  return words
-      .map(
-        (word) => word.length == 1
-            ? word.toUpperCase()
-            : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
-      )
-      .join(' ');
-}
-
-Map<String, dynamic> _detailAttributes(Map<String, dynamic> attributes) {
-  return Map.fromEntries(
-    attributes.entries.where(
-      (entry) =>
-          entry.key != 'result' &&
-          entry.key != 'notes' &&
-          _hasAttributeValue(entry.value),
-    ),
-  );
-}
-
-bool _hasAttributeValue(Object? value) {
-  if (value == null) {
-    return false;
-  }
-  if (value is String) {
-    return value.trim().isNotEmpty;
-  }
-  if (value is Iterable) {
-    return value.any(_hasAttributeValue);
-  }
-  if (value is Map) {
-    return value.values.any(_hasAttributeValue);
-  }
-  return true;
-}
-
-String _formatAttributeValue(Object? value) {
-  if (value == null) {
-    return 'Not specified';
-  }
-  if (value is Iterable) {
-    return value.map(_formatAttributeValue).join(', ');
-  }
-  if (value is Map) {
-    return value.entries
-        .map((entry) {
-          final key = _humanizeAttributeKey(entry.key.toString());
-          return '$key: ${_formatAttributeValue(entry.value)}';
-        })
-        .join('\n');
-  }
-  if (value is bool) {
-    return value ? 'Yes' : 'No';
-  }
-  return value.toString();
 }

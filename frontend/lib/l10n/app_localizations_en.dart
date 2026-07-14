@@ -855,6 +855,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventViewOriginalAction => 'View original';
 
   @override
+  String eventOriginalPageIndicator(int current, int total) {
+    return 'Page $current of $total';
+  }
+
+  @override
+  String get eventPreviousOriginalPage => 'Previous page';
+
+  @override
+  String get eventNextOriginalPage => 'Next page';
+
+  @override
   String get eventOriginalUnavailable =>
       'The original is unavailable on this device.';
 

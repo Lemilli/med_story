@@ -83,6 +83,7 @@ class DocumentRepository {
         sizeBytes: localFiles.fold(0, (total, file) => total + file.sizeBytes),
         subjectId: draft.subjectId,
         documentDate: draft.documentDate,
+        localUriHint: localFiles.first.localUriHint,
         language: draft.language,
       ),
     );
@@ -140,8 +141,9 @@ class DocumentRepository {
     return api.getDocument(id);
   }
 
-  Future<void> deleteDocument(String id) {
-    return api.deleteDocument(id);
+  Future<void> deleteDocument(String id) async {
+    await api.deleteDocument(id);
+    await database?.removeEventsForDocument(id);
   }
 
   Future<void> _deleteCreatedDocument(String id) async {
@@ -155,10 +157,12 @@ class DocumentRepository {
   Future<MedicalDocument> pollDocumentUntilTerminal({
     required String id,
     Duration interval = const Duration(seconds: 2),
-    Duration timeout = const Duration(minutes: 2),
+    Duration timeout = const Duration(minutes: 1),
+    int maxPollAttempts = 30,
   }) async {
+    assert(maxPollAttempts > 0);
     final deadline = DateTime.now().add(timeout);
-    while (true) {
+    for (var attempt = 0; attempt < maxPollAttempts; attempt++) {
       final document = await api.getDocument(id);
       if (document.status.isTerminal) {
         if (document.status == DocumentStatus.failed) {
@@ -176,8 +180,13 @@ class DocumentRepository {
       if (DateTime.now().isAfter(deadline)) {
         throw const AppFailure('document_processing_timeout');
       }
-      await Future<void>.delayed(interval);
+      if (attempt < maxPollAttempts - 1) {
+        await Future<void>.delayed(interval);
+      }
     }
+    // A request-count cap protects the app if the device clock is adjusted
+    // while polling. Further processing is always an explicit user retry.
+    throw const AppFailure('document_processing_timeout');
   }
 }
 

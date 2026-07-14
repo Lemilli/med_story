@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:med_story/core/error/app_failure.dart';
 import 'package:med_story/features/documents/data/document_api.dart';
 import 'package:med_story/features/documents/data/document_repository.dart';
 import 'package:med_story/features/documents/domain/medical_document.dart';
@@ -101,6 +102,92 @@ void main() {
       );
     },
   );
+
+  test('document drafts retain the saved local URI hint when created', () async {
+    final api = _MockDocumentApi();
+    final repository = DocumentRepository(
+      api: api,
+      localFileStore: const _FakeDocumentLocalFileStore(
+        StoredDocumentFile(
+          path: '/local/report.jpg',
+          fileName: 'report.jpg',
+          mimeType: 'image/jpeg',
+          sizeBytes: 1024,
+          localUriHint: 'app://documents/report.jpg',
+        ),
+      ),
+    );
+
+    when(() => api.createDocument(any())).thenAnswer(
+      (_) async => const DocumentStatusUpdate(
+        id: 'document-1',
+        status: DocumentStatus.pendingIngest,
+      ),
+    );
+    when(
+      () => api.ingestDocument(
+        documentId: any(named: 'documentId'),
+        files: any(named: 'files'),
+      ),
+    ).thenAnswer(
+      (_) async => const DocumentStatusUpdate(
+        id: 'document-1',
+        status: DocumentStatus.processing,
+      ),
+    );
+
+    await repository.createAndUpload(
+      const DocumentUploadDraft(
+        title: 'Medical photo',
+        docType: DocumentType.medicalRecord,
+        sources: [
+          DocumentSourceFile(
+            path: '/tmp/report.jpg',
+            fileName: 'report.jpg',
+            mimeType: 'image/jpeg',
+          ),
+        ],
+      ),
+    );
+
+    final request =
+        verify(() => api.createDocument(captureAny())).captured.single
+            as DocumentCreateRequest;
+    expect(request.localUriHint, 'app://documents/report.jpg');
+  });
+
+  test('processing polling stops after its configured request limit', () async {
+    final api = _MockDocumentApi();
+    final repository = DocumentRepository(
+      api: api,
+      localFileStore: const _FakeDocumentLocalFileStore(
+        StoredDocumentFile(
+          path: '/local/report.jpg',
+          fileName: 'report.jpg',
+          mimeType: 'image/jpeg',
+          sizeBytes: 1024,
+          localUriHint: 'app://documents/report.jpg',
+        ),
+      ),
+    );
+    when(() => api.getDocument('document-1')).thenAnswer(
+      (_) async => _processingDocument(),
+    );
+
+    await expectLater(
+      repository.pollDocumentUntilTerminal(
+        id: 'document-1',
+        interval: Duration.zero,
+        maxPollAttempts: 3,
+      ),
+      throwsA(isA<AppFailure>().having(
+        (failure) => failure.message,
+        'message',
+        'document_processing_timeout',
+      )),
+    );
+    verify(() => api.getDocument('document-1')).called(3);
+  });
 }
 
 DocumentCreateRequest _createRequest() {
@@ -111,3 +198,17 @@ DocumentCreateRequest _createRequest() {
     sizeBytes: 1024,
   );
 }
+
+MedicalDocument _processingDocument() => MedicalDocument(
+  id: 'document-1',
+  title: 'Document',
+  docType: DocumentType.medicalRecord,
+  mimeType: 'image/jpeg',
+  sizeBytes: 1024,
+  status: DocumentStatus.processing,
+  subjectId: 'subject-1',
+  extractedTextAvailable: false,
+  eventCount: 0,
+  createdAt: DateTime.utc(2026, 7, 14),
+  updatedAt: DateTime.utc(2026, 7, 14),
+);

@@ -73,6 +73,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                           .read(documentUploadControllerProvider.notifier)
                           .dismiss(id),
                       onOpenDocument: (id) => context.push('/documents/$id'),
+                      onOpenCompletedEvent: _openCompletedEvent,
                     ),
             ),
             if (hasUploads) const SizedBox(height: AppSpacing.xl),
@@ -383,6 +384,15 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       _ => 'jpg',
     };
     return '$prefix-${DateFormat('yyyy-MM-dd-HHmmss').format(DateTime.now())}.$extension';
+  }
+
+  Future<void> _openCompletedEvent(String documentId) async {
+    final document = await ref
+        .read(documentRepositoryProvider)
+        .getDocument(documentId);
+    final eventId = document.eventId;
+    if (!mounted || eventId == null) return;
+    context.push('/events/$eventId');
   }
 }
 
@@ -922,12 +932,14 @@ class _UploadQueue extends StatelessWidget {
     required this.onRetry,
     required this.onDismiss,
     required this.onOpenDocument,
+    required this.onOpenCompletedEvent,
   });
 
   final List<QueuedUpload> items;
   final ValueChanged<String> onRetry;
   final ValueChanged<String> onDismiss;
   final ValueChanged<String> onOpenDocument;
+  final Future<void> Function(String) onOpenCompletedEvent;
 
   @override
   Widget build(BuildContext context) {
@@ -961,6 +973,7 @@ class _UploadQueue extends StatelessWidget {
                       onRetry: onRetry,
                       onDismiss: onDismiss,
                       onOpenDocument: onOpenDocument,
+                      onOpenCompletedEvent: onOpenCompletedEvent,
                     ),
                     if (index != items.length - 1)
                       const Divider(height: 1, color: AppColors.clinicalLine),
@@ -981,12 +994,14 @@ class _UploadQueueRow extends StatelessWidget {
     required this.onRetry,
     required this.onDismiss,
     required this.onOpenDocument,
+    required this.onOpenCompletedEvent,
   });
 
   final QueuedUpload item;
   final ValueChanged<String> onRetry;
   final ValueChanged<String> onDismiss;
   final ValueChanged<String> onOpenDocument;
+  final Future<void> Function(String) onOpenCompletedEvent;
 
   @override
   Widget build(BuildContext context) {
@@ -1119,7 +1134,10 @@ class _UploadQueueRow extends StatelessWidget {
     return Semantics(
       button: true,
       label: l10n.uploadQueueOpenResultHint,
-      child: InkWell(onTap: () => onOpenDocument(item.documentId!), child: row),
+      child: InkWell(
+        onTap: () => onOpenCompletedEvent(item.documentId!),
+        child: row,
+      ),
     );
   }
 }

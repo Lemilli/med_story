@@ -855,6 +855,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get eventViewOriginalAction => 'Открыть оригинал';
 
   @override
+  String eventOriginalPageIndicator(int current, int total) {
+    return 'Страница $current из $total';
+  }
+
+  @override
+  String get eventPreviousOriginalPage => 'Предыдущая страница';
+
+  @override
+  String get eventNextOriginalPage => 'Следующая страница';
+
+  @override
   String get eventOriginalUnavailable =>
       'Оригинал недоступен на этом устройстве.';
 

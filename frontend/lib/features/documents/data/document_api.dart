@@ -21,7 +21,7 @@ class DocumentApi {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/documents',
-        data: request.toJson(),
+        data: request.toJson()..removeWhere((_, value) => value == null),
       );
       return DocumentStatusUpdate.fromJson(
         response.data ?? <String, dynamic>{},

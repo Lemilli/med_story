@@ -30,11 +30,11 @@ final apiClientProvider = Provider<Dio>((ref) {
       PrettyDioLogger(
         // Medical payloads and Authorization headers are sensitive even in
         // debug builds. Keep only method/URL/status timing diagnostics.
-        requestHeader: false,
-        requestBody: false,
-        responseHeader: false,
-        responseBody: false,
-        error: false,
+        requestHeader: true,
+        requestBody: true,
+        responseHeader: true,
+        responseBody: true,
+        error: true,
         compact: true,
       ),
     );

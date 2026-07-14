@@ -345,6 +345,30 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["results"][0]["title"], "MRI report")
 
+    def test_document_detail_marks_broker_failed_ingestion_as_failed(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        document.status = Document.Status.PROCESSING
+        document.save(update_fields=("status", "updated_at"))
+        job = ProcessingJob.objects.create(
+            user=self.user,
+            document=document,
+            status=ProcessingJob.Status.QUEUED,
+            task_id="failed-task-id",
+        )
+
+        with patch("medical.views.current_app.AsyncResult") as async_result:
+            async_result.return_value.failed.return_value = True
+            response = self.client.get(f"/api/v1/documents/{document.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], Document.Status.FAILED)
+        self.assertEqual(response.data["error_message"], "document_processing_failed")
+        document.refresh_from_db()
+        job.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.FAILED)
+        self.assertEqual(job.status, ProcessingJob.Status.FAILED)
+        self.assertTrue(job.finished_at)
+
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_lab_result_creates_ai_event(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
@@ -1281,6 +1305,14 @@ class MedicalApiTests(APITestCase):
 
 
 class AIProviderTests(SimpleTestCase):
+    def test_event_extraction_prompt_prioritizes_infection_panel_findings(self):
+        from ai.providers.openai import EVENT_EXTRACTION_USER_PROMPT
+
+        self.assertIn("positive, reactive, detected", EVENT_EXTRACTION_USER_PROMPT)
+        self.assertIn("negative, non-reactive, or not-detected", EVENT_EXTRACTION_USER_PROMPT)
+        self.assertIn("infer infection from a blood-count pattern", EVENT_EXTRACTION_USER_PROMPT)
+        self.assertIn("DD.MM.YYYY", EVENT_EXTRACTION_USER_PROMPT)
+
     @override_settings(
         AI_OPENAI_API_KEY="test-key",
         AI_OPENAI_OCR_MODEL="gpt-test-ocr",
