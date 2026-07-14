@@ -173,8 +173,12 @@ Use plain, simple language. Never invent values that are not present in the sour
 
 ### 6.4 Summary Prompt (intent)
 - Input: structured events. Output: the five BRD sections + a concise doctor-ready narrative.
-- Rules: chronological where relevant; concise; flag gaps ("no records between X and Y");
-  no diagnostic conclusions.
+- Rules: lead with ongoing or repeatedly recorded concerns; order items only by explicit event
+  signals such as recency, repetition, duration, recorded intensity, ongoing status, or a concern
+  the user wrote; otherwise use reverse chronology. Keep each item to one dense plain-language line
+  with a short label, key detail, date/period, and recorded status or outcome when available. Do not
+  infer urgency or importance from medical knowledge, repeat facts across sections, or make
+  diagnostic conclusions.
 
 ## 7. Safety, Quality & Disclaimers
 

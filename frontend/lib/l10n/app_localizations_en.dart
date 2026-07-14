@@ -66,9 +66,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get summaryGenerateAction => 'Generate summary';
 
   @override
-  String get summaryPrepareVisitAction => 'Prepare for visit';
-
-  @override
   String get summaryNotReadyTitle => 'No summary yet';
 
   @override
@@ -76,7 +73,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Generate a doctor-ready summary from your timeline events when you need to prepare for a visit.';
 
   @override
-  String get summaryNarrativeTitle => 'Doctor-ready narrative';
+  String get summaryNarrativeTitle => 'At a glance';
 
   @override
   String get summaryNoNarrativeMessage =>
@@ -157,6 +154,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get summarySectionMajorDiagnoses => 'Major diagnoses';
+
+  @override
+  String get summarySectionTreatmentHistory => 'Treatments and outcomes';
+
+  @override
+  String get summarySectionImportantExaminations =>
+      'Important tests and results';
+
+  @override
+  String get summarySectionRelevantMedications => 'Relevant medications';
 
   @override
   String get summarySectionMedications => 'Medications';

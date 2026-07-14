@@ -142,6 +142,7 @@ DOCUMENT_EXPLANATION_JSON_SCHEMA = {
 
 SUMMARY_SECTION_JSON_SCHEMA = {
     "type": "array",
+    "maxItems": 6,
     "items": {"type": "string", "minLength": 1},
 }
 
@@ -275,11 +276,17 @@ def validate_medical_summary(payload: dict[str, Any]) -> dict[str, Any]:
         raw_items = raw_content.get(section)
         if not isinstance(raw_items, list):
             raise SchemaValidationError(f"content.{section} must be a list.")
-        content[section] = [
+        items = [
             item.strip()
             for item in raw_items
             if isinstance(item, str) and item.strip()
         ]
+        section_limit = SUMMARY_SECTION_JSON_SCHEMA["maxItems"]
+        if len(items) > section_limit:
+            raise SchemaValidationError(
+                f"content.{section} cannot contain more than {section_limit} items."
+            )
+        content[section] = items
 
     narrative_text = payload.get("narrative_text")
     if not isinstance(narrative_text, str) or not narrative_text.strip():

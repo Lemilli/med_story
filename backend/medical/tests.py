@@ -1471,6 +1471,20 @@ class AIProviderTests(SimpleTestCase):
         with self.assertRaises(SchemaValidationError):
             validate_document_explanation({"summary_text": "Summary", "key_points": {}, "glossary": {}})
 
+    def test_medical_summary_validation_rejects_overlong_sections(self):
+        from ai.schemas import SUMMARY_CONTENT_SECTIONS, validate_medical_summary
+
+        content = {section: [] for section in SUMMARY_CONTENT_SECTIONS}
+        content["key_symptoms"] = [f"Symptom {index}" for index in range(7)]
+
+        with self.assertRaises(SchemaValidationError):
+            validate_medical_summary(
+                {
+                    "content": content,
+                    "narrative_text": "A concise timeline-based summary.",
+                }
+            )
+
     def test_mock_llm_provider_returns_document_explanation(self):
         from ai.providers.mock import MockLLMProvider
         from ai.schemas import DOCUMENT_EXPLANATION_JSON_SCHEMA

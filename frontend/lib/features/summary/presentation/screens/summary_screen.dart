@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -148,42 +147,15 @@ class _SummaryHeader extends ConsumerWidget {
         ),
         if (summary != null) ...[
           const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              _MetaChip(label: l10n.summaryVersionLabel(summary.version)),
-              _MetaChip(
-                label: l10n.summaryEventCountLabel(
-                  summary.generatedFromEventCount,
-                ),
-              ),
-              if (summary.createdAt != null)
-                _MetaChip(
-                  label: l10n.summaryGeneratedAt(
-                    _formatDateTime(context, summary.createdAt!),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: state.currentSummary == null
-                      ? null
-                      : () => context.push('/visit-preparation'),
-                  icon: state.isExporting
-                      ? const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.ios_share_rounded),
-                  label: Text(l10n.summaryPrepareVisitAction),
+              if (summary.createdAt != null)
+                Flexible(
+                  child: _MetaChip(
+                    label: _formatDateTime(context, summary.createdAt!),
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
+              const Spacer(),
               IconButton.outlined(
                 tooltip: l10n.summaryRegenerateAction,
                 onPressed: state.isRegenerating
@@ -196,7 +168,7 @@ class _SummaryHeader extends ConsumerWidget {
                         dimension: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.auto_fix_high_rounded),
+                    : const Icon(Icons.refresh_rounded),
               ),
             ],
           ),
@@ -284,28 +256,54 @@ class _SummaryContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.summaryNarrativeTitle,
-          style: textTheme.titleLarge?.copyWith(
-            color: AppColors.patientInk,
-            fontWeight: FontWeight.w900,
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.quietSurface,
+            borderRadius: BorderRadius.circular(14),
           ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          summary.narrativeText.isEmpty
-              ? l10n.summaryNoNarrativeMessage
-              : summary.narrativeText,
-          style: textTheme.bodyLarge?.copyWith(
-            color: AppColors.patientInk,
-            height: 1.45,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.subject_rounded,
+                      size: 21,
+                      color: AppColors.deepClinicalBlue,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        l10n.summaryNarrativeTitle,
+                        style: textTheme.titleMedium?.copyWith(
+                          color: AppColors.patientInk,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  summary.narrativeText.isEmpty
+                      ? l10n.summaryNoNarrativeMessage
+                      : summary.narrativeText,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: AppColors.patientInk,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         if (sections.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.xxl),
           for (final section in sections) ...[
             _StructuredSection(section: section),
-            const Divider(height: AppSpacing.xl),
+            if (section != sections.last) const Divider(height: AppSpacing.xxl),
           ],
         ],
       ],
@@ -324,45 +322,111 @@ class _StructuredSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          section.title,
-          style: textTheme.titleMedium?.copyWith(
-            color: AppColors.patientInk,
-            fontWeight: FontWeight.w900,
-          ),
+        Row(
+          children: [
+            SizedBox.square(
+              dimension: 36,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: section.emphasized
+                      ? AppColors.selectedSurface
+                      : AppColors.quietSurface,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  section.icon,
+                  size: 20,
+                  color: section.emphasized
+                      ? AppColors.controlledCrimson
+                      : AppColors.deepClinicalBlue,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                section.title,
+                style: textTheme.titleMedium?.copyWith(
+                  color: AppColors.patientInk,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.quietSurface,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
+                ),
+                child: Text(
+                  '${section.items.length}',
+                  style: textTheme.labelMedium?.copyWith(
+                    color: AppColors.secondaryInk,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.md),
         for (final item in section.items)
           Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: SizedBox.square(
-                    dimension: 5,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.deepClinicalBlue,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    item,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.patientInk,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: _SummaryItem(item: item),
           ),
+      ],
+    );
+  }
+}
+
+class _SummaryItem extends StatelessWidget {
+  const _SummaryItem({required this.item});
+
+  final String item;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final parts = _splitSummaryItem(item);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: Icon(Icons.circle, size: 6, color: AppColors.deepClinicalBlue),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: parts == null
+              ? Text(
+                  item,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.patientInk,
+                    height: 1.45,
+                  ),
+                )
+              : Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: parts.$1,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      TextSpan(text: ' — ${parts.$2}'),
+                    ],
+                  ),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.patientInk,
+                    height: 1.45,
+                  ),
+                ),
+        ),
       ],
     );
   }
@@ -455,6 +519,9 @@ List<_SummarySection> _summarySections(
   final keys = <String>[
     'key_symptoms',
     'major_diagnoses',
+    'treatment_history',
+    'important_examinations',
+    'relevant_medications',
     'medications',
     'procedures',
     'hospitalizations',
@@ -472,7 +539,12 @@ List<_SummarySection> _summarySections(
         if (items.isEmpty) {
           return null;
         }
-        return _SummarySection(title: _sectionTitle(l10n, key), items: items);
+        return _SummarySection(
+          title: _sectionTitle(l10n, key),
+          items: items,
+          icon: _sectionIcon(key),
+          emphasized: key == 'key_symptoms' || key == 'major_diagnoses',
+        );
       })
       .nonNulls
       .toList(growable: false);
@@ -526,6 +598,9 @@ String _sectionTitle(AppLocalizations l10n, String key) {
   return switch (key) {
     'key_symptoms' => l10n.summarySectionKeySymptoms,
     'major_diagnoses' => l10n.summarySectionMajorDiagnoses,
+    'treatment_history' => l10n.summarySectionTreatmentHistory,
+    'important_examinations' => l10n.summarySectionImportantExaminations,
+    'relevant_medications' => l10n.summarySectionRelevantMedications,
     'medications' => l10n.summarySectionMedications,
     'procedures' => l10n.summarySectionProcedures,
     'hospitalizations' => l10n.summarySectionHospitalizations,
@@ -538,6 +613,35 @@ String _sectionTitle(AppLocalizations l10n, String key) {
   };
 }
 
+IconData _sectionIcon(String key) {
+  return switch (key) {
+    'key_symptoms' => Icons.monitor_heart_outlined,
+    'major_diagnoses' => Icons.assignment_outlined,
+    'treatment_history' || 'treatment_outcomes' => Icons.history_rounded,
+    'important_examinations' || 'test_results' => Icons.biotech_outlined,
+    'relevant_medications' || 'medications' => Icons.medication_outlined,
+    'procedures' => Icons.medical_services_outlined,
+    'hospitalizations' => Icons.local_hospital_outlined,
+    'allergies' => Icons.warning_amber_rounded,
+    'open_questions' => Icons.help_outline_rounded,
+    'care_team' => Icons.people_outline_rounded,
+    _ => Icons.notes_rounded,
+  };
+}
+
+(String, String)? _splitSummaryItem(String item) {
+  for (final separator in const [' — ', ' – ']) {
+    final index = item.indexOf(separator);
+    if (index > 0 && index < item.length - separator.length) {
+      return (
+        item.substring(0, index).trim(),
+        item.substring(index + separator.length).trim(),
+      );
+    }
+  }
+  return null;
+}
+
 String _formatDateTime(BuildContext context, DateTime date) {
   return DateFormat.yMMMd(
     Localizations.localeOf(context).toLanguageTag(),
@@ -545,15 +649,25 @@ String _formatDateTime(BuildContext context, DateTime date) {
 }
 
 class _SummarySection {
-  const _SummarySection({required this.title, required this.items});
+  const _SummarySection({
+    required this.title,
+    required this.items,
+    required this.icon,
+    required this.emphasized,
+  });
 
   final String title;
   final List<String> items;
+  final IconData icon;
+  final bool emphasized;
 }
 
 const _knownSummaryKeys = <String>{
   'key_symptoms',
   'major_diagnoses',
+  'treatment_history',
+  'important_examinations',
+  'relevant_medications',
   'medications',
   'procedures',
   'hospitalizations',

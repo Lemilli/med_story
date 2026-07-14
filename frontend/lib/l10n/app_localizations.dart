@@ -200,12 +200,6 @@ abstract class AppLocalizations {
   /// **'Generate summary'**
   String get summaryGenerateAction;
 
-  /// No description provided for @summaryPrepareVisitAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Prepare for visit'**
-  String get summaryPrepareVisitAction;
-
   /// No description provided for @summaryNotReadyTitle.
   ///
   /// In en, this message translates to:
@@ -221,7 +215,7 @@ abstract class AppLocalizations {
   /// No description provided for @summaryNarrativeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Doctor-ready narrative'**
+  /// **'At a glance'**
   String get summaryNarrativeTitle;
 
   /// No description provided for @summaryNoNarrativeMessage.
@@ -343,6 +337,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Major diagnoses'**
   String get summarySectionMajorDiagnoses;
+
+  /// No description provided for @summarySectionTreatmentHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatments and outcomes'**
+  String get summarySectionTreatmentHistory;
+
+  /// No description provided for @summarySectionImportantExaminations.
+  ///
+  /// In en, this message translates to:
+  /// **'Important tests and results'**
+  String get summarySectionImportantExaminations;
+
+  /// No description provided for @summarySectionRelevantMedications.
+  ///
+  /// In en, this message translates to:
+  /// **'Relevant medications'**
+  String get summarySectionRelevantMedications;
 
   /// No description provided for @summarySectionMedications.
   ///

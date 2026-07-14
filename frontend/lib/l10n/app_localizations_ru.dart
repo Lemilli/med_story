@@ -65,9 +65,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get summaryGenerateAction => 'Создать сводку';
 
   @override
-  String get summaryPrepareVisitAction => 'Подготовить к визиту';
-
-  @override
   String get summaryNotReadyTitle => 'Сводки пока нет';
 
   @override
@@ -75,7 +72,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Создайте сводку для врача из событий хронологии, когда нужно подготовиться к визиту.';
 
   @override
-  String get summaryNarrativeTitle => 'Краткий текст для врача';
+  String get summaryNarrativeTitle => 'Самое важное';
 
   @override
   String get summaryNoNarrativeMessage =>
@@ -156,6 +153,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get summarySectionMajorDiagnoses => 'Основные диагнозы';
+
+  @override
+  String get summarySectionTreatmentHistory => 'Лечение и результаты';
+
+  @override
+  String get summarySectionImportantExaminations =>
+      'Важные обследования и результаты';
+
+  @override
+  String get summarySectionRelevantMedications => 'Значимые лекарства';
 
   @override
   String get summarySectionMedications => 'Лекарства';

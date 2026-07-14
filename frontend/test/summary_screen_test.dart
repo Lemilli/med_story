@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:med_story/app/theme/app_theme.dart';
 import 'package:med_story/features/subjects/data/subject_repository.dart';
 import 'package:med_story/features/subjects/domain/subject.dart';
@@ -37,11 +38,7 @@ void main() {
       () => summaryRepository.getCurrentSummary(subjectId: 'subject-1'),
     ).thenAnswer((_) async => const SummaryLoadResult.notReady());
 
-    await _pumpScreen(
-      tester,
-      subjectRepository,
-      summaryRepository,
-    );
+    await _pumpScreen(tester, subjectRepository, summaryRepository);
     await tester.pumpAndSettle();
 
     final l10n = AppLocalizations.of(
@@ -59,11 +56,7 @@ void main() {
     when(
       () => summaryRepository.getCurrentSummary(subjectId: 'subject-1'),
     ).thenAnswer((_) async => SummaryLoadResult.ready(_summary(version: 2)));
-    await _pumpScreen(
-      tester,
-      subjectRepository,
-      summaryRepository,
-    );
+    await _pumpScreen(tester, subjectRepository, summaryRepository);
     await tester.pumpAndSettle();
 
     final l10n = AppLocalizations.of(
@@ -73,7 +66,23 @@ void main() {
     expect(find.text('Patient has recurring pain flares.'), findsOneWidget);
     expect(find.text(l10n.summarySectionKeySymptoms), findsOneWidget);
     expect(find.text('Pain flare'), findsOneWidget);
+    expect(find.text(l10n.summarySectionTreatmentHistory), findsOneWidget);
+    expect(find.text('Mesalazine — symptoms improved'), findsOneWidget);
+    expect(find.text('Prepare for visit'), findsNothing);
     expect(find.text(l10n.summaryBoundaryNote), findsOneWidget);
+    expect(find.text(l10n.summaryVersionLabel(2)), findsNothing);
+    expect(find.text(l10n.summaryEventCountLabel(3)), findsNothing);
+    expect(
+      find.text(
+        DateFormat.yMMMd(
+          Localizations.localeOf(
+            tester.element(find.byType(SummaryScreen)),
+          ).toLanguageTag(),
+        ).add_Hm().format(DateTime.utc(2026, 6, 2).toLocal()),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byTooltip(l10n.summaryRegenerateAction), findsOneWidget);
   });
 }
 
@@ -118,6 +127,7 @@ MedicalSummary _summary({required int version}) {
     isCurrent: version == 2,
     content: const {
       'key_symptoms': ['Pain flare'],
+      'treatment_history': ['Mesalazine — symptoms improved'],
     },
     narrativeText: 'Patient has recurring pain flares.',
     language: 'en',

@@ -24,11 +24,13 @@ class MockLLMProvider:
         if "narrative_text" in schema.get("properties", {}):
             return {
                 "content": {
-                    "key_symptoms": ["Abdominal pain was recorded on the timeline."],
-                    "major_diagnoses": ["Ulcerative colitis appears in the timeline history."],
-                    "treatment_history": ["Mesalazine treatment was recorded."],
-                    "important_examinations": ["CRP result of 12 mg/L was recorded."],
-                    "relevant_medications": ["Mesalazine 800 mg was recorded."],
+                    "key_symptoms": [
+                        "Abdominal pain — recurring symptom recorded in the timeline."
+                    ],
+                    "major_diagnoses": ["Ulcerative colitis — recorded in the timeline history."],
+                    "treatment_history": ["Mesalazine — treatment recorded in the timeline."],
+                    "important_examinations": ["CRP — result of 12 mg/L was recorded."],
+                    "relevant_medications": ["Mesalazine — 800 mg dose recorded."],
                 },
                 "narrative_text": (
                     "This summary organizes MedStory timeline events for a healthcare visit. "
