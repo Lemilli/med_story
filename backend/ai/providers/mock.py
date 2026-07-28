@@ -1,6 +1,17 @@
 import json
+import unicodedata
 
 from ai.providers.base import OCRResult
+
+
+def _safe_mock_text(payload: bytes) -> str:
+    """Decode text fixtures without allowing binary control bytes into the DB."""
+    decoded = payload.decode("utf-8", errors="ignore")
+    return "".join(
+        character
+        for character in decoded
+        if character in "\n\r\t" or unicodedata.category(character) != "Cc"
+    )
 
 
 class MockLLMProvider:
@@ -102,9 +113,9 @@ class MockLLMProvider:
 
 class MockOCRProvider:
     def extract_text(self, *, file_bytes: bytes, mime: str) -> OCRResult:
-        return OCRResult(text=file_bytes.decode("utf-8", errors="ignore"), language="en")
+        return OCRResult(text=_safe_mock_text(file_bytes), language="en")
 
 
 class MockSTTProvider:
     def transcribe(self, *, audio_bytes: bytes, mime: str, lang: str | None = None) -> str:
-        return audio_bytes.decode("utf-8", errors="ignore")
+        return _safe_mock_text(audio_bytes)

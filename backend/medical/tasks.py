@@ -10,7 +10,12 @@ from medical.original_storage import (
     purge_storage_deletions,
     release_assets,
 )
-from medical.services import process_document_explanation, process_document_ingestion, process_medical_summary
+from medical.services import (
+    DocumentProcessingCancelled,
+    process_document_explanation,
+    process_document_ingestion,
+    process_medical_summary,
+)
 
 
 logger = get_task_logger(__name__)
@@ -18,26 +23,33 @@ logger = get_task_logger(__name__)
 
 @shared_task
 def ingest_document_task(document_id, job_id, language=None):
-    document = Document.objects.select_related("user", "subject").get(id=document_id, deleted_at__isnull=True)
-    job = ProcessingJob.objects.filter(id=job_id, document=document).first()
-    assets = list(document.assets.select_related("blob").order_by("position"))
-    decoded_parts = [
-        (load_asset_bytes(asset, purpose="processing"), asset.mime_type)
-        for asset in assets
-    ]
-    file_bytes = decoded_parts[0][0] if decoded_parts else b""
-    mime_type = decoded_parts[0][1] if decoded_parts else document.mime_type
-
-    logger.info(
-        "Starting document ingestion document_id=%s job_id=%s mime_type=%s asset_count=%s size_bytes=%s language=%s",
-        document.id,
-        job_id,
-        mime_type,
-        len(decoded_parts),
-        sum(len(part_bytes) for part_bytes, _ in decoded_parts),
-        language or "",
+    document = (
+        Document.objects.select_related("user", "subject")
+        .filter(id=document_id, deleted_at__isnull=True)
+        .first()
     )
+    if document is None:
+        logger.info("Document ingestion cancelled before start document_id=%s job_id=%s", document_id, job_id)
+        return {"status": "cancelled", "document_id": str(document_id)}
+
+    job = ProcessingJob.objects.filter(id=job_id, document=document).first()
     try:
+        assets = list(document.assets.select_related("blob").order_by("position"))
+        decoded_parts = [
+            (load_asset_bytes(asset, purpose="processing"), asset.mime_type)
+            for asset in assets
+        ]
+        file_bytes = decoded_parts[0][0] if decoded_parts else b""
+        mime_type = decoded_parts[0][1] if decoded_parts else document.mime_type
+        logger.info(
+            "Starting document ingestion document_id=%s job_id=%s mime_type=%s asset_count=%s size_bytes=%s language=%s",
+            document.id,
+            job_id,
+            mime_type,
+            len(decoded_parts),
+            sum(len(part_bytes) for part_bytes, _ in decoded_parts),
+            language or "",
+        )
         event = process_document_ingestion(
             document=document,
             file_bytes=file_bytes,
@@ -46,20 +58,32 @@ def ingest_document_task(document_id, job_id, language=None):
             job=job,
             language=language,
         )
+    except DocumentProcessingCancelled:
+        result = {"status": "cancelled", "document_id": str(document.id)}
     except Exception as exc:
-        document.refresh_from_db(fields=("status", "error_message"))
+        current_document = Document.objects.filter(
+            id=document.id,
+            deleted_at__isnull=True,
+        ).only("status", "error_message").first()
+        if current_document is None:
+            logger.info(
+                "Document ingestion cancelled during cleanup document_id=%s job_id=%s",
+                document.id,
+                job_id,
+            )
+            return {"status": "cancelled", "document_id": str(document.id)}
         logger.exception(
             "Document ingestion failed document_id=%s job_id=%s status=%s saved_error=%r exception_type=%s",
             document.id,
             job_id,
-            document.status,
-            document.error_message,
+            current_document.status,
+            current_document.error_message,
             exc.__class__.__name__,
         )
         result = {
             "status": "failed",
             "document_id": str(document.id),
-            "error": document.error_message,
+            "error": current_document.error_message,
         }
     else:
         logger.info("Document ingestion processed document_id=%s job_id=%s", document.id, job_id)

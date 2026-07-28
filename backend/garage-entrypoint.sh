@@ -5,14 +5,32 @@ read_secret() {
   tr -d '\r\n' < "$1"
 }
 
-export GARAGE_RPC_SECRET="$(read_secret /run/secrets/garage_rpc_secret)"
-export GARAGE_ADMIN_TOKEN="$(read_secret /run/secrets/garage_admin_token)"
-# Garage's nested admin setting has used this expanded environment name too.
-# Export both forms so the token is applied across the supported image line.
-export GARAGE_ADMIN_ADMIN_TOKEN="$GARAGE_ADMIN_TOKEN"
+GARAGE_RPC_SECRET="$(read_secret /run/secrets/garage_rpc_secret)"
+GARAGE_ADMIN_TOKEN="$(read_secret /run/secrets/garage_admin_token)"
 export GARAGE_DEFAULT_ACCESS_KEY="$(read_secret /run/secrets/garage_bootstrap_access_key)"
 export GARAGE_DEFAULT_SECRET_KEY="$(read_secret /run/secrets/garage_bootstrap_secret_key)"
 export GARAGE_DEFAULT_BUCKET="${ORIGINAL_STORAGE_BUCKET:-medstory-originals}"
+
+GARAGE_CONFIG_FILE=/tmp/garage.toml
+umask 077
+{
+  printf 'metadata_dir = "%s"\n' "${GARAGE_METADATA_DIR:-/var/lib/garage/meta}"
+  printf 'data_dir = "%s"\n' "${GARAGE_DATA_DIR:-/var/lib/garage/data}"
+  printf 'db_engine = "%s"\n' "${GARAGE_DB_ENGINE:-lmdb}"
+  printf 'replication_factor = %s\n' "${GARAGE_REPLICATION_FACTOR:-1}"
+  printf 'rpc_bind_addr = "%s"\n' "${GARAGE_RPC_BIND_ADDR:-0.0.0.0:3901}"
+  printf 'rpc_public_addr = "%s"\n' "${GARAGE_RPC_PUBLIC_ADDR:-127.0.0.1:3901}"
+  printf 'rpc_secret = "%s"\n\n' "$GARAGE_RPC_SECRET"
+  printf '[s3_api]\n'
+  printf 's3_region = "%s"\n' "${GARAGE_S3_API_S3_REGION:-medstory}"
+  printf 'api_bind_addr = "%s"\n' "${GARAGE_S3_API_BIND_ADDR:-0.0.0.0:3900}"
+  printf 'root_domain = "%s"\n\n' "${GARAGE_S3_API_ROOT_DOMAIN:-.s3.garage.localhost}"
+  printf '[admin]\n'
+  printf 'api_bind_addr = "%s"\n' "${GARAGE_ADMIN_API_BIND_ADDR:-0.0.0.0:3903}"
+  printf 'admin_token = "%s"\n' "$GARAGE_ADMIN_TOKEN"
+  printf 'metrics_token = "%s"\n' "$GARAGE_ADMIN_TOKEN"
+} > "$GARAGE_CONFIG_FILE"
+export GARAGE_CONFIG_FILE
 
 /garage server --single-node --default-bucket &
 garage_pid=$!

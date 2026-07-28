@@ -156,6 +156,10 @@ class DocumentRejectionError(ValueError):
     """A safe, user-facing reason an upload cannot become medical history."""
 
 
+class DocumentProcessingCancelled(Exception):
+    """The source document was deleted while its background work was running."""
+
+
 EVENT_REVISION_FIELDS = ("event_type", "title", "description", "event_date", "attributes", "confidence")
 
 
@@ -264,12 +268,19 @@ def process_document_ingestion(
 
     now = timezone.now()
     if job is not None:
-        job.status = ProcessingJob.Status.RUNNING
-        job.attempts += 1
-        job.started_at = now
-        job.finished_at = None
-        job.error_message = ""
-        job.save(update_fields=("status", "attempts", "started_at", "finished_at", "error_message", "updated_at"))
+        changed = ProcessingJob.objects.filter(
+            id=job.id,
+            document__deleted_at__isnull=True,
+        ).update(
+            status=ProcessingJob.Status.RUNNING,
+            attempts=job.attempts + 1,
+            started_at=now,
+            finished_at=None,
+            error_message="",
+            updated_at=now,
+        )
+        if not changed:
+            raise DocumentProcessingCancelled()
 
     try:
         if extracted_text_override is not None:
@@ -355,6 +366,24 @@ def process_document_ingestion(
             )
 
         with transaction.atomic():
+            active_document = (
+                Document.objects.select_for_update()
+                .select_related("user", "subject")
+                .filter(id=document.id, deleted_at__isnull=True)
+                .first()
+            )
+            if active_document is None:
+                raise DocumentProcessingCancelled()
+            document = active_document
+            if job is not None:
+                active_job = ProcessingJob.objects.select_for_update().filter(
+                    id=job.id,
+                    document=document,
+                ).first()
+                if active_job is None:
+                    raise DocumentProcessingCancelled()
+                job = active_job
+
             event_data = extraction["event"]
             event_date = event_data["event_date"] or extraction["document_date"] or document.document_date
             if event_date is None:
@@ -412,6 +441,13 @@ def process_document_ingestion(
             1,
         )
         return event
+    except DocumentProcessingCancelled:
+        logger.info(
+            "Document ingestion cancelled because the document was deleted document_id=%s job_id=%s",
+            document.id,
+            job_id,
+        )
+        raise
     except (SchemaValidationError, ValueError) as exc:
         logger.exception(
             "Document ingestion phase=failed document_id=%s job_id=%s exception_type=%s error=%s",
@@ -775,15 +811,23 @@ def _mark_ingestion_failed(*, document, job, message):
     from medical.models import Document, ProcessingJob
 
     sanitized_message = message[:500]
+    now = timezone.now()
     with transaction.atomic():
-        document.status = Document.Status.FAILED
-        document.error_message = sanitized_message
-        document.save(update_fields=("status", "error_message", "updated_at"))
+        Document.objects.filter(
+            id=document.id,
+            deleted_at__isnull=True,
+        ).update(
+            status=Document.Status.FAILED,
+            error_message=sanitized_message,
+            updated_at=now,
+        )
         if job is not None:
-            job.status = ProcessingJob.Status.FAILED
-            job.error_message = sanitized_message
-            job.finished_at = timezone.now()
-            job.save(update_fields=("status", "error_message", "finished_at", "updated_at"))
+            ProcessingJob.objects.filter(id=job.id).update(
+                status=ProcessingJob.Status.FAILED,
+                error_message=sanitized_message,
+                finished_at=now,
+                updated_at=now,
+            )
 
 
 def _mark_explanation_failed(*, job, message):

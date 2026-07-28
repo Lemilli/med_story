@@ -134,8 +134,10 @@ services:
       - redis
 
   garage:
-    image: dxflrs/garage:v2.3.0
-    entrypoint: ["/bin/sh", "/garage-entrypoint.sh"]
+    build:
+      context: .
+      dockerfile: Dockerfile.garage
+    image: medstory-garage:2.3.0
     volumes:
       - garage_data:/var/lib/garage/data
       - garage_meta:/var/lib/garage/meta
@@ -178,10 +180,11 @@ services:
       - storage_internal
 
   clamav:
-    image: clamav/clamav:stable
+    image: clamav/clamav-debian:stable
     volumes:
       - clamav_signatures:/var/lib/clamav
     networks:
+      - default
       - storage_internal
 
   db:

@@ -5,6 +5,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from config.exceptions import api_error_response
 from medical.models import AuditLog, DocumentAsset
 from medical.original_storage import release_assets
 from medical.services import log_audit_event
@@ -91,9 +92,11 @@ class LogoutView(generics.GenericAPIView):
         try:
             RefreshToken(refresh_token).blacklist()
         except TokenError:
-            return Response(
-                {"error": {"code": "validation_error", "message": "Invalid refresh token."}},
-                status=status.HTTP_400_BAD_REQUEST,
+            return api_error_response(
+                request,
+                code="validation_error",
+                message="Invalid refresh token.",
+                status_code=status.HTTP_400_BAD_REQUEST,
             )
 
         return Response(status=status.HTTP_205_RESET_CONTENT)

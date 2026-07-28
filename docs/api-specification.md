@@ -341,15 +341,19 @@ All errors share one envelope:
 ```jsonc
 { "error": {
     "code": "validation_error",          // machine-readable
-    "message": "event_date is required.", // human-readable
-    "details": { "event_date": ["This field is required."] }, // optional, field-level
-    "request_id": "req_abc123" } }
+    "message": "Request validation failed.", // human-readable
+    "details": { "event_date": ["This field is required."] }, // field-level or empty object
+    "request_id": "85a05cd8-6518-4613-94eb-567f53e6de15" } }
 ```
+
+Every API error includes the same request ID in the `X-Request-ID` response header. Validation,
+authentication, permission, lookup, throttling, and explicitly coded domain errors all use this
+envelope.
 
 | HTTP | code examples | Meaning |
 |------|---------------|---------|
 | 400 | validation_error | Malformed/invalid input |
-| 401 | not_authenticated, token_expired | Missing/invalid JWT |
+| 401 | authentication_required | Missing/invalid JWT |
 | 403 | permission_denied | Not the owner of the resource |
 | 404 | not_found, not_ready | Missing, or AI result not yet generated |
 | 409 | conflict | e.g. document already completed |

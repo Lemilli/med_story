@@ -188,7 +188,7 @@ go_router, dio, freezed, flutter_secure_storage, Drift.
 | Concern | Choice |
 |--------|--------|
 | Packaging | Docker images per service (api, worker, beat) |
-| Local dev | docker-compose (api, worker, beat, postgres, redis, Garage, ClamAV, TLS proxy) |
+| Local dev | Multi-architecture docker-compose stack (api, worker, beat, postgres, redis, Garage wrapper, ClamAV, TLS proxy) |
 | Reverse proxy / TLS | Nginx (or managed LB) |
 | Prod orchestration | Cloud-agnostic containers (Compose → Kubernetes when needed) |
 | CI/CD | Build, test, lint, image build, deploy |

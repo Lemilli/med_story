@@ -18,6 +18,10 @@ the internal TLS proxy, and ClamAV:
 docker compose up --build
 ```
 
+The Compose stack builds a small Alpine wrapper around the official Garage binary so its secret-fed
+bootstrap script works on both ARM64 and amd64 hosts. ClamAV uses its multi-architecture Debian
+image; no `DOCKER_DEFAULT_PLATFORM` override or emulation is required.
+
 Run migrations:
 
 ```bash

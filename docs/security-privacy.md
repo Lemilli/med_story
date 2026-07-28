@@ -56,6 +56,8 @@ control. This document defines the controls to achieve that.
 
 - Garage runs single-node on a dedicated encrypted EU/EEA volume. S3, admin, and RPC ports are
   absent from public networks; API/workers reach S3 through a verified private TLS proxy.
+- ClamAV exposes no host port. It joins the application network for outbound signature refreshes
+  and the private storage network for API/worker scan requests.
 - Upload, authenticated user read, processing read, and deletion use independent bucket-scoped
   credentials. Flutter receives no Garage credential, address, or presigned URL.
 - Ciphertext keys are random opaque identifiers. Garage sees no user IDs, filenames, MIME types,

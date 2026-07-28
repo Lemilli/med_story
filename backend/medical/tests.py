@@ -11,10 +11,12 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.test import SimpleTestCase, override_settings
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from ai.providers.base import OCRResult
+from ai.providers.mock import MockLLMProvider, MockOCRProvider
 from ai.schemas import SchemaValidationError
 from medical.models import (
     Document,
@@ -34,6 +36,8 @@ from medical.original_storage import (
     OriginalStorageUnavailable,
     purge_storage_deletions,
 )
+from medical.services import DocumentProcessingCancelled, process_document_ingestion
+from medical.tasks import ingest_document_task
 
 
 TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
@@ -70,6 +74,43 @@ class MedicalApiTests(APITestCase):
         response = self.client.post("/api/v1/privacy/export", {}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_api_errors_use_documented_envelope_and_request_id(self):
+        self.client.force_authenticate(user=None)
+        unauthenticated = self.client.get("/api/v1/me")
+        self.client.force_authenticate(user=self.user)
+        invalid = self.client.post(
+            "/api/v1/documents",
+            {
+                "title": "Unsupported",
+                "doc_type": Document.DocumentType.OTHER,
+                "mime_type": "text/plain",
+                "size_bytes": 10,
+            },
+            format="json",
+        )
+        missing = self.client.get(
+            "/api/v1/documents/00000000-0000-0000-0000-000000000000"
+        )
+        pending_document = self._create_document(Document.DocumentType.LAB_RESULT)
+        missing_file = self.client.post(
+            f"/api/v1/documents/{pending_document.id}/ingest",
+            {},
+            format="multipart",
+        )
+
+        for response, expected_code in (
+            (unauthenticated, "authentication_required"),
+            (invalid, "validation_error"),
+            (missing, "not_found"),
+            (missing_file, "validation_error"),
+        ):
+            error = response.data["error"]
+            self.assertEqual(error["code"], expected_code)
+            self.assertIn("message", error)
+            self.assertIn("details", error)
+            uuid.UUID(error["request_id"])
+            self.assertEqual(response["X-Request-ID"], error["request_id"])
 
     def test_visit_preparation_is_subject_scoped_and_exported(self):
         subject = Subject.objects.create(
@@ -363,6 +404,22 @@ class MedicalApiTests(APITestCase):
         event.refresh_from_db()
         self.assertIsNotNone(document.deleted_at)
         self.assertIsNotNone(event.deleted_at)
+
+    def test_document_delete_marks_active_processing_job_failed(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        job = ProcessingJob.objects.create(
+            user=self.user,
+            document=document,
+            status=ProcessingJob.Status.RUNNING,
+        )
+
+        response = self.client.delete(f"/api/v1/documents/{document.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        job.refresh_from_db()
+        self.assertEqual(job.status, ProcessingJob.Status.FAILED)
+        self.assertEqual(job.error_message, "document_deleted")
+        self.assertIsNotNone(job.finished_at)
 
     def test_document_create_rejects_cross_user_subject(self):
         other_subject = Subject.objects.create(
@@ -803,6 +860,33 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(second_response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(Document.objects.get(id=document.id).medical_events.filter(deleted_at__isnull=True).count(), 1)
         self.assertEqual(ProcessingJob.objects.filter(document=document).count(), 1)
+
+    def test_ingestion_task_returns_cancelled_when_document_was_deleted(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        document.deleted_at = timezone.now()
+        document.save(update_fields=("deleted_at", "updated_at"))
+
+        result = ingest_document_task(str(document.id), str(uuid.uuid4()))
+
+        self.assertEqual(result["status"], "cancelled")
+
+    def test_processing_cancels_cleanly_when_document_is_deleted_midflight(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        job = ProcessingJob.objects.create(user=self.user, document=document)
+
+        class DeletingLLMProvider:
+            def complete_json(inner_self, **kwargs):
+                Document.objects.filter(id=document.id).update(deleted_at=timezone.now())
+                return MockLLMProvider().complete_json(**kwargs)
+
+        with patch("medical.services.get_llm_provider", return_value=DeletingLLMProvider()):
+            with self.assertRaises(DocumentProcessingCancelled):
+                process_document_ingestion(
+                    document=document,
+                    mime_type="text/plain",
+                    job=job,
+                    extracted_text_override="CRP 12 mg/L on 2026-05-12",
+                )
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_deduplicates_exact_file_within_same_user(self):
@@ -1838,6 +1922,15 @@ class PrivateStorageConfigurationTests(SimpleTestCase):
 
 
 class AIProviderTests(SimpleTestCase):
+    def test_mock_ocr_removes_postgresql_nul_characters(self):
+        result = MockOCRProvider().extract_text(
+            file_bytes=b"CRP 12 mg/L\x00binary\x01tail",
+            mime="image/png",
+        )
+
+        self.assertEqual(result.text, "CRP 12 mg/Lbinarytail")
+        self.assertNotIn("\x00", result.text)
+
     def test_event_extraction_prompt_prioritizes_infection_panel_findings(self):
         from ai.providers.openai import EVENT_EXTRACTION_USER_PROMPT
 

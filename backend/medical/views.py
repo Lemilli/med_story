@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 
+from config.exceptions import api_error_response
 from medical.models import AuditLog, Document, DocumentAsset, EventRevision, MedicalEvent, MedicalSummary, ProcessingJob, Subject, VisitPreparation
 from medical.original_storage import (
     InvalidOriginalType,
@@ -212,9 +213,11 @@ class EventRevisionListCreateView(MedicalEventQuerysetMixin, generics.GenericAPI
         try:
             revision = create_event_revision(event=self._event())
         except ValueError as exc:
-            return Response(
-                {"error": {"code": str(exc), "message": "We could not create a suggested revision."}},
-                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            return api_error_response(
+                request,
+                code=str(exc),
+                message="We could not create a suggested revision.",
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         return Response(self.get_serializer(revision).data, status=status.HTTP_201_CREATED)
 
@@ -331,6 +334,18 @@ class DocumentDetailView(DocumentQuerysetMixin, generics.RetrieveDestroyAPIView)
         with transaction.atomic():
             instance.deleted_at = deleted_at
             instance.save(update_fields=("deleted_at", "updated_at"))
+            instance.processing_jobs.filter(
+                status__in=(
+                    ProcessingJob.Status.QUEUED,
+                    ProcessingJob.Status.RUNNING,
+                    ProcessingJob.Status.RETRYING,
+                )
+            ).update(
+                status=ProcessingJob.Status.FAILED,
+                error_message="document_deleted",
+                finished_at=deleted_at,
+                updated_at=deleted_at,
+            )
             instance.medical_events.filter(deleted_at__isnull=True).update(deleted_at=deleted_at)
             release_assets(instance.assets.select_related("blob"))
             log_audit_event(
@@ -634,10 +649,13 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
         return language.strip()[:10]
 
     def _error_response(self, *, code, message, http_status, details=None):
-        payload = {"error": {"code": code, "message": message}}
-        if details is not None:
-            payload["error"]["details"] = details
-        return Response(payload, status=http_status)
+        return api_error_response(
+            self.request,
+            code=code,
+            message=message,
+            status_code=http_status,
+            details=details,
+        )
 
 
 class DocumentAudioUploadView(DocumentIngestView):
@@ -898,7 +916,12 @@ class NoteProcessView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         text = request.data.get("text")
         if not isinstance(text, str) or not text.strip():
-            return Response({"error": {"code": "note_empty", "message": "Enter a note to process."}}, status=status.HTTP_400_BAD_REQUEST)
+            return api_error_response(
+                request,
+                code="note_empty",
+                message="Enter a note to process.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
         subject_id = request.data.get("subject_id")
         subject = Subject.objects.filter(id=subject_id, user=request.user).first() if subject_id else get_or_create_default_subject(request.user)
         if subject is None:
