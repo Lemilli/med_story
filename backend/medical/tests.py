@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import json
 import uuid
 from datetime import date
@@ -15,7 +16,24 @@ from rest_framework.test import APITestCase
 
 from ai.providers.base import OCRResult
 from ai.schemas import SchemaValidationError
-from medical.models import Document, DocumentAsset, DocumentExplanation, EventRevision, MedicalEvent, MedicalSummary, ProcessingJob, Subject, VisitPreparation
+from medical.models import (
+    Document,
+    DocumentAsset,
+    DocumentExplanation,
+    EncryptedBlob,
+    EventRevision,
+    MedicalEvent,
+    MedicalSummary,
+    ProcessingJob,
+    StorageDeletionJob,
+    Subject,
+    VisitPreparation,
+)
+from medical.original_storage import (
+    MemoryObjectStore,
+    OriginalStorageUnavailable,
+    purge_storage_deletions,
+)
 
 
 TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
@@ -23,6 +41,7 @@ TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
 
 class MedicalApiTests(APITestCase):
     def setUp(self):
+        MemoryObjectStore.clear()
         self.user = get_user_model().objects.create_user(
             email="user@example.com",
             password="StrongPass123!",
@@ -34,6 +53,10 @@ class MedicalApiTests(APITestCase):
             full_name="Other User",
         )
         self.client.force_authenticate(user=self.user)
+
+    def tearDown(self):
+        MemoryObjectStore.clear()
+        super().tearDown()
 
     def test_subject_list_lazily_creates_default_subject(self):
         response = self.client.get("/api/v1/subjects")
@@ -316,7 +339,7 @@ class MedicalApiTests(APITestCase):
         document = Document.objects.get(id=create_response.data["id"])
         self.assertEqual(document.subject.display_name, "Jane Doe")
         self.assertEqual(create_response.data["status"], Document.Status.PENDING_INGEST)
-        self.assertTrue(create_response.data["local_only"])
+        self.assertFalse(create_response.data["local_only"])
         self.assertFalse(create_response.data["extracted_text_available"])
         self.assertFalse(create_response.data["explanation_available"])
 
@@ -362,6 +385,31 @@ class MedicalApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_document_metadata_enforces_25_mb_boundary(self):
+        exact = self.client.post(
+            "/api/v1/documents",
+            {
+                "title": "Boundary PDF",
+                "doc_type": Document.DocumentType.LAB_RESULT,
+                "mime_type": "application/pdf",
+                "size_bytes": 25 * 1024 * 1024,
+            },
+            format="json",
+        )
+        over = self.client.post(
+            "/api/v1/documents",
+            {
+                "title": "Oversized PDF",
+                "doc_type": Document.DocumentType.LAB_RESULT,
+                "mime_type": "application/pdf",
+                "size_bytes": 25 * 1024 * 1024 + 1,
+            },
+            format="json",
+        )
+
+        self.assertEqual(exact.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(over.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_document_search_matches_title_and_extracted_text_for_subject(self):
         subject = Subject.objects.create(
@@ -757,7 +805,7 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(ProcessingJob.objects.filter(document=document).count(), 1)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    def test_ingest_rejects_exact_file_already_processed_for_same_user(self):
+    def test_ingest_deduplicates_exact_file_within_same_user(self):
         original = self._create_document(Document.DocumentType.LAB_RESULT)
         duplicate = self._create_document(Document.DocumentType.LAB_RESULT)
         payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
@@ -774,11 +822,311 @@ class MedicalApiTests(APITestCase):
         )
 
         self.assertEqual(first_response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(duplicate_response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(duplicate_response.data["error"]["code"], "document_already_processed")
-        self.assertEqual(duplicate_response.data["error"]["details"]["document_id"], str(original.id))
-        self.assertFalse(Document.objects.filter(id=duplicate.id).exists())
+        self.assertEqual(duplicate_response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertTrue(Document.objects.filter(id=duplicate.id).exists())
+        self.assertEqual(
+            original.assets.get().blob_id,
+            duplicate.assets.get().blob_id,
+        )
+        self.assertEqual(original.assets.get().blob.reference_count, 2)
         self.assertEqual(ProcessingJob.objects.filter(document=original).count(), 1)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_original_content_is_streamed_only_to_owning_user_with_private_headers(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        ingest = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("lab.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+        asset_id = ingest.data["assets"][0]["id"]
+        asset = DocumentAsset.objects.select_related("blob").get(id=asset_id)
+        ciphertext = MemoryObjectStore().get(asset.blob.object_key)
+        self.assertNotIn(payload, ciphertext)
+        self.assertNotIn("lab", asset.blob.object_key)
+        self.assertNotEqual(
+            asset.blob.fingerprint,
+            hashlib.sha256(payload).hexdigest(),
+        )
+
+        inline = self.client.get(
+            f"/api/v1/documents/{document.id}/assets/{asset_id}/content"
+        )
+        attachment = self.client.get(
+            f"/api/v1/documents/{document.id}/assets/{asset_id}/content"
+            "?disposition=attachment"
+        )
+
+        self.assertEqual(inline.status_code, status.HTTP_200_OK)
+        self.assertEqual(b"".join(inline.streaming_content), payload)
+        self.assertEqual(inline["Cache-Control"], "private, no-store")
+        self.assertEqual(inline["X-Content-Type-Options"], "nosniff")
+        self.assertIn("inline", inline["Content-Disposition"])
+        self.assertIn("attachment", attachment["Content-Disposition"])
+
+        second_document = self._create_document(Document.DocumentType.LAB_RESULT)
+        second_ingest = self.client.post(
+            f"/api/v1/documents/{second_document.id}/ingest",
+            {"file": self._upload("second.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+        cross_document = self.client.get(
+            f"/api/v1/documents/{document.id}/assets/"
+            f"{second_ingest.data['assets'][0]['id']}/content"
+        )
+        self.assertEqual(cross_document.status_code, status.HTTP_404_NOT_FOUND)
+
+        self.client.force_authenticate(user=self.other_user)
+        hidden = self.client.get(
+            f"/api/v1/documents/{document.id}/assets/{asset_id}/content"
+        )
+        guessed = self.client.get(
+            f"/api/v1/documents/{document.id}/assets/{uuid.uuid4()}/content"
+        )
+        self.assertEqual(hidden.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(guessed.status_code, status.HTTP_404_NOT_FOUND)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_tampered_ciphertext_fails_closed(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("lab.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+        asset = DocumentAsset.objects.select_related("blob").get(
+            id=response.data["assets"][0]["id"]
+        )
+        ciphertext = MemoryObjectStore().get(asset.blob.object_key)
+        MemoryObjectStore().put(
+            asset.blob.object_key,
+            ciphertext[:-1] + bytes([ciphertext[-1] ^ 1]),
+        )
+
+        content = self.client.get(
+            f"/api/v1/documents/{document.id}/assets/{asset.id}/content"
+        )
+
+        self.assertEqual(content.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(content.data["error"]["code"], "original_integrity_error")
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_processing_failure_preserves_original_and_retry_reuses_it(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        with patch(
+            "medical.services.validate_event_extraction",
+            side_effect=SchemaValidationError("invalid structured output"),
+        ):
+            first = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {"file": self._upload("lab.pdf", payload, "application/pdf")},
+                format="multipart",
+            )
+
+        document.refresh_from_db()
+        self.assertEqual(first.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(document.status, Document.Status.FAILED)
+        self.assertEqual(document.assets.count(), 1)
+        blob_id = document.assets.get().blob_id
+
+        self.client.force_authenticate(user=self.other_user)
+        hidden_retry = self.client.post(
+            f"/api/v1/documents/{document.id}/retry-processing",
+            {},
+            format="json",
+        )
+        self.assertEqual(hidden_retry.status_code, status.HTTP_404_NOT_FOUND)
+
+        self.client.force_authenticate(user=self.user)
+        retried = self.client.post(
+            f"/api/v1/documents/{document.id}/retry-processing",
+            {},
+            format="json",
+        )
+
+        document.refresh_from_db()
+        self.assertEqual(retried.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(document.status, Document.Status.PROCESSED)
+        self.assertEqual(document.assets.get().blob_id, blob_id)
+        self.assertEqual(document.medical_events.filter(deleted_at__isnull=True).count(), 1)
+
+    def test_celery_dispatch_contains_ids_only(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        payload = b"private medical bytes"
+        with patch("medical.views.ingest_document_task.delay") as delay:
+            delay.return_value = SimpleNamespace(id="task-id")
+            response = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {"file": self._upload("lab.pdf", payload, "application/pdf")},
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        args = delay.call_args.args
+        self.assertEqual(len(args), 3)
+        self.assertTrue(all(value is None or isinstance(value, str) for value in args))
+        self.assertNotIn(payload, args)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_identical_originals_are_not_deduplicated_across_users(self):
+        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        own_document = self._create_document(Document.DocumentType.LAB_RESULT)
+        self.client.post(
+            f"/api/v1/documents/{own_document.id}/ingest",
+            {"file": self._upload("own.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+
+        other_subject = Subject.objects.create(
+            user=self.other_user,
+            display_name="Other",
+            relationship=Subject.Relationship.SELF,
+            is_default=True,
+        )
+        other_document = Document.objects.create(
+            user=self.other_user,
+            subject=other_subject,
+            title="Other document",
+            doc_type=Document.DocumentType.LAB_RESULT,
+            mime_type="application/pdf",
+            size_bytes=len(payload),
+        )
+        self.client.force_authenticate(user=self.other_user)
+        self.client.post(
+            f"/api/v1/documents/{other_document.id}/ingest",
+            {"file": self._upload("other.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+
+        self.assertNotEqual(
+            own_document.assets.get().blob_id,
+            other_document.assets.get().blob_id,
+        )
+
+    @override_settings(ORIGINAL_STORAGE_QUOTA_BYTES=8)
+    def test_distinct_original_quota_is_enforced_before_storage(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("large.pdf", b"123456789", "application/pdf")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+        self.assertEqual(
+            response.data["error"]["code"],
+            "original_storage_quota_exceeded",
+        )
+        self.assertFalse(document.assets.exists())
+
+    @override_settings(ORIGINAL_STRICT_FILE_VALIDATION=True)
+    def test_signature_mismatch_is_rejected_before_storage(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {"file": self._upload("fake.pdf", b"not a pdf", "application/pdf")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["error"]["code"], "invalid_original_type")
+        self.assertFalse(document.assets.exists())
+
+    def test_malware_positive_upload_is_rejected_before_storage(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        response = self.client.post(
+            f"/api/v1/documents/{document.id}/ingest",
+            {
+                "file": self._upload(
+                    "eicar.pdf",
+                    b"EICAR-STANDARD-ANTIVIRUS-TEST-FILE",
+                    "application/pdf",
+                )
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(response.data["error"]["code"], "malware_detected")
+        self.assertFalse(document.assets.exists())
+
+    @override_settings(ORIGINAL_MALWARE_SCANNER="clamav")
+    def test_scanner_outage_fails_closed_before_storage(self):
+        document = self._create_document(Document.DocumentType.LAB_RESULT)
+        with patch(
+            "medical.original_storage.socket.create_connection",
+            side_effect=OSError("scanner unavailable"),
+        ):
+            response = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {"file": self._upload("lab.pdf", b"private bytes", "application/pdf")},
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(
+            response.data["error"]["code"],
+            "malware_scanner_unavailable",
+        )
+        self.assertFalse(document.assets.exists())
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_reference_counted_deletion_crypto_erases_final_reference(self):
+        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        first = self._create_document(Document.DocumentType.LAB_RESULT)
+        second = self._create_document(Document.DocumentType.LAB_RESULT)
+        self.client.post(
+            f"/api/v1/documents/{first.id}/ingest",
+            {"file": self._upload("first.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+        self.client.post(
+            f"/api/v1/documents/{second.id}/ingest",
+            {"file": self._upload("second.pdf", payload, "application/pdf")},
+            format="multipart",
+        )
+        blob_id = first.assets.get().blob_id
+
+        with patch("medical.views.purge_storage_deletions_task.delay"):
+            self.client.delete(f"/api/v1/documents/{first.id}")
+            blob = EncryptedBlob.objects.get(id=blob_id)
+            self.assertEqual(blob.reference_count, 1)
+            self.assertEqual(blob.state, EncryptedBlob.State.AVAILABLE)
+
+            self.client.delete(f"/api/v1/documents/{second.id}")
+
+        blob.refresh_from_db()
+        self.assertEqual(blob.reference_count, 0)
+        self.assertEqual(blob.state, EncryptedBlob.State.DELETION_PENDING)
+        self.assertEqual(bytes(blob.encrypted_key), b"")
+        self.assertTrue(StorageDeletionJob.objects.filter(object_key=blob.object_key).exists())
+
+    def test_storage_deletion_job_survives_outage_and_retries(self):
+        job = StorageDeletionJob.objects.create(object_key="v1/opaque-object")
+
+        class UnavailableStore:
+            def delete(self, object_key):
+                raise OriginalStorageUnavailable("Garage is unavailable.")
+
+        with patch(
+            "medical.original_storage.get_object_store",
+            return_value=UnavailableStore(),
+        ):
+            purge_storage_deletions()
+
+        job.refresh_from_db()
+        self.assertEqual(job.status, StorageDeletionJob.Status.FAILED)
+        self.assertEqual(job.attempts, 1)
+
+        MemoryObjectStore().put(job.object_key, b"ciphertext")
+        purge_storage_deletions()
+
+        job.refresh_from_db()
+        self.assertEqual(job.status, StorageDeletionJob.Status.SUCCEEDED)
+        self.assertEqual(job.attempts, 2)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_allows_exact_file_after_original_document_is_deleted(self):
@@ -827,7 +1175,7 @@ class MedicalApiTests(APITestCase):
 
         response = self.client.post(
             f"/api/v1/documents/{document.id}/ingest",
-            {"file": self._upload("too-large.pdf", b"x" * (5 * 1024 * 1024 + 1), "application/pdf")},
+            {"file": self._upload("too-large.pdf", b"x" * (25 * 1024 * 1024 + 1), "application/pdf")},
             format="multipart",
         )
 
@@ -879,6 +1227,17 @@ class MedicalApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        delete_response = self.client.delete(
+            f"/api/v1/documents/{other_document.id}"
+        )
+        self.assertEqual(delete_response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(
+            Document.objects.filter(
+                id=other_document.id,
+                deleted_at__isnull=True,
+            ).exists()
+        )
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_failed_provider_output_marks_document_and_job_failed_without_events(self):
@@ -1180,7 +1539,7 @@ class MedicalApiTests(APITestCase):
         for position in (1, 2):
             DocumentAsset.objects.create(
                 document=document, position=position, file_name=f"page-{position}.pdf",
-                mime_type="application/pdf", size_bytes=1, content_hash=str(position) * 64,
+                mime_type="application/pdf", size_bytes=1,
             )
         event = MedicalEvent.objects.create(
             user=self.user, subject=subject, source_document=document,
@@ -1447,6 +1806,35 @@ class MedicalApiTests(APITestCase):
 
     def _upload(self, name, payload, content_type):
         return SimpleUploadedFile(name, payload, content_type=content_type)
+
+
+class PrivateStorageConfigurationTests(SimpleTestCase):
+    @override_settings(
+        ORIGINAL_STORAGE_BACKEND="memory",
+        ORIGINAL_STORAGE_REQUIRE_S3=True,
+    )
+    def test_production_rejects_in_memory_original_storage(self):
+        from medical.checks import private_original_storage_checks
+
+        self.assertIn(
+            "medical.E000",
+            {error.id for error in private_original_storage_checks(None)},
+        )
+
+    @override_settings(
+        ORIGINAL_STORAGE_BACKEND="s3",
+        ORIGINAL_MASTER_KEY="",
+        ORIGINAL_MASTER_KEY_FILE="",
+        ORIGINAL_STORAGE_ENDPOINT="http://garage:3900",
+        ORIGINAL_STORAGE_VERIFY_TLS=False,
+    )
+    def test_s3_requires_master_key_and_verified_https(self):
+        from medical.checks import private_original_storage_checks
+
+        error_ids = {error.id for error in private_original_storage_checks(None)}
+        self.assertIn("medical.E001", error_ids)
+        self.assertIn("medical.E002", error_ids)
+        self.assertIn("medical.E003", error_ids)
 
 
 class AIProviderTests(SimpleTestCase):

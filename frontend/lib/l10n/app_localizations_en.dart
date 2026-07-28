@@ -261,11 +261,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsActionsSectionTitle => 'Account actions';
 
   @override
-  String get settingsPrivacyNoteTitle => 'What stays here';
+  String get settingsPrivacyNoteTitle => 'How originals are stored';
 
   @override
   String get settingsPrivacyNoteDescription =>
-      'Original uploads are not stored on the server. Local timeline and summary caches are cleared when you log out or delete your account.';
+      'PDFs and images are encrypted before they enter private server storage and are available online on your signed-in devices. MedStory sends the minimum needed content to configured AI providers for processing. Originals have no backup, so a server or disk failure can permanently lose them. Local caches and temporary files are cleared on logout.';
 
   @override
   String get settingsLanguageEnglish => 'English';
@@ -285,7 +285,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDeleteAccountDescription =>
-      'Permanently delete your MedStory account and backend records.';
+      'Permanently delete your MedStory account, originals, and backend records.';
 
   @override
   String get settingsDeleteAccountAction => 'Delete account';
@@ -295,7 +295,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDeleteAccountDialogMessage =>
-      'This permanently deletes your account and backend records.';
+      'This permanently deletes your account, stored originals, and backend records. This cannot be undone.';
 
   @override
   String get settingsDeleteAccountConfirmLabel => 'Type DELETE to confirm';
@@ -367,7 +367,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voicePermissionRequestingDescription =>
-      'Your recording stays on this device until you choose to upload it.';
+      'Your recording stays temporary. It is deleted after successful transcription and kept locally for retry if transcription fails.';
 
   @override
   String get voiceRecordingInProgress => 'Recording';
@@ -455,7 +455,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chooseFileDescription =>
-      'Choose a PDF or image from your device files, up to 5 MB.';
+      'Choose a PDF or image from your device files, up to 25 MB.';
 
   @override
   String get chooseFileSemanticHint =>
@@ -562,7 +562,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentFileTooLargeMessage =>
-      'Choose a file that is 5 MB or smaller.';
+      'Choose files totaling 25 MB or less.';
 
   @override
   String get documentUnsupportedFileMessage =>
@@ -590,7 +590,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get uploadQueueDuplicateMessage =>
-      'This file is already being processed or was added before.';
+      'This file is already being uploaded or processed.';
 
   @override
   String get documentAlreadyProcessedMessage =>
@@ -613,7 +613,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentProcessingFailedMessage =>
-      'Processing failed. The original file remains on this device.';
+      'Processing failed. Your encrypted original remains available on the server so you can retry or delete it.';
 
   @override
   String get documentProcessingTimeoutMessage =>
@@ -636,10 +636,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get documentStorageLabel => 'Storage';
 
   @override
-  String get documentLocalOnlyValue => 'Original saved on this device only';
+  String get documentLocalOnlyValue => 'Temporary local source';
 
   @override
-  String get documentRemoteStorageValue => 'Stored remotely';
+  String get documentRemoteStorageValue => 'Encrypted private server storage';
 
   @override
   String get documentExtractedTextLabel => 'Extracted text';
@@ -677,7 +677,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentDetailPrivacyNote =>
-      'The original document stays in the app sandbox. The backend processes uploaded bytes transiently and returns only metadata and suggested events.';
+      'The encrypted original is retained in private server storage. Opening or sharing it requires an authenticated connection; MedStory does not keep an automatic offline copy.';
 
   @override
   String get documentDeleteAction => 'Delete document';
@@ -687,7 +687,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentDeleteConfirmMessage =>
-      'Its derived events may also be removed from your timeline.';
+      'This deletes the stored original and hides its derived timeline events. Deleting only a timeline event does not delete this document.';
 
   @override
   String get documentOpenTimelineAction => 'Open timeline';
@@ -921,11 +921,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventOriginalUnavailable =>
-      'The original is unavailable on this device.';
+      'The original is unavailable. Check your connection or try again.';
 
   @override
   String get eventOriginalLocalOnly =>
-      'Originals stay in this app on this device. Uploaded bytes are processed transiently.';
+      'Originals are fetched from encrypted private server storage and are not cached for offline use. Downloading or sharing creates a copy you control.';
 
   @override
   String get eventRevisionCompareTitle => 'Compare suggested changes';
@@ -950,7 +950,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventRevisionRegenerateAction => 'Regenerate suggestion';
 
   @override
-  String get eventOriginalShareAction => 'Open or share original';
+  String get eventOriginalShareAction => 'Download or share original';
 
   @override
   String get documentSingleEventValue => 'One timeline event';

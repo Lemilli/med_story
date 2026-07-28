@@ -21,9 +21,9 @@ final documentUploadControllerProvider =
       DocumentUploadController.new,
     );
 
-/// A durable, app-wide queue. Finished items stay in the local database so the
-/// same file is not accidentally submitted again, while the Add tab only shows
-/// items which still need the user's attention.
+/// A durable metadata-only queue. Source paths remain only while an upload can
+/// still be retried; temporary captures are removed once the server has the
+/// authoritative original.
 class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
   @override
   Future<List<QueuedUpload>> build() async {
@@ -53,6 +53,12 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
     final duplicate =
         await (database.select(database.uploadQueueItems)
               ..where((item) => item.fingerprint.equals(fingerprint))
+              ..where(
+                (item) => item.status.isIn([
+                  UploadQueueStage.uploading.name,
+                  UploadQueueStage.processing.name,
+                ]),
+              )
               ..limit(1))
             .getSingleOrNull();
     if (duplicate != null) {
@@ -103,6 +109,9 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
           .read(documentRepositoryProvider)
           .deleteDocument(item.documentId!);
     }
+    await ref
+        .read(documentRepositoryProvider)
+        .deleteOwnedSources(item.localFiles);
     if (item.stage == UploadQueueStage.failed) {
       await (database.delete(
         database.uploadQueueItems,
@@ -124,24 +133,42 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
     var current = item;
     try {
       final repository = ref.read(documentRepositoryProvider);
-      final result = await repository.createAndUploadStored(
-        item.draft,
-        item.localFiles,
-        onUploadProgress: (sent, total) {
-          if (total > 0) {
-            _setUploadProgress(item.id, sent / total);
-          }
-        },
-      );
+      final existingDocumentId = item.documentId;
+      late final String documentId;
+      if (existingDocumentId != null &&
+          item.draft.docType != DocumentType.audio) {
+        final retry = await repository.retryProcessing(existingDocumentId);
+        documentId = retry.id;
+      } else {
+        if (existingDocumentId != null) {
+          await repository.deleteDocument(existingDocumentId);
+        }
+        final result = await repository.createAndUploadStored(
+          item.draft,
+          item.localFiles,
+          onUploadProgress: (sent, total) {
+            if (total > 0) {
+              _setUploadProgress(item.id, sent / total);
+            }
+          },
+        );
+        documentId = result.documentId;
+      }
       current = current.copyWith(
         stage: UploadQueueStage.processing,
-        documentId: result.documentId,
+        documentId: documentId,
         updatedAt: DateTime.now(),
       );
       await _save(current);
+      if (item.draft.docType != DocumentType.audio) {
+        await repository.deleteOwnedSources(item.localFiles);
+      }
       final document = await repository.pollDocumentUntilTerminal(
-        id: result.documentId,
+        id: documentId,
       );
+      if (item.draft.docType == DocumentType.audio) {
+        await repository.deleteOwnedSources(item.localFiles);
+      }
       await _save(
         current.copyWith(
           stage: UploadQueueStage.completed,
@@ -235,6 +262,7 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
               'file_name': file.fileName,
               'mime_type': file.mimeType,
               'size_bytes': file.sizeBytes,
+              'delete_after_upload': file.deleteAfterUpload,
             },
         ]),
       ),
@@ -250,7 +278,8 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
             fileName: asset['file_name'] as String,
             mimeType: asset['mime_type'] as String,
             sizeBytes: asset['size_bytes'] as int,
-            localUriHint: 'app://documents/${asset['file_name']}',
+            localUriHint: '',
+            deleteAfterUpload: asset['delete_after_upload'] == true,
           ),
         )
         .toList();
@@ -261,7 +290,7 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
               fileName: row.storedFileName,
               mimeType: row.mimeType,
               sizeBytes: row.sizeBytes,
-              localUriHint: 'app://documents/${row.storedFileName}',
+              localUriHint: '',
             ),
           ]
         : decodedAssets;
@@ -281,6 +310,7 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
               path: file.path,
               fileName: file.fileName,
               mimeType: file.mimeType,
+              deleteAfterUpload: file.deleteAfterUpload,
             ),
         ],
       ),

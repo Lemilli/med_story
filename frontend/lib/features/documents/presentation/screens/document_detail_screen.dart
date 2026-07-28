@@ -174,6 +174,30 @@ class _DocumentDetailBody extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
+            if (document.status == DocumentStatus.failed &&
+                document.assets.any((asset) => asset.available)) ...[
+              FilledButton.tonalIcon(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(documentRepositoryProvider)
+                        .retryProcessing(document.id);
+                    ref.invalidate(documentDetailProvider(document.id));
+                  } on Object {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.documentProcessingFailedMessage),
+                        ),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text(l10n.documentRetryAction),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             if (document.eventId != null) ...[
               FilledButton.icon(
                 onPressed: () => context.push('/events/${document.eventId}'),

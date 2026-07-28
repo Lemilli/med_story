@@ -20,7 +20,7 @@ import '../../../documents/presentation/controllers/document_controllers.dart';
 import '../../../subjects/presentation/controllers/subject_controller.dart';
 import '../controllers/voice_capture_controller.dart';
 
-const _maxDocumentBytes = 5 * 1024 * 1024;
+const _maxDocumentBytes = 25 * 1024 * 1024;
 
 class CaptureScreen extends ConsumerStatefulWidget {
   const CaptureScreen({super.key});
@@ -268,7 +268,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   Future<void> _pickFile() async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['pdf', 'png', 'jpg', 'jpeg'],
+      allowedExtensions: const ['pdf', 'png', 'jpg', 'jpeg', 'heic', 'heif'],
       withData: false,
     );
     final file = result?.files.singleOrNull;
@@ -315,6 +315,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                 )
               : image.name,
           mimeType: image.mimeType ?? _mimeTypeForName(image.name),
+          deleteAfterUpload: true,
         ),
       );
     }
@@ -1355,13 +1356,19 @@ String _mimeTypeForName(String fileName) {
     '.pdf' => 'application/pdf',
     '.png' => 'image/png',
     '.jpg' || '.jpeg' => 'image/jpeg',
+    '.heic' => 'image/heic',
+    '.heif' => 'image/heif',
     _ => 'application/octet-stream',
   };
 }
 
-bool _isSupportedMimeType(String mimeType) {
-  return mimeType == 'application/pdf' || mimeType.startsWith('image/');
-}
+bool _isSupportedMimeType(String mimeType) => const {
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/heic',
+  'image/heif',
+}.contains(mimeType.toLowerCase());
 
 String _titleFromFileName(String fileName, {required String fallback}) {
   final basename = p.basenameWithoutExtension(fileName).trim();

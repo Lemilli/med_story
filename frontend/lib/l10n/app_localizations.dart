@@ -533,13 +533,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsPrivacyNoteTitle.
   ///
   /// In en, this message translates to:
-  /// **'What stays here'**
+  /// **'How originals are stored'**
   String get settingsPrivacyNoteTitle;
 
   /// No description provided for @settingsPrivacyNoteDescription.
   ///
   /// In en, this message translates to:
-  /// **'Original uploads are not stored on the server. Local timeline and summary caches are cleared when you log out or delete your account.'**
+  /// **'PDFs and images are encrypted before they enter private server storage and are available online on your signed-in devices. MedStory sends the minimum needed content to configured AI providers for processing. Originals have no backup, so a server or disk failure can permanently lose them. Local caches and temporary files are cleared on logout.'**
   String get settingsPrivacyNoteDescription;
 
   /// No description provided for @settingsLanguageEnglish.
@@ -575,7 +575,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDeleteAccountDescription.
   ///
   /// In en, this message translates to:
-  /// **'Permanently delete your MedStory account and backend records.'**
+  /// **'Permanently delete your MedStory account, originals, and backend records.'**
   String get settingsDeleteAccountDescription;
 
   /// No description provided for @settingsDeleteAccountAction.
@@ -593,7 +593,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDeleteAccountDialogMessage.
   ///
   /// In en, this message translates to:
-  /// **'This permanently deletes your account and backend records.'**
+  /// **'This permanently deletes your account, stored originals, and backend records. This cannot be undone.'**
   String get settingsDeleteAccountDialogMessage;
 
   /// No description provided for @settingsDeleteAccountConfirmLabel.
@@ -719,7 +719,7 @@ abstract class AppLocalizations {
   /// No description provided for @voicePermissionRequestingDescription.
   ///
   /// In en, this message translates to:
-  /// **'Your recording stays on this device until you choose to upload it.'**
+  /// **'Your recording stays temporary. It is deleted after successful transcription and kept locally for retry if transcription fails.'**
   String get voicePermissionRequestingDescription;
 
   /// No description provided for @voiceRecordingInProgress.
@@ -863,7 +863,7 @@ abstract class AppLocalizations {
   /// No description provided for @chooseFileDescription.
   ///
   /// In en, this message translates to:
-  /// **'Choose a PDF or image from your device files, up to 5 MB.'**
+  /// **'Choose a PDF or image from your device files, up to 25 MB.'**
   String get chooseFileDescription;
 
   /// No description provided for @chooseFileSemanticHint.
@@ -1037,7 +1037,7 @@ abstract class AppLocalizations {
   /// No description provided for @documentFileTooLargeMessage.
   ///
   /// In en, this message translates to:
-  /// **'Choose a file that is 5 MB or smaller.'**
+  /// **'Choose files totaling 25 MB or less.'**
   String get documentFileTooLargeMessage;
 
   /// No description provided for @documentUnsupportedFileMessage.
@@ -1085,7 +1085,7 @@ abstract class AppLocalizations {
   /// No description provided for @uploadQueueDuplicateMessage.
   ///
   /// In en, this message translates to:
-  /// **'This file is already being processed or was added before.'**
+  /// **'This file is already being uploaded or processed.'**
   String get uploadQueueDuplicateMessage;
 
   /// No description provided for @documentAlreadyProcessedMessage.
@@ -1127,7 +1127,7 @@ abstract class AppLocalizations {
   /// No description provided for @documentProcessingFailedMessage.
   ///
   /// In en, this message translates to:
-  /// **'Processing failed. The original file remains on this device.'**
+  /// **'Processing failed. Your encrypted original remains available on the server so you can retry or delete it.'**
   String get documentProcessingFailedMessage;
 
   /// No description provided for @documentProcessingTimeoutMessage.
@@ -1169,13 +1169,13 @@ abstract class AppLocalizations {
   /// No description provided for @documentLocalOnlyValue.
   ///
   /// In en, this message translates to:
-  /// **'Original saved on this device only'**
+  /// **'Temporary local source'**
   String get documentLocalOnlyValue;
 
   /// No description provided for @documentRemoteStorageValue.
   ///
   /// In en, this message translates to:
-  /// **'Stored remotely'**
+  /// **'Encrypted private server storage'**
   String get documentRemoteStorageValue;
 
   /// No description provided for @documentExtractedTextLabel.
@@ -1229,7 +1229,7 @@ abstract class AppLocalizations {
   /// No description provided for @documentDetailPrivacyNote.
   ///
   /// In en, this message translates to:
-  /// **'The original document stays in the app sandbox. The backend processes uploaded bytes transiently and returns only metadata and suggested events.'**
+  /// **'The encrypted original is retained in private server storage. Opening or sharing it requires an authenticated connection; MedStory does not keep an automatic offline copy.'**
   String get documentDetailPrivacyNote;
 
   /// No description provided for @documentDeleteAction.
@@ -1247,7 +1247,7 @@ abstract class AppLocalizations {
   /// No description provided for @documentDeleteConfirmMessage.
   ///
   /// In en, this message translates to:
-  /// **'Its derived events may also be removed from your timeline.'**
+  /// **'This deletes the stored original and hides its derived timeline events. Deleting only a timeline event does not delete this document.'**
   String get documentDeleteConfirmMessage;
 
   /// No description provided for @documentOpenTimelineAction.
@@ -1655,13 +1655,13 @@ abstract class AppLocalizations {
   /// No description provided for @eventOriginalUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'The original is unavailable on this device.'**
+  /// **'The original is unavailable. Check your connection or try again.'**
   String get eventOriginalUnavailable;
 
   /// No description provided for @eventOriginalLocalOnly.
   ///
   /// In en, this message translates to:
-  /// **'Originals stay in this app on this device. Uploaded bytes are processed transiently.'**
+  /// **'Originals are fetched from encrypted private server storage and are not cached for offline use. Downloading or sharing creates a copy you control.'**
   String get eventOriginalLocalOnly;
 
   /// No description provided for @eventRevisionCompareTitle.
@@ -1709,7 +1709,7 @@ abstract class AppLocalizations {
   /// No description provided for @eventOriginalShareAction.
   ///
   /// In en, this message translates to:
-  /// **'Open or share original'**
+  /// **'Download or share original'**
   String get eventOriginalShareAction;
 
   /// No description provided for @documentSingleEventValue.

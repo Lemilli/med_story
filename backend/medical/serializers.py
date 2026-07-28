@@ -7,6 +7,7 @@ from medical.models import (
     Document,
     DocumentAsset,
     DocumentExplanation,
+    EncryptedBlob,
     EventRevision,
     MedicalEvent,
     MedicalSummary,
@@ -19,9 +20,16 @@ from medical.summary_content import normalize_summary_content
 from medical.services import get_or_create_default_subject
 
 
-MAX_DOCUMENT_SIZE_BYTES = 5 * 1024 * 1024
-SUPPORTED_DOCUMENT_MIME_TYPES = {"application/pdf"}
-SUPPORTED_DOCUMENT_MIME_PREFIXES = ("image/",)
+MAX_DOCUMENT_SIZE_BYTES = 25 * 1024 * 1024
+MAX_AUDIO_SIZE_BYTES = 5 * 1024 * 1024
+SUPPORTED_DOCUMENT_MIME_TYPES = {
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/heic",
+    "image/heif",
+}
+SUPPORTED_DOCUMENT_MIME_PREFIXES = ()
 SUPPORTED_AUDIO_MIME_TYPES = {
     "audio/mpeg",
     "audio/mp3",
@@ -205,10 +213,20 @@ class MedicalEventSerializer(serializers.ModelSerializer):
 
 
 class DocumentAssetSerializer(serializers.ModelSerializer):
+    available = serializers.SerializerMethodField()
+
     class Meta:
         model = DocumentAsset
-        fields = ("id", "position", "file_name", "mime_type", "size_bytes")
+        fields = ("id", "position", "file_name", "mime_type", "size_bytes", "available")
         read_only_fields = fields
+
+    @extend_schema_field(serializers.BooleanField())
+    def get_available(self, obj):
+        return bool(
+            obj.blob_id
+            and obj.blob.state == EncryptedBlob.State.AVAILABLE
+            and obj.blob.encrypted_key
+        )
 
 
 class EventRevisionSerializer(serializers.ModelSerializer):
@@ -252,6 +270,7 @@ class DocumentSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             "id",
+            "local_uri_hint",
             "extracted_text_available",
             "language",
             "error_message",
@@ -265,13 +284,12 @@ class DocumentSerializer(serializers.ModelSerializer):
         )
         extra_kwargs = {
             "status": {"required": False},
-            "local_uri_hint": {"required": False, "allow_blank": True},
             "document_date": {"required": False, "allow_null": True},
         }
 
     @extend_schema_field(serializers.BooleanField())
     def get_local_only(self, obj):
-        return True
+        return False
 
     @extend_schema_field(serializers.BooleanField())
     def get_extracted_text_available(self, obj):
@@ -322,8 +340,14 @@ class DocumentSerializer(serializers.ModelSerializer):
     def validate_size_bytes(self, value):
         if value <= 0:
             raise serializers.ValidationError("size_bytes must be greater than zero.")
-        if value > MAX_DOCUMENT_SIZE_BYTES:
-            raise serializers.ValidationError("size_bytes must be 5 MB or smaller.")
+        limit = (
+            MAX_AUDIO_SIZE_BYTES
+            if self.initial_data.get("doc_type") == Document.DocumentType.AUDIO
+            else MAX_DOCUMENT_SIZE_BYTES
+        )
+        if value > limit:
+            maximum = "5 MB" if limit == MAX_AUDIO_SIZE_BYTES else "25 MB"
+            raise serializers.ValidationError(f"size_bytes must be {maximum} or smaller.")
         return value
 
     def validate_status(self, value):

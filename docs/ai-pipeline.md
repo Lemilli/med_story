@@ -51,16 +51,17 @@ Selection is config-driven (`AI_LLM_PROVIDER`, `AI_OCR_PROVIDER`, `AI_STT_PROVID
 ## 3. Pipelines
 
 ### 3.1 Document Ingestion Pipeline
-Triggered by `POST /documents/{id}/ingest` (transient multipart upload, max 5 MB).
-Before OCR or LLM work, the backend calculates a SHA-256 fingerprint of the transient bytes. A
-matching live document for the same account that has already generated active events is returned
-as a duplicate rather than processed again; deleted documents do not block re-uploading.
+Triggered by `POST /documents/{id}/ingest` (retained PDF/image multipart upload, max 25 MB).
+Before OCR or LLM work, the API validates signatures, fail-closed scans in tmpfs, calculates a
+user-scoped keyed fingerprint, encrypts with a unique committed framed envelope, and stores only
+ciphertext in Garage. Identical assets may share a blob within one account but are never compared
+across users.
 
 ```
-[Document bytes received transiently]
+[Encrypted original durably acknowledged; Celery receives IDs only]
    │
    ▼
-(1) Pre-process: detect MIME, page count, basic validation
+(1) Worker loads the user-owned blob and verifies/decrypts it in memory
    │
    ▼
 (2) Text extraction
@@ -84,7 +85,7 @@ as a duplicate rather than processed again; deleted documents do not block re-up
    │
    ▼
 [Document.status = processed only after one event exists]
-   (no event or any step failure → status=failed + error_message; retriable)
+   (no event or any step failure → status=failed + error_message; original remains retriable)
 ```
 
 For photographed multi-page sources, OCR runs once per ordered image and joins the extracted page
@@ -93,11 +94,12 @@ user whether a multi-selection is one document or separate documents.
 
 ### 3.2 Voice Capture Pipeline
 ```
-[Audio bytes received transiently] → (1) STT transcribe → (2) LLM structuring → events
+[Audio bytes encrypted in transient staging] → (1) STT → delete recording → (2) LLM structuring
 ```
 Implemented in the backend through `POST /documents/upload-audio` and `doc_type=audio`
 ingestion. Voice-derived events use `source=ai_voice` and can be edited or removed by the user,
-and store only the transcript/extracted text, not the raw audio.
+and store only the transcript/extracted text, not the raw audio. The client deletes its recording
+after successful transcription; a failure keeps it locally for retry.
 
 ### 3.3 On-Demand Explanation
 `POST /documents/{id}/explanation/regenerate` re-runs step (4) in the user's currently selected
@@ -210,7 +212,7 @@ Use plain, simple language. Never invent values that are not present in the sour
   in a medical source. Never infer a diagnosis, urgency, treatment, or recommendation.
 - Provenance: every transient AI item cites supplied event IDs only. The model does not invent
   document names, page positions, or source labels; the backend supplies those after validation and
-  stores each source with its event ID, `title`, date, document name, and known local-asset positions.
+  stores each source with its event ID, `title`, date, document name, and known asset positions.
 
 ## 7. Safety, Quality & Disclaimers
 
@@ -219,7 +221,7 @@ Use plain, simple language. Never invent values that are not present in the sour
   users can edit the event's plain-language fields, remove it, and open the original document.
 - **Disclaimers**: the app consistently frames output as organizational, per BRD trust NFR.
 - **Source traceability**: all active events are eligible, including AI-derived events; summary
-  claims link back to their underlying event and original document when locally available.
+  claims link back to their underlying event and authenticated online original.
 - **Hallucination guardrails**: schema validation + "never invent values" instruction +
   source-grounding (only use provided text).
 
@@ -229,7 +231,11 @@ Use plain, simple language. Never invent values that are not present in the sour
   explanation/structuring and can be redacted where feasible.
 - Providers are accessed only from backend workers, never the client.
 - Prefer providers with **no-training-on-data / zero-retention** terms; record this in the DPA.
-- Raw file bytes are processed transiently and not persisted on backend storage.
+- Retained originals remain MedStory-encrypted in private Garage storage. Providers receive only
+  the minimum decrypted source content needed for the configured OCR/LLM call.
+- Production use requires a DPA, EU region/transfer review, no-training controls, and verified
+  minimal retention for each provider.
+- Raw bytes/base64 are never placed in Celery/Redis messages or application logs.
 - Per-request data sent to AI providers is logged as metadata only (no raw content) for cost
   and debugging. See [security-privacy.md](./security-privacy.md).
 

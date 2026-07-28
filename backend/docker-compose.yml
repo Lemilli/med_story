@@ -4,6 +4,8 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
+    tmpfs:
+      - /var/run/medstory-uploads:size=268435456,mode=0700
     ports:
       - "8000:8000"
     environment:
@@ -22,15 +24,51 @@ services:
       AI_OPENAI_OCR_MODEL: ${AI_OPENAI_OCR_MODEL:-gpt-5.4-nano}
       AI_OPENAI_STT_MODEL: ${AI_OPENAI_STT_MODEL:-gpt-4o-mini-transcribe}
       AI_OPENAI_TIMEOUT_SECONDS: ${AI_OPENAI_TIMEOUT_SECONDS:-60}
+      ORIGINAL_STORAGE_BACKEND: ${ORIGINAL_STORAGE_BACKEND:-s3}
+      ORIGINAL_STORAGE_SERVICE_ROLE: api
+      ORIGINAL_STORAGE_ENDPOINT: ${ORIGINAL_STORAGE_ENDPOINT:-https://garage-proxy}
+      ORIGINAL_STORAGE_REGION: ${ORIGINAL_STORAGE_REGION:-medstory}
+      ORIGINAL_STORAGE_BUCKET: ${ORIGINAL_STORAGE_BUCKET:-medstory-originals}
+      ORIGINAL_STORAGE_UPLOAD_ACCESS_KEY_FILE: /run/secrets/garage_upload_access_key
+      ORIGINAL_STORAGE_UPLOAD_SECRET_KEY_FILE: /run/secrets/garage_upload_secret_key
+      ORIGINAL_STORAGE_READ_ACCESS_KEY_FILE: /run/secrets/garage_read_access_key
+      ORIGINAL_STORAGE_READ_SECRET_KEY_FILE: /run/secrets/garage_read_secret_key
+      ORIGINAL_STORAGE_DELETION_ACCESS_KEY_FILE: /run/secrets/garage_deletion_access_key
+      ORIGINAL_STORAGE_DELETION_SECRET_KEY_FILE: /run/secrets/garage_deletion_secret_key
+      ORIGINAL_STORAGE_VERIFY_TLS: "True"
+      ORIGINAL_STORAGE_CA_BUNDLE: /run/secrets/storage_ca_certificate
+      ORIGINAL_MASTER_KEY_FILE: /run/secrets/original_master_key
+      ORIGINAL_MASTER_KEY_VERSION: ${ORIGINAL_MASTER_KEY_VERSION:-1}
+      ORIGINAL_STRICT_FILE_VALIDATION: ${ORIGINAL_STRICT_FILE_VALIDATION:-True}
+      ORIGINAL_MALWARE_SCANNER: ${ORIGINAL_MALWARE_SCANNER:-clamav}
+      CLAMAV_HOST: clamav
+      FILE_UPLOAD_TEMP_DIR: /var/run/medstory-uploads
+    secrets:
+      - original_master_key
+      - garage_upload_access_key
+      - garage_upload_secret_key
+      - garage_read_access_key
+      - garage_read_secret_key
+      - garage_deletion_access_key
+      - garage_deletion_secret_key
+      - storage_ca_certificate
     depends_on:
       - db
       - redis
+      - garage
+      - garage-proxy
+      - clamav
+    networks:
+      - default
+      - storage_internal
 
   worker:
     build: .
     command: celery -A config worker --loglevel=info
     volumes:
       - .:/app
+    tmpfs:
+      - /var/run/medstory-uploads:size=268435456,mode=0700
     environment:
       DEBUG: ${DEBUG:-True}
       SECRET_KEY: ${SECRET_KEY:-unsafe-dev-secret-key-change-me-32chars}
@@ -47,9 +85,104 @@ services:
       AI_OPENAI_OCR_MODEL: ${AI_OPENAI_OCR_MODEL:-gpt-5.4-nano}
       AI_OPENAI_STT_MODEL: ${AI_OPENAI_STT_MODEL:-gpt-4o-mini-transcribe}
       AI_OPENAI_TIMEOUT_SECONDS: ${AI_OPENAI_TIMEOUT_SECONDS:-60}
+      ORIGINAL_STORAGE_BACKEND: ${ORIGINAL_STORAGE_BACKEND:-s3}
+      ORIGINAL_STORAGE_SERVICE_ROLE: worker
+      ORIGINAL_STORAGE_ENDPOINT: ${ORIGINAL_STORAGE_ENDPOINT:-https://garage-proxy}
+      ORIGINAL_STORAGE_REGION: ${ORIGINAL_STORAGE_REGION:-medstory}
+      ORIGINAL_STORAGE_BUCKET: ${ORIGINAL_STORAGE_BUCKET:-medstory-originals}
+      ORIGINAL_STORAGE_PROCESSING_ACCESS_KEY_FILE: /run/secrets/garage_processing_access_key
+      ORIGINAL_STORAGE_PROCESSING_SECRET_KEY_FILE: /run/secrets/garage_processing_secret_key
+      ORIGINAL_STORAGE_DELETION_ACCESS_KEY_FILE: /run/secrets/garage_deletion_access_key
+      ORIGINAL_STORAGE_DELETION_SECRET_KEY_FILE: /run/secrets/garage_deletion_secret_key
+      ORIGINAL_STORAGE_VERIFY_TLS: "True"
+      ORIGINAL_STORAGE_CA_BUNDLE: /run/secrets/storage_ca_certificate
+      ORIGINAL_MASTER_KEY_FILE: /run/secrets/original_master_key
+      ORIGINAL_MASTER_KEY_VERSION: ${ORIGINAL_MASTER_KEY_VERSION:-1}
+      ORIGINAL_MALWARE_SCANNER: ${ORIGINAL_MALWARE_SCANNER:-clamav}
+      CLAMAV_HOST: clamav
+      FILE_UPLOAD_TEMP_DIR: /var/run/medstory-uploads
+    secrets:
+      - original_master_key
+      - garage_processing_access_key
+      - garage_processing_secret_key
+      - garage_deletion_access_key
+      - garage_deletion_secret_key
+      - storage_ca_certificate
     depends_on:
       - db
       - redis
+      - garage
+      - garage-proxy
+      - clamav
+    networks:
+      - default
+      - storage_internal
+
+  beat:
+    build: .
+    command: celery -A config beat --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      DEBUG: ${DEBUG:-True}
+      SECRET_KEY: ${SECRET_KEY:-unsafe-dev-secret-key-change-me-32chars}
+      DATABASE_URL: ${DATABASE_URL:-postgres://medstory:medstory@db:5432/medstory}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+    depends_on:
+      - db
+      - redis
+
+  garage:
+    image: dxflrs/garage:v2.3.0
+    entrypoint: ["/bin/sh", "/garage-entrypoint.sh"]
+    volumes:
+      - garage_data:/var/lib/garage/data
+      - garage_meta:/var/lib/garage/meta
+      - ./garage-entrypoint.sh:/garage-entrypoint.sh:ro
+    environment:
+      GARAGE_METADATA_DIR: /var/lib/garage/meta
+      GARAGE_DATA_DIR: /var/lib/garage/data
+      GARAGE_DB_ENGINE: lmdb
+      GARAGE_REPLICATION_FACTOR: 1
+      GARAGE_RPC_BIND_ADDR: 0.0.0.0:3901
+      GARAGE_S3_API_BIND_ADDR: 0.0.0.0:3900
+      GARAGE_S3_API_S3_REGION: medstory
+      GARAGE_ADMIN_API_BIND_ADDR: 0.0.0.0:3903
+    secrets:
+      - garage_rpc_secret
+      - garage_admin_token
+      - garage_bootstrap_access_key
+      - garage_bootstrap_secret_key
+      - garage_upload_access_key
+      - garage_upload_secret_key
+      - garage_read_access_key
+      - garage_read_secret_key
+      - garage_processing_access_key
+      - garage_processing_secret_key
+      - garage_deletion_access_key
+      - garage_deletion_secret_key
+    networks:
+      - storage_internal
+
+  garage-proxy:
+    image: nginx:1.29-alpine
+    volumes:
+      - ./garage-proxy.conf:/etc/nginx/nginx.conf:ro
+    secrets:
+      - storage_tls_certificate
+      - storage_tls_private_key
+    depends_on:
+      - garage
+    networks:
+      - storage_internal
+
+  clamav:
+    image: clamav/clamav:stable
+    volumes:
+      - clamav_signatures:/var/lib/clamav
+    networks:
+      - storage_internal
 
   db:
     image: postgres:16
@@ -69,3 +202,44 @@ services:
 
 volumes:
   postgres_data:
+  garage_data:
+  garage_meta:
+  clamav_signatures:
+
+secrets:
+  original_master_key:
+    file: ./secrets/original_master_key
+  garage_rpc_secret:
+    file: ./secrets/garage_rpc_secret
+  garage_admin_token:
+    file: ./secrets/garage_admin_token
+  garage_bootstrap_access_key:
+    file: ./secrets/garage_bootstrap_access_key
+  garage_bootstrap_secret_key:
+    file: ./secrets/garage_bootstrap_secret_key
+  garage_upload_access_key:
+    file: ./secrets/garage_upload_access_key
+  garage_upload_secret_key:
+    file: ./secrets/garage_upload_secret_key
+  garage_read_access_key:
+    file: ./secrets/garage_read_access_key
+  garage_read_secret_key:
+    file: ./secrets/garage_read_secret_key
+  garage_processing_access_key:
+    file: ./secrets/garage_processing_access_key
+  garage_processing_secret_key:
+    file: ./secrets/garage_processing_secret_key
+  garage_deletion_access_key:
+    file: ./secrets/garage_deletion_access_key
+  garage_deletion_secret_key:
+    file: ./secrets/garage_deletion_secret_key
+  storage_ca_certificate:
+    file: ./secrets/storage_ca_certificate.pem
+  storage_tls_certificate:
+    file: ./secrets/storage_tls_certificate.pem
+  storage_tls_private_key:
+    file: ./secrets/storage_tls_private_key.pem
+
+networks:
+  storage_internal:
+    internal: true

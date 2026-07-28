@@ -226,7 +226,7 @@ return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUri
 @JsonSerializable()
 
 class _MedicalDocument implements MedicalDocument {
-  const _MedicalDocument({required this.id, this.title = '', @JsonKey(name: 'doc_type') this.docType = DocumentType.other, @JsonKey(name: 'mime_type') this.mimeType = '', @JsonKey(name: 'local_uri_hint') this.localUriHint = '', @JsonKey(name: 'size_bytes') this.sizeBytes = 0, this.status = DocumentStatus.pendingIngest, @JsonKey(name: 'subject_id') this.subjectId, @JsonKey(name: 'document_date') this.documentDate, this.language = '', @JsonKey(name: 'local_only') this.localOnly = true, @JsonKey(name: 'extracted_text_available') this.extractedTextAvailable = false, @JsonKey(name: 'event_count') this.eventCount = 0, @JsonKey(name: 'event_id') this.eventId, final  List<DocumentAssetMetadata> assets = const <DocumentAssetMetadata>[], @JsonKey(name: 'error_message') this.errorMessage = '', @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt}): _assets = assets;
+  const _MedicalDocument({required this.id, this.title = '', @JsonKey(name: 'doc_type') this.docType = DocumentType.other, @JsonKey(name: 'mime_type') this.mimeType = '', @JsonKey(name: 'local_uri_hint') this.localUriHint = '', @JsonKey(name: 'size_bytes') this.sizeBytes = 0, this.status = DocumentStatus.pendingIngest, @JsonKey(name: 'subject_id') this.subjectId, @JsonKey(name: 'document_date') this.documentDate, this.language = '', @JsonKey(name: 'local_only') this.localOnly = false, @JsonKey(name: 'extracted_text_available') this.extractedTextAvailable = false, @JsonKey(name: 'event_count') this.eventCount = 0, @JsonKey(name: 'event_id') this.eventId, final  List<DocumentAssetMetadata> assets = const <DocumentAssetMetadata>[], @JsonKey(name: 'error_message') this.errorMessage = '', @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt}): _assets = assets;
   factory _MedicalDocument.fromJson(Map<String, dynamic> json) => _$MedicalDocumentFromJson(json);
 
 @override final  String id;
@@ -335,7 +335,7 @@ as DateTime?,
 /// @nodoc
 mixin _$DocumentAssetMetadata {
 
- String get id; int get position;@JsonKey(name: 'file_name') String get fileName;@JsonKey(name: 'mime_type') String get mimeType;@JsonKey(name: 'size_bytes') int get sizeBytes;
+ String get id; int get position;@JsonKey(name: 'file_name') String get fileName;@JsonKey(name: 'mime_type') String get mimeType;@JsonKey(name: 'size_bytes') int get sizeBytes; bool get available;
 /// Create a copy of DocumentAssetMetadata
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -348,16 +348,16 @@ $DocumentAssetMetadataCopyWith<DocumentAssetMetadata> get copyWith => _$Document
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentAssetMetadata&&(identical(other.id, id) || other.id == id)&&(identical(other.position, position) || other.position == position)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentAssetMetadata&&(identical(other.id, id) || other.id == id)&&(identical(other.position, position) || other.position == position)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.available, available) || other.available == available));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,position,fileName,mimeType,sizeBytes);
+int get hashCode => Object.hash(runtimeType,id,position,fileName,mimeType,sizeBytes,available);
 
 @override
 String toString() {
-  return 'DocumentAssetMetadata(id: $id, position: $position, fileName: $fileName, mimeType: $mimeType, sizeBytes: $sizeBytes)';
+  return 'DocumentAssetMetadata(id: $id, position: $position, fileName: $fileName, mimeType: $mimeType, sizeBytes: $sizeBytes, available: $available)';
 }
 
 
@@ -368,7 +368,7 @@ abstract mixin class $DocumentAssetMetadataCopyWith<$Res>  {
   factory $DocumentAssetMetadataCopyWith(DocumentAssetMetadata value, $Res Function(DocumentAssetMetadata) _then) = _$DocumentAssetMetadataCopyWithImpl;
 @useResult
 $Res call({
- String id, int position,@JsonKey(name: 'file_name') String fileName,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'size_bytes') int sizeBytes
+ String id, int position,@JsonKey(name: 'file_name') String fileName,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'size_bytes') int sizeBytes, bool available
 });
 
 
@@ -385,14 +385,15 @@ class _$DocumentAssetMetadataCopyWithImpl<$Res>
 
 /// Create a copy of DocumentAssetMetadata
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? position = null,Object? fileName = null,Object? mimeType = null,Object? sizeBytes = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? position = null,Object? fileName = null,Object? mimeType = null,Object? sizeBytes = null,Object? available = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
 as String,mimeType: null == mimeType ? _self.mimeType : mimeType // ignore: cast_nullable_to_non_nullable
 as String,sizeBytes: null == sizeBytes ? _self.sizeBytes : sizeBytes // ignore: cast_nullable_to_non_nullable
-as int,
+as int,available: null == available ? _self.available : available // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -477,10 +478,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int position, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int position, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes,  bool available)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DocumentAssetMetadata() when $default != null:
-return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.sizeBytes);case _:
+return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.sizeBytes,_that.available);case _:
   return orElse();
 
 }
@@ -498,10 +499,10 @@ return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.size
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int position, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int position, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes,  bool available)  $default,) {final _that = this;
 switch (_that) {
 case _DocumentAssetMetadata():
-return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.sizeBytes);case _:
+return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.sizeBytes,_that.available);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -518,10 +519,10 @@ return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.size
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int position, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int position, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'mime_type')  String mimeType, @JsonKey(name: 'size_bytes')  int sizeBytes,  bool available)?  $default,) {final _that = this;
 switch (_that) {
 case _DocumentAssetMetadata() when $default != null:
-return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.sizeBytes);case _:
+return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.sizeBytes,_that.available);case _:
   return null;
 
 }
@@ -533,7 +534,7 @@ return $default(_that.id,_that.position,_that.fileName,_that.mimeType,_that.size
 @JsonSerializable()
 
 class _DocumentAssetMetadata implements DocumentAssetMetadata {
-  const _DocumentAssetMetadata({required this.id, required this.position, @JsonKey(name: 'file_name') required this.fileName, @JsonKey(name: 'mime_type') required this.mimeType, @JsonKey(name: 'size_bytes') required this.sizeBytes});
+  const _DocumentAssetMetadata({required this.id, required this.position, @JsonKey(name: 'file_name') required this.fileName, @JsonKey(name: 'mime_type') required this.mimeType, @JsonKey(name: 'size_bytes') required this.sizeBytes, this.available = true});
   factory _DocumentAssetMetadata.fromJson(Map<String, dynamic> json) => _$DocumentAssetMetadataFromJson(json);
 
 @override final  String id;
@@ -541,6 +542,7 @@ class _DocumentAssetMetadata implements DocumentAssetMetadata {
 @override@JsonKey(name: 'file_name') final  String fileName;
 @override@JsonKey(name: 'mime_type') final  String mimeType;
 @override@JsonKey(name: 'size_bytes') final  int sizeBytes;
+@override@JsonKey() final  bool available;
 
 /// Create a copy of DocumentAssetMetadata
 /// with the given fields replaced by the non-null parameter values.
@@ -555,16 +557,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentAssetMetadata&&(identical(other.id, id) || other.id == id)&&(identical(other.position, position) || other.position == position)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentAssetMetadata&&(identical(other.id, id) || other.id == id)&&(identical(other.position, position) || other.position == position)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.available, available) || other.available == available));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,position,fileName,mimeType,sizeBytes);
+int get hashCode => Object.hash(runtimeType,id,position,fileName,mimeType,sizeBytes,available);
 
 @override
 String toString() {
-  return 'DocumentAssetMetadata(id: $id, position: $position, fileName: $fileName, mimeType: $mimeType, sizeBytes: $sizeBytes)';
+  return 'DocumentAssetMetadata(id: $id, position: $position, fileName: $fileName, mimeType: $mimeType, sizeBytes: $sizeBytes, available: $available)';
 }
 
 
@@ -575,7 +577,7 @@ abstract mixin class _$DocumentAssetMetadataCopyWith<$Res> implements $DocumentA
   factory _$DocumentAssetMetadataCopyWith(_DocumentAssetMetadata value, $Res Function(_DocumentAssetMetadata) _then) = __$DocumentAssetMetadataCopyWithImpl;
 @override @useResult
 $Res call({
- String id, int position,@JsonKey(name: 'file_name') String fileName,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'size_bytes') int sizeBytes
+ String id, int position,@JsonKey(name: 'file_name') String fileName,@JsonKey(name: 'mime_type') String mimeType,@JsonKey(name: 'size_bytes') int sizeBytes, bool available
 });
 
 
@@ -592,14 +594,15 @@ class __$DocumentAssetMetadataCopyWithImpl<$Res>
 
 /// Create a copy of DocumentAssetMetadata
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? position = null,Object? fileName = null,Object? mimeType = null,Object? sizeBytes = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? position = null,Object? fileName = null,Object? mimeType = null,Object? sizeBytes = null,Object? available = null,}) {
   return _then(_DocumentAssetMetadata(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
 as String,mimeType: null == mimeType ? _self.mimeType : mimeType // ignore: cast_nullable_to_non_nullable
 as String,sizeBytes: null == sizeBytes ? _self.sizeBytes : sizeBytes // ignore: cast_nullable_to_non_nullable
-as int,
+as int,available: null == available ? _self.available : available // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

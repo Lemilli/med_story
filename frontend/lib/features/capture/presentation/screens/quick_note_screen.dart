@@ -22,6 +22,7 @@ class QuickNoteScreen extends ConsumerStatefulWidget {
 class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
   final _text = TextEditingController();
   bool _transcribing = false;
+  bool _transcriptionFailed = false;
   bool _submitting = false;
   String? _message;
 
@@ -33,7 +34,10 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<VoiceCaptureState>>(voiceCaptureControllerProvider, (_, next) {
+    ref.listen<AsyncValue<VoiceCaptureState>>(voiceCaptureControllerProvider, (
+      _,
+      next,
+    ) {
       final recording = _dataOrNull(next);
       if (recording?.stage == VoiceCaptureStage.recorded && !_transcribing) {
         unawaited(_transcribe(recording!));
@@ -48,14 +52,18 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
       onPopInvokedWithResult: (didPop, _) async {
         if (!didPop && !busy) return;
         if (!didPop) return;
-        await ref.read(voiceCaptureControllerProvider.notifier).discardRecording();
+        await ref
+            .read(voiceCaptureControllerProvider.notifier)
+            .discardRecording();
       },
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.writeNoteTitle),
           leading: IconButton(
             icon: const Icon(Icons.close_rounded),
-            onPressed: (_transcribing || recording == true) ? null : _discardAndClose,
+            onPressed: (_transcribing || recording == true)
+                ? null
+                : _discardAndClose,
             tooltip: l10n.voiceDiscardAction,
           ),
         ),
@@ -68,7 +76,12 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
                 Text(l10n.writeNoteDescription),
                 const SizedBox(height: AppSpacing.md),
                 if (_message != null) ...[
-                  Text(_message!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  Text(
+                    _message!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                 ],
                 if (_transcribing) const LinearProgressIndicator(),
@@ -85,27 +98,50 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
                     maxLines: null,
                     expands: true,
                     textAlignVertical: TextAlignVertical.top,
-                    decoration: InputDecoration(labelText: l10n.eventDescriptionLabel),
+                    decoration: InputDecoration(
+                      labelText: l10n.eventDescriptionLabel,
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 if (recording == true)
                   FilledButton.icon(
-                    onPressed: () => ref.read(voiceCaptureControllerProvider.notifier).stopRecording(),
+                    onPressed: () => ref
+                        .read(voiceCaptureControllerProvider.notifier)
+                        .stopRecording(),
                     icon: const Icon(Icons.stop_rounded),
                     label: Text(l10n.voiceStopAction),
                   )
                 else
-                  OutlinedButton.icon(
-                    onPressed: busy ? null : _recordMore,
-                    icon: const Icon(Icons.mic_rounded),
-                    label: Text(l10n.recordVoiceTitle),
+                  Row(
+                    children: [
+                      if (_transcriptionFailed &&
+                          voice?.stage == VoiceCaptureStage.recorded) ...[
+                        Expanded(
+                          child: FilledButton.tonal(
+                            onPressed: busy ? null : () => _transcribe(voice!),
+                            child: Text(l10n.documentRetryAction),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                      ],
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: busy ? null : _recordMore,
+                          icon: const Icon(Icons.mic_rounded),
+                          label: Text(l10n.recordVoiceTitle),
+                        ),
+                      ),
+                    ],
                   ),
                 const SizedBox(height: AppSpacing.sm),
                 FilledButton(
                   onPressed: busy ? null : _submit,
                   child: _submitting
-                      ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : Text(l10n.eventCreateAction),
                 ),
               ],
@@ -117,7 +153,10 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
   }
 
   Future<void> _recordMore() async {
-    setState(() => _message = null);
+    setState(() {
+      _message = null;
+      _transcriptionFailed = false;
+    });
     await ref.read(voiceCaptureControllerProvider.notifier).startRecording();
   }
 
@@ -125,33 +164,57 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
     final path = recording.path;
     final name = recording.fileName;
     if (path == null || name == null) return;
-    setState(() { _transcribing = true; _message = null; });
+    setState(() {
+      _transcribing = true;
+      _transcriptionFailed = false;
+      _message = null;
+    });
     try {
       final language = Localizations.localeOf(context).languageCode;
-      final transcript = await ref.read(documentApiProvider).transcribeAudio(
-        filePath: path, fileName: name, mimeType: voiceCaptureMimeType,
-        language: language,
-      );
+      final transcript = await ref
+          .read(documentApiProvider)
+          .transcribeAudio(
+            filePath: path,
+            fileName: name,
+            mimeType: voiceCaptureMimeType,
+            language: language,
+          );
       final separator = _text.text.trim().isEmpty ? '' : '\n\n';
       _text.text = '${_text.text.trimRight()}$separator$transcript';
+      await ref
+          .read(voiceCaptureControllerProvider.notifier)
+          .discardRecording();
     } catch (_) {
-      if (mounted) _message = context.l10n.audioUnreadableMessage;
+      if (mounted) {
+        setState(() {
+          _transcriptionFailed = true;
+          _message = context.l10n.audioUnreadableMessage;
+        });
+      }
     } finally {
-      await ref.read(voiceCaptureControllerProvider.notifier).discardRecording();
       if (mounted) setState(() => _transcribing = false);
     }
   }
 
   Future<void> _submit() async {
     final text = _text.text.trim();
-    if (text.isEmpty) { setState(() => _message = context.l10n.audioNotMedicalMessage); return; }
+    if (text.isEmpty) {
+      setState(() => _message = context.l10n.audioNotMedicalMessage);
+      return;
+    }
     final subject = _dataOrNull(ref.read(subjectControllerProvider));
-    setState(() { _submitting = true; _message = null; });
+    setState(() {
+      _submitting = true;
+      _message = null;
+    });
     try {
-      final queued = await ref.read(documentApiProvider).processNote(
-        text: text, subjectId: subject?.selectedSubjectId,
-        language: Localizations.localeOf(context).languageCode,
-      );
+      final queued = await ref
+          .read(documentApiProvider)
+          .processNote(
+            text: text,
+            subjectId: subject?.selectedSubjectId,
+            language: Localizations.localeOf(context).languageCode,
+          );
       await _waitForResult(queued.id);
     } catch (_) {
       if (mounted) {
@@ -173,7 +236,11 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
         return;
       }
       if (mounted) {
-        setState(() => _message = document.errorMessage.isEmpty ? context.l10n.audioNotMedicalMessage : document.errorMessage);
+        setState(
+          () => _message = document.errorMessage.isEmpty
+              ? context.l10n.audioNotMedicalMessage
+              : document.errorMessage,
+        );
       }
       return;
     }
@@ -185,7 +252,5 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
   }
 }
 
-T? _dataOrNull<T>(AsyncValue<T> value) => value.maybeWhen(
-  data: (data) => data,
-  orElse: () => null,
-);
+T? _dataOrNull<T>(AsyncValue<T> value) =>
+    value.maybeWhen(data: (data) => data, orElse: () => null);

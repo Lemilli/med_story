@@ -53,6 +53,26 @@ class SummaryScreen extends ConsumerWidget {
                           _SummaryNotReady(state: state)
                         else
                           _SummaryContent(summary: state.visibleSummary!),
+                        if (state.visibleSummary != null) ...[
+                          const SizedBox(height: AppSpacing.xxl),
+                          Text(
+                            l10n.summaryAiOrganizedNote,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColors.secondaryInk,
+                                  height: 1.4,
+                                ),
+                          ),
+                        ],
+                        const SizedBox(height: AppSpacing.xxl),
+                        Text(
+                          l10n.summaryBoundaryNote,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.secondaryInk,
+                                height: 1.4,
+                              ),
+                        ),
                         const SizedBox(height: AppSpacing.xxl),
                       ],
                     ),

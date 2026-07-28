@@ -95,25 +95,12 @@ class UploadQueueItems extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-class DocumentLocalAssets extends Table {
-  TextColumn get documentId => text()();
-  IntColumn get position => integer()();
-  TextColumn get localPath => text()();
-  TextColumn get fileName => text()();
-  TextColumn get mimeType => text()();
-  IntColumn get sizeBytes => integer()();
-
-  @override
-  Set<Column<Object>> get primaryKey => {documentId, position};
-}
-
 @DriftDatabase(
   tables: [
     Subjects,
     CachedMedicalEvents,
     CachedMedicalSummaries,
     UploadQueueItems,
-    DocumentLocalAssets,
   ],
 )
 class LocalDatabase extends _$LocalDatabase {
@@ -123,48 +110,22 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       onCreate: (migrator) => migrator.createAll(),
       onUpgrade: (migrator, from, to) async {
-        if (from < 2) {
-          await migrator.createTable(cachedMedicalSummaries);
-        }
-        if (from < 3) {
-          await migrator.createTable(uploadQueueItems);
-        }
-        if (from < 4) {
-          await migrator.addColumn(
-            uploadQueueItems,
-            uploadQueueItems.isDismissed,
-          );
-        }
-        if (from < 5) {
-          await migrator.dropColumn(cachedMedicalEvents, 'is_confirmed');
-        }
-        if (from < 6) {
-          await migrator.addColumn(
-            uploadQueueItems,
-            uploadQueueItems.assetsJson,
-          );
-          await migrator.createTable(documentLocalAssets);
-        }
-        if (from < 7) {
-          await migrator.addColumn(
-            cachedMedicalEvents,
-            cachedMedicalEvents.sourceText,
-          );
-          await migrator.addColumn(
-            cachedMedicalEvents,
-            cachedMedicalEvents.sourceAssetCount,
-          );
-          await migrator.addColumn(
-            cachedMedicalEvents,
-            cachedMedicalEvents.sourcePagePositionsJson,
-          );
+        if (from < 8) {
+          // This MVP release intentionally resets local metadata. Originals
+          // are authoritative on the server and must never be migrated into a
+          // durable device-side cache.
+          await customStatement('DROP TABLE IF EXISTS document_local_assets');
+          for (final table in allTables) {
+            await migrator.deleteTable(table.actualTableName);
+          }
+          await migrator.createAll();
         }
       },
     );
@@ -176,29 +137,7 @@ class LocalDatabase extends _$LocalDatabase {
       await delete(cachedMedicalEvents).go();
       await delete(subjects).go();
       await delete(uploadQueueItems).go();
-      await delete(documentLocalAssets).go();
     });
-  }
-
-  Future<void> replaceDocumentLocalAssets(
-    String documentId,
-    Iterable<DocumentLocalAssetsCompanion> rows,
-  ) async {
-    await transaction(() async {
-      await (delete(
-        documentLocalAssets,
-      )..where((row) => row.documentId.equals(documentId))).go();
-      await batch(
-        (batch) => batch.insertAll(documentLocalAssets, rows.toList()),
-      );
-    });
-  }
-
-  Future<List<DocumentLocalAsset>> getDocumentLocalAssets(String documentId) {
-    return (select(documentLocalAssets)
-          ..where((row) => row.documentId.equals(documentId))
-          ..orderBy([(row) => OrderingTerm(expression: row.position)]))
-        .get();
   }
 
   Future<void> upsertSubjects(Iterable<SubjectsCompanion> rows) async {

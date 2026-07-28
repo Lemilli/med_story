@@ -260,11 +260,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsActionsSectionTitle => 'Действия с аккаунтом';
 
   @override
-  String get settingsPrivacyNoteTitle => 'Что остаётся здесь';
+  String get settingsPrivacyNoteTitle => 'Как хранятся оригиналы';
 
   @override
   String get settingsPrivacyNoteDescription =>
-      'Исходные файлы не хранятся на сервере. Локальные кэши хронологии и сводок очищаются при выходе или удалении аккаунта.';
+      'PDF и изображения шифруются до помещения в закрытое серверное хранилище и доступны онлайн на устройствах, где вы вошли в аккаунт. Для обработки MedStory передаёт настроенным ИИ-провайдерам только необходимые данные. Резервной копии оригиналов нет: сбой сервера или диска может привести к их безвозвратной потере. При выходе очищаются локальные кэши и временные файлы.';
 
   @override
   String get settingsLanguageEnglish => 'Английский';
@@ -284,7 +284,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsDeleteAccountDescription =>
-      'Навсегда удалить аккаунт MedStory и записи на сервере.';
+      'Навсегда удалить аккаунт MedStory, оригиналы и записи на сервере.';
 
   @override
   String get settingsDeleteAccountAction => 'Удалить аккаунт';
@@ -294,7 +294,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsDeleteAccountDialogMessage =>
-      'Это навсегда удалит аккаунт и записи на сервере.';
+      'Это навсегда удалит аккаунт, сохранённые оригиналы и записи на сервере. Отменить удаление нельзя.';
 
   @override
   String get settingsDeleteAccountConfirmLabel =>
@@ -367,7 +367,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get voicePermissionRequestingDescription =>
-      'Запись остаётся на этом устройстве, пока вы не решите её загрузить.';
+      'Запись хранится временно. После успешной расшифровки она удаляется, а при ошибке остаётся локально для повтора.';
 
   @override
   String get voiceRecordingInProgress => 'Идёт запись';
@@ -455,7 +455,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get chooseFileDescription =>
-      'Выберите PDF или изображение из файлов на устройстве, до 5 МБ.';
+      'Выберите PDF или изображение из файлов на устройстве, до 25 МБ.';
 
   @override
   String get chooseFileSemanticHint =>
@@ -562,7 +562,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get documentFileTooLargeMessage =>
-      'Выберите файл размером не более 5 МБ.';
+      'Общий размер файлов должен быть не больше 25 МБ.';
 
   @override
   String get documentUnsupportedFileMessage =>
@@ -590,7 +590,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get uploadQueueDuplicateMessage =>
-      'Этот файл уже обрабатывается или был добавлен ранее.';
+      'Этот файл уже загружается или обрабатывается.';
 
   @override
   String get documentAlreadyProcessedMessage =>
@@ -613,7 +613,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get documentProcessingFailedMessage =>
-      'Обработка не удалась. Оригинал файла остаётся на этом устройстве.';
+      'Обработка не удалась. Зашифрованный оригинал остаётся на сервере: обработку можно повторить или удалить документ.';
 
   @override
   String get documentProcessingTimeoutMessage =>
@@ -636,11 +636,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get documentStorageLabel => 'Хранение';
 
   @override
-  String get documentLocalOnlyValue =>
-      'Оригинал сохранён только на этом устройстве';
+  String get documentLocalOnlyValue => 'Временный локальный источник';
 
   @override
-  String get documentRemoteStorageValue => 'Хранится удалённо';
+  String get documentRemoteStorageValue => 'Зашифрованное закрытое хранилище';
 
   @override
   String get documentExtractedTextLabel => 'Извлечённый текст';
@@ -678,7 +677,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get documentDetailPrivacyNote =>
-      'Оригинал документа остаётся в песочнице приложения. Бэкенд обрабатывает загруженные байты временно и возвращает только метаданные и предложенные события.';
+      'Зашифрованный оригинал хранится в закрытом серверном хранилище. Для открытия или отправки нужно войти в аккаунт и быть онлайн; автоматической офлайн-копии нет.';
 
   @override
   String get documentDeleteAction => 'Удалить документ';
@@ -688,7 +687,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get documentDeleteConfirmMessage =>
-      'Связанные события также могут исчезнуть из хронологии.';
+      'Сохранённый оригинал будет удалён, а созданные из него события скрыты. Удаление только события хронологии не удаляет документ.';
 
   @override
   String get documentOpenTimelineAction => 'Открыть хронологию';
@@ -922,11 +921,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get eventOriginalUnavailable =>
-      'Оригинал недоступен на этом устройстве.';
+      'Оригинал недоступен. Проверьте соединение или попробуйте снова.';
 
   @override
   String get eventOriginalLocalOnly =>
-      'Оригиналы остаются в приложении на этом устройстве. Загруженные данные обрабатываются временно.';
+      'Оригиналы загружаются из зашифрованного закрытого серверного хранилища и не кэшируются для офлайн-доступа. При скачивании или отправке создаётся копия под вашим контролем.';
 
   @override
   String get eventRevisionCompareTitle => 'Сравнить предложенные изменения';
@@ -951,7 +950,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get eventRevisionRegenerateAction => 'Создать новое предложение';
 
   @override
-  String get eventOriginalShareAction => 'Открыть или поделиться оригиналом';
+  String get eventOriginalShareAction => 'Скачать или поделиться оригиналом';
 
   @override
   String get documentSingleEventValue => 'Одно событие в хронологии';

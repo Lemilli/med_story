@@ -5,6 +5,28 @@ services:
     restart: unless-stopped
     env_file:
       - .env.production
+    environment:
+      ORIGINAL_STORAGE_SERVICE_ROLE: api
+      ORIGINAL_STORAGE_UPLOAD_ACCESS_KEY_FILE: /run/secrets/garage_upload_access_key
+      ORIGINAL_STORAGE_UPLOAD_SECRET_KEY_FILE: /run/secrets/garage_upload_secret_key
+      ORIGINAL_STORAGE_READ_ACCESS_KEY_FILE: /run/secrets/garage_read_access_key
+      ORIGINAL_STORAGE_READ_SECRET_KEY_FILE: /run/secrets/garage_read_secret_key
+      ORIGINAL_STORAGE_DELETION_ACCESS_KEY_FILE: /run/secrets/garage_deletion_access_key
+      ORIGINAL_STORAGE_DELETION_SECRET_KEY_FILE: /run/secrets/garage_deletion_secret_key
+      ORIGINAL_MASTER_KEY_FILE: /run/secrets/original_master_key
+      ORIGINAL_STORAGE_CA_BUNDLE: /run/secrets/storage_ca_certificate
+      FILE_UPLOAD_TEMP_DIR: /var/run/medstory-uploads
+    tmpfs:
+      - /var/run/medstory-uploads:size=268435456,mode=0700
+    secrets:
+      - original_master_key
+      - garage_upload_access_key
+      - garage_upload_secret_key
+      - garage_read_access_key
+      - garage_read_secret_key
+      - garage_deletion_access_key
+      - garage_deletion_secret_key
+      - storage_ca_certificate
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -12,10 +34,54 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      garage-proxy:
+        condition: service_started
+      clamav:
+        condition: service_started
+    networks:
+      - default
+      - storage_internal
 
   worker:
     build: .
     command: celery -A config worker --loglevel=info
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      ORIGINAL_STORAGE_SERVICE_ROLE: worker
+      ORIGINAL_STORAGE_PROCESSING_ACCESS_KEY_FILE: /run/secrets/garage_processing_access_key
+      ORIGINAL_STORAGE_PROCESSING_SECRET_KEY_FILE: /run/secrets/garage_processing_secret_key
+      ORIGINAL_STORAGE_DELETION_ACCESS_KEY_FILE: /run/secrets/garage_deletion_access_key
+      ORIGINAL_STORAGE_DELETION_SECRET_KEY_FILE: /run/secrets/garage_deletion_secret_key
+      ORIGINAL_MASTER_KEY_FILE: /run/secrets/original_master_key
+      ORIGINAL_STORAGE_CA_BUNDLE: /run/secrets/storage_ca_certificate
+      FILE_UPLOAD_TEMP_DIR: /var/run/medstory-uploads
+    tmpfs:
+      - /var/run/medstory-uploads:size=268435456,mode=0700
+    secrets:
+      - original_master_key
+      - garage_processing_access_key
+      - garage_processing_secret_key
+      - garage_deletion_access_key
+      - garage_deletion_secret_key
+      - storage_ca_certificate
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      garage-proxy:
+        condition: service_started
+      clamav:
+        condition: service_started
+    networks:
+      - default
+      - storage_internal
+
+  beat:
+    build: .
+    command: celery -A config beat --loglevel=info
     restart: unless-stopped
     env_file:
       - .env.production
@@ -24,6 +90,61 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  garage:
+    image: dxflrs/garage:v2.3.0
+    entrypoint: ["/bin/sh", "/garage-entrypoint.sh"]
+    restart: unless-stopped
+    volumes:
+      - garage_data:/var/lib/garage/data
+      - garage_meta:/var/lib/garage/meta
+      - ./garage-entrypoint.sh:/garage-entrypoint.sh:ro
+    environment:
+      GARAGE_METADATA_DIR: /var/lib/garage/meta
+      GARAGE_DATA_DIR: /var/lib/garage/data
+      GARAGE_DB_ENGINE: lmdb
+      GARAGE_REPLICATION_FACTOR: 1
+      GARAGE_RPC_BIND_ADDR: 0.0.0.0:3901
+      GARAGE_S3_API_BIND_ADDR: 0.0.0.0:3900
+      GARAGE_S3_API_S3_REGION: medstory
+      GARAGE_ADMIN_API_BIND_ADDR: 0.0.0.0:3903
+      ORIGINAL_STORAGE_BUCKET: medstory-originals
+    secrets:
+      - garage_rpc_secret
+      - garage_admin_token
+      - garage_bootstrap_access_key
+      - garage_bootstrap_secret_key
+      - garage_upload_access_key
+      - garage_upload_secret_key
+      - garage_read_access_key
+      - garage_read_secret_key
+      - garage_processing_access_key
+      - garage_processing_secret_key
+      - garage_deletion_access_key
+      - garage_deletion_secret_key
+    networks:
+      - storage_internal
+
+  garage-proxy:
+    image: nginx:1.29-alpine
+    restart: unless-stopped
+    volumes:
+      - ./garage-proxy.conf:/etc/nginx/nginx.conf:ro
+    secrets:
+      - storage_tls_certificate
+      - storage_tls_private_key
+    depends_on:
+      - garage
+    networks:
+      - storage_internal
+
+  clamav:
+    image: clamav/clamav:stable
+    restart: unless-stopped
+    volumes:
+      - clamav_signatures:/var/lib/clamav
+    networks:
+      - storage_internal
 
   db:
     image: postgres:16
@@ -54,3 +175,44 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  garage_data:
+  garage_meta:
+  clamav_signatures:
+
+secrets:
+  original_master_key:
+    file: ./secrets/original_master_key
+  garage_rpc_secret:
+    file: ./secrets/garage_rpc_secret
+  garage_admin_token:
+    file: ./secrets/garage_admin_token
+  garage_bootstrap_access_key:
+    file: ./secrets/garage_bootstrap_access_key
+  garage_bootstrap_secret_key:
+    file: ./secrets/garage_bootstrap_secret_key
+  garage_upload_access_key:
+    file: ./secrets/garage_upload_access_key
+  garage_upload_secret_key:
+    file: ./secrets/garage_upload_secret_key
+  garage_read_access_key:
+    file: ./secrets/garage_read_access_key
+  garage_read_secret_key:
+    file: ./secrets/garage_read_secret_key
+  garage_processing_access_key:
+    file: ./secrets/garage_processing_access_key
+  garage_processing_secret_key:
+    file: ./secrets/garage_processing_secret_key
+  garage_deletion_access_key:
+    file: ./secrets/garage_deletion_access_key
+  garage_deletion_secret_key:
+    file: ./secrets/garage_deletion_secret_key
+  storage_ca_certificate:
+    file: ./secrets/storage_ca_certificate.pem
+  storage_tls_certificate:
+    file: ./secrets/storage_tls_certificate.pem
+  storage_tls_private_key:
+    file: ./secrets/storage_tls_private_key.pem
+
+networks:
+  storage_internal:
+    internal: true

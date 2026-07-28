@@ -121,25 +121,27 @@ frontend/lib/
 ### 7.1 Document Capture & Processing (Scenario A + B)
 A client-side state machine mirrors the async backend pipeline:
 ```
-idle → selecting → saving_local → creating(POST /documents) → ingesting(POST /documents/{id}/ingest)
+idle → selecting → preparing_source → creating(POST /documents) → ingesting(POST /documents/{id}/ingest)
      → processing(poll GET /documents/{id})
      → done(events + explanation ready) | failed(retry)
 ```
 - Gallery multi-selection always asks whether photos are pages of one document or separate
   documents. Camera scanning enters a reorderable page review and allows more pages.
-- One logical document bundle contains ordered local assets and resolves to one timeline event.
-- Drift maps the backend document UUID to device-local originals; loss/change of device leaves the
-  event available while the UI reports that the original is unavailable locally.
-- The user can leave the screen; files remain on-device, and processing surfaces via the
-  documents list / timeline once `processed`.
+- One logical document bundle contains ordered server assets and resolves to one timeline event.
+- `202` means validation, malware scanning, encryption, Garage acknowledgement, and asset
+  persistence have completed. Camera/gallery picker temporaries are then deleted. System
+  Files/gallery sources remain user-controlled and are never deleted by MedStory.
+- Processing failure keeps Retry/Delete access to the retained original; retry calls
+  `/documents/{id}/retry-processing` without re-uploading.
 - Newly extracted events show an **"AI-suggested, tap to confirm"** badge
   with edit and deletion controls to keep the user in control.
 - Regeneration opens a field-selectable draft comparison. The edited event remains unchanged until
   the user applies selected changes.
 
 ### 7.2 Voice-First Capture
-Record → save locally → transient ingest as `doc_type=audio` → poll → review extracted events.
-Same machine as 7.1.
+Record to app temp → encrypted transient server upload → transcribe → delete both copies on success.
+On failure the local recording remains for explicit retry; abandoned server staging is cleaned
+automatically.
 
 ### 7.3 Timeline (Scenario E)
 - Infinite scroll via cursor pagination; filter chips by `event_type`, date range, tag.
@@ -154,11 +156,11 @@ Same machine as 7.1.
 - Items prefer one concise line and may use a second line only when necessary. A trailing blue
   source icon is the compact provenance action. One source opens the event; multiple sources open a
   bottom sheet (event title, date, and document name) before the selected event opens.
-- The navigation contract is `Summary → Event → local original`. A one-based supporting position
+- The navigation contract is `Summary → Event → authenticated online original`. A one-based supporting position
   can select an uploaded image/page asset in a multi-image scan. Internal pages of a single PDF are
   not separately identified or rendered in the current MVP, so PDFs and sources without asset-level
-  provenance open at the file/document start. If the original is no longer on the device, the event
-  remains available and explains that the local file is unavailable.
+  provenance open at the file/document start. Images use an in-app paged viewer; PDFs use an
+  app-temporary file and platform viewer. Explicit Download/Share creates a user-controlled copy.
 - The free-text reason for visit is saved per subject until changed. Refresh is the only generation
   trigger. The old cached summary stays visible with a compact updating state and remains available
   if regeneration fails.
@@ -166,11 +168,10 @@ Same machine as 7.1.
 
 ## 8. Offline & Caching
 
-- **Read-mostly offline**: timeline and current summary, including backend-enriched event provenance,
-  are cached in Drift. Source navigation works offline when the event and local original are present.
-- **Writes require connectivity** for MVP (transient ingestion/AI need the backend); queued
-  retry is a post-MVP enhancement.
-- Document/audio binaries are durable on-device only; there is no cross-device sync/backup in MVP.
+- **Read-mostly offline**: timeline and current summary metadata remain cached in Drift.
+- Originals are online-only from any authenticated device; there is no automatic binary cache.
+- Upload, processing retry, original viewing, download, and share require connectivity. The upload
+  queue retains source paths only until the server acknowledges storage.
 - Cache is per-`subject`; cleared on logout and on account deletion.
 
 ## 9. Theming, Accessibility & Localization
@@ -189,8 +190,8 @@ Same machine as 7.1.
 
 - JWTs stored only in `flutter_secure_storage`; never in plain prefs or logs.
 - `auth_interceptor` transparently refreshes the access token on `401` and retries once.
-- Medical content is stored only in app-sandboxed storage (Drift + local files), not in
-  insecure storage.
+- Drift stores medical metadata but never original binaries. Sensitive temporary viewer/capture
+  files are cleaned after use where possible and on startup/logout/account deletion.
 - Certificate pinning and biometric app-lock are planned post-MVP (see roadmap).
 
 ## 11. Testing Strategy
@@ -209,6 +210,6 @@ Phase 0 has added: `flutter_riverpod`, `go_router`, `dio`, `flutter_secure_stora
 `json_serializable`.
 
 Implemented beyond Phase 0: `drift`, `sqlite3_flutter_libs`, `path_provider`,
-`image_picker`, `file_picker`, `record`, and test helpers such as `mocktail`.
+`image_picker`, `file_picker`, `open_filex`, `record`, and test helpers such as `mocktail`.
 
 > Versions intentionally omitted here; pin them via the package manager during implementation.

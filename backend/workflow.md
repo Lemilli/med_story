@@ -10,7 +10,9 @@ cd backend
 
 Local development uses Docker Compose, so you do not need a Python `.venv` for the backend.
 
-Start the database, Redis, API, and worker:
+First provision the private-storage secret files described in
+[`secrets/README.md`](./secrets/README.md). Then start PostgreSQL, Redis, API/worker/beat, Garage,
+the internal TLS proxy, and ClamAV:
 
 ```bash
 docker compose up --build
@@ -35,8 +37,8 @@ Useful URLs:
 - Swagger UI: `http://localhost:8000/api/docs/`
 - Django admin: `http://localhost:8000/admin/`
 
-Optional local environment overrides can go in `.env`. The Compose file already provides safe
-development defaults, so `.env` is not required to start.
+Optional local environment overrides can go in `.env`. Secret files are always required for the
+Garage-backed Compose stack and are ignored by Git.
 
 To use real OpenAI-backed document processing locally, set these values in `backend/.env` before
 starting Compose. Add the STT values when testing voice capture:
@@ -65,6 +67,8 @@ The production Compose file runs:
 - Celery worker
 - PostgreSQL with a persistent Docker volume
 - Redis with a persistent Docker volume
+- Garage 2.3 on a persistent encrypted host volume, reachable only through the private TLS proxy
+- ClamAV and Celery beat for fail-closed scans and deletion/staging cleanup
 
 On the VPS:
 
@@ -103,7 +107,17 @@ AI_OPENAI_SUMMARY_MODEL=<stronger-summary-model>
 AI_OPENAI_OCR_MODEL=<your-model>
 AI_OPENAI_STT_MODEL=gpt-4o-mini-transcribe
 AI_OPENAI_TIMEOUT_SECONDS=60
+
+ORIGINAL_STORAGE_BACKEND=s3
+ORIGINAL_STORAGE_ENDPOINT=https://garage-proxy
+ORIGINAL_STORAGE_VERIFY_TLS=True
+ORIGINAL_STRICT_FILE_VALIDATION=True
+ORIGINAL_MALWARE_SCANNER=clamav
 ```
+
+Provision every file listed in `backend/secrets/README.md` with mode `0600`. The four application
+Garage keys are independent and least-privilege; do not reuse the bootstrap key in API or worker
+containers. The TLS certificate must be valid for `garage-proxy`.
 
 Build and start production services:
 
@@ -131,3 +145,7 @@ docker compose -f docker-compose.prod.yml down
 
 The API is bound to `127.0.0.1:8000` on the VPS. Put Nginx or Caddy in front of it for HTTPS and
 public traffic.
+
+Garage S3/RPC/admin ports have no host mapping. Do not add one. Place both Garage volumes on the
+encrypted production disk. V1 intentionally has no object backup; retain a sealed offline recovery
+copy of `original_master_key`, because losing it makes every original undecryptable.

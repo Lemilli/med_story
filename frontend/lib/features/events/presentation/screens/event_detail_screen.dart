@@ -1,16 +1,18 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/widgets/app_alert_dialog.dart';
 import '../../../../l10n/l10n.dart';
-import '../../../../core/storage/local_database.dart' as db;
+import '../../../documents/data/document_repository.dart';
+import '../../../documents/domain/medical_document.dart';
 import '../../domain/medical_event.dart';
 import '../controllers/event_controllers.dart';
 import '../event_type_l10n.dart';
@@ -231,23 +233,25 @@ class _OriginalSourceScreen extends ConsumerStatefulWidget {
 
 class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
   late final PageController _pageController;
-  late final Future<List<db.DocumentLocalAsset>> _assetsFuture;
+  late final Future<MedicalDocument?> _documentFuture;
   var _currentPage = 0;
   var _didApplyRequestedPage = false;
+  var _sharing = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
     final documentId = widget.event.sourceDocumentId;
-    _assetsFuture = documentId == null
-        ? Future.value(const [])
-        : ref.read(db.localDatabaseProvider).getDocumentLocalAssets(documentId);
+    _documentFuture = documentId == null
+        ? Future.value(null)
+        : ref.read(documentRepositoryProvider).getDocument(documentId);
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    ref.read(documentRepositoryProvider).cleanupTemporaryOriginals();
     super.dispose();
   }
 
@@ -263,13 +267,28 @@ class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
                 widget.event.sourceText ?? l10n.eventOriginalUnavailable,
               ),
             )
-          : FutureBuilder<List<db.DocumentLocalAsset>>(
-              future: _assetsFuture,
+          : FutureBuilder<MedicalDocument?>(
+              future: _documentFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final assets = snapshot.data ?? const [];
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Text(
+                        l10n.eventOriginalUnavailable,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }
+                final assets =
+                    snapshot.data?.assets
+                        .where((asset) => asset.available)
+                        .toList(growable: false) ??
+                    const <DocumentAssetMetadata>[];
                 if (assets.isEmpty) {
                   if (widget.event.sourceText != null) {
                     return ListView(
@@ -310,37 +329,43 @@ class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
                             itemBuilder: (context, index) {
                               final asset = assets[index];
                               if (asset.mimeType.startsWith('image/')) {
-                                return InteractiveViewer(
-                                  key: ValueKey(asset.localPath),
-                                  minScale: 1,
-                                  maxScale: 4,
-                                  boundaryMargin: const EdgeInsets.all(48),
-                                  child: Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(
-                                        AppSpacing.lg,
-                                      ),
-                                      child: Image.file(
-                                        key: ValueKey(asset.localPath),
-                                        File(asset.localPath),
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (_, _, _) => Center(
-                                          child: Text(
-                                            l10n.eventOriginalUnavailable,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                return _ServerImageAsset(
+                                  key: ValueKey(asset.id),
+                                  documentId: documentId,
+                                  asset: asset,
                                 );
                               }
                               return Center(
-                                child: ListTile(
-                                  leading: const Icon(
-                                    Icons.insert_drive_file_outlined,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(AppSpacing.xl),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.picture_as_pdf_outlined,
+                                        size: 48,
+                                      ),
+                                      const SizedBox(height: AppSpacing.md),
+                                      Text(
+                                        asset.fileName,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium,
+                                      ),
+                                      const SizedBox(height: AppSpacing.lg),
+                                      FilledButton.icon(
+                                        onPressed: () =>
+                                            _openAsset(documentId, asset),
+                                        icon: const Icon(
+                                          Icons.open_in_new_rounded,
+                                        ),
+                                        label: Text(
+                                          l10n.eventViewOriginalAction,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  title: Text(asset.fileName),
-                                  subtitle: Text(asset.mimeType),
                                 ),
                               );
                             },
@@ -393,19 +418,18 @@ class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
                           ),
                           const SizedBox(height: AppSpacing.md),
                           OutlinedButton.icon(
-                            onPressed: () => SharePlus.instance.share(
-                              ShareParams(
-                                files: [
-                                  for (final asset in assets)
-                                    XFile(asset.localPath),
-                                ],
-                                fileNameOverrides: [
-                                  for (final asset in assets) asset.fileName,
-                                ],
-                              ),
-                            ),
+                            onPressed: _sharing
+                                ? null
+                                : () => _shareAssets(documentId, assets),
                             icon: const Icon(Icons.ios_share_rounded),
-                            label: Text(l10n.eventOriginalShareAction),
+                            label: _sharing
+                                ? const SizedBox.square(
+                                    dimension: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(l10n.eventOriginalShareAction),
                           ),
                         ],
                       ),
@@ -427,6 +451,58 @@ class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
     _pageController.jumpToPage(page);
   }
 
+  Future<void> _openAsset(
+    String documentId,
+    DocumentAssetMetadata asset,
+  ) async {
+    try {
+      final path = await ref
+          .read(documentRepositoryProvider)
+          .downloadAssetToTemporaryFile(documentId: documentId, asset: asset);
+      await OpenFilex.open(path, type: asset.mimeType);
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.eventOriginalUnavailable)),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareAssets(
+    String documentId,
+    List<DocumentAssetMetadata> assets,
+  ) async {
+    setState(() => _sharing = true);
+    final repository = ref.read(documentRepositoryProvider);
+    try {
+      final paths = <String>[];
+      for (final asset in assets) {
+        paths.add(
+          await repository.downloadAssetToTemporaryFile(
+            documentId: documentId,
+            asset: asset,
+          ),
+        );
+      }
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [for (final path in paths) XFile(path)],
+          fileNameOverrides: [for (final asset in assets) asset.fileName],
+        ),
+      );
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.eventOriginalUnavailable)),
+        );
+      }
+    } finally {
+      await repository.cleanupTemporaryOriginals();
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
   void _applyRequestedPage(int assetCount) {
     if (_didApplyRequestedPage || assetCount <= 0) return;
     _didApplyRequestedPage = true;
@@ -441,6 +517,68 @@ class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
         _pageController.jumpToPage(target);
       }
     });
+  }
+}
+
+class _ServerImageAsset extends ConsumerStatefulWidget {
+  const _ServerImageAsset({
+    required this.documentId,
+    required this.asset,
+    super.key,
+  });
+
+  final String documentId;
+  final DocumentAssetMetadata asset;
+
+  @override
+  ConsumerState<_ServerImageAsset> createState() => _ServerImageAssetState();
+}
+
+class _ServerImageAssetState extends ConsumerState<_ServerImageAsset> {
+  late final Future<Uint8List> _bytesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytesFuture = ref
+        .read(documentRepositoryProvider)
+        .loadAssetBytes(
+          documentId: widget.documentId,
+          assetId: widget.asset.id,
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List>(
+      future: _bytesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final bytes = snapshot.data;
+        if (snapshot.hasError || bytes == null || bytes.isEmpty) {
+          return Center(child: Text(context.l10n.eventOriginalUnavailable));
+        }
+        return InteractiveViewer(
+          minScale: 1,
+          maxScale: 4,
+          boundaryMargin: const EdgeInsets.all(48),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Image.memory(
+                bytes,
+                fit: BoxFit.contain,
+                gaplessPlayback: true,
+                errorBuilder: (_, _, _) =>
+                    Center(child: Text(context.l10n.eventOriginalUnavailable)),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

@@ -67,10 +67,10 @@ generation, and retention over time.
 **Status:** Implemented with pluggable providers; OpenAI LLM/OCR wiring added, mock providers
 remain for deterministic local tests.
 **Goal:** upload documents and extract text + structured events automatically.
-- Backend: `Document` model (metadata only), `/documents/{id}/ingest`, status polling;
-  transient ingestion path (no file persistence); Celery ingestion task; **OCR** + **LLM
-  structuring** via provider abstraction; events are added to the timeline with an AI source.
-- Frontend: capture flow (scan/photo/file), local file persistence, a persistent Add-tab
+- Backend: `Document` plus encrypted blob/assets, `/documents/{id}/ingest`, authenticated original
+  content, retained-source processing retry, status polling, and Celery **OCR** + **LLM structuring**.
+  Garage stores MedStory-encrypted ciphertext only.
+- Frontend: capture flow (scan/photo/file), temporary source ownership, a persistent metadata Add-tab
   processing queue with retry and duplicate-file protection, document list/detail,
   "confirm AI event" UX.
 - **Exit:** upload a document → see extracted, confirmable events on the timeline (Scenario A).
@@ -78,7 +78,7 @@ remain for deterministic local tests.
   `AI_OPENAI_API_KEY` for real document extraction. Set `AI_STT_PROVIDER=openai` and
   `AI_OPENAI_STT_MODEL` for real Phase 5 voice transcription.
 - **Single-source milestone:** implemented one logical capture bundle → one active event, ordered
-  multi-photo pages, explicit gallery grouping, device-local original navigation, preserved source
+  multi-photo pages, explicit gallery grouping, online original navigation, preserved source
   text, and non-destructive AI event revisions.
 
 ### Phase 3 — Understanding (Explanations)
@@ -96,7 +96,7 @@ remain for deterministic local tests.
 - Frontend: seven concise structured sections, saved free-text visit reason, in-app event source
   links, cached current summary, and timeline-backed history search.
 - Source traceability: summary items cite validated event IDs; the backend adds event/document/page
-  provenance. The phone flow is summary → event → locally stored original. Known one-based positions
+  provenance. The phone flow is summary → event → authenticated server-retained original. Known one-based positions
   address uploaded image assets/pages; a single PDF has no separately addressable internal-page
   provenance in the MVP and opens at the file start, as do older sources without asset metadata.
 - Selection rules: current/unresolved information first; identical repeated analyses use the newest
@@ -115,19 +115,25 @@ remain for deterministic local tests.
   fail without creating timeline events.
 
 ### Phase 6 — Privacy, Hardening & Launch Prep
-**Status:** GDPR/settings flows, API throttling, and CI dependency/secret scanning implemented;
-legal/operations launch hardening remains in progress.
+**Status:** Server-retained private originals, GDPR/settings flows, API throttling, and CI
+dependency/secret scanning implemented; legal/operations launch approval remains in progress.
 **Goal:** GDPR flows, security checklist, store readiness.
-- Backend: `DELETE /me` (hard delete of backend records) and `AuditLog`,
-  Redis-backed auth/AI throttling, and backend tests implemented.
+- Backend: private single-node Garage behind internal TLS, ClamAV fail-closed scanning, framed
+  envelope encryption with key commitment, same-user keyed dedupe, 2 GB quota, cryptographic
+  erasure, durable opaque deletion jobs, `DELETE /me`, audit logging, and isolation/lifecycle tests.
 - CI: blocking dependency and full-history secret scans plus weekly Dependabot updates.
-- Compliance: optional subprocessor register and DPA review checklist are available; they do not
-  gate production provider configuration.
+- Compliance launch gates: Garage AGPLv3 approval; EU/EEA hosting; external-AI DPA,
+  cross-border/no-training/minimal-retention review; sealed offline master-key recovery copy; and
+  explicit acceptance that the single disk/no object backup can permanently lose originals.
 - Frontend: settings (delete account, locale), onboarding disclaimer ("organizer, not
   a doctor"), accessibility pass. **Implemented.**
-- Ops: backend metadata backups, monitoring/error tracking, cost alerts; complete the security checklist
-  (`security-privacy.md` §14).
+- Ops: one encrypted production disk, no original backup by explicit V1 decision, monitoring/error
+  tracking, cost alerts, and the remaining security checklist (`security-privacy.md` §14).
 - **Exit:** account-erasure work; security checklist green; app store builds ready.
+
+This milestone is a breaking MVP reset. Migration `0016_private_original_storage` creates the new
+schema without legacy binary migration; development PostgreSQL, Garage volumes, and Drift state are
+reset instead of converted.
 
 ### Core UX Release — Capture, Review & Visit Preparation
 **Status:** Implemented; launch hardening remains separate.

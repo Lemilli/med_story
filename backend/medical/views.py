@@ -1,24 +1,42 @@
-import base64
 import hashlib
 from pathlib import Path
 
 from celery import current_app
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.db.models import Q
 from django.db import transaction
 from django.utils import timezone
+from django.utils.http import content_disposition_header
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import CursorPagination
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.views import APIView
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 
 from medical.models import AuditLog, Document, DocumentAsset, EventRevision, MedicalEvent, MedicalSummary, ProcessingJob, Subject, VisitPreparation
+from medical.original_storage import (
+    InvalidOriginalType,
+    MalwareDetected,
+    MalwareScannerUnavailable,
+    OriginalIntegrityError,
+    OriginalQuotaExceeded,
+    OriginalStorageError,
+    load_asset_bytes,
+    purge_storage_deletions,
+    release_blob_reference,
+    release_assets,
+    scan_for_malware,
+    store_upload,
+    validate_original_signature,
+)
 from medical.pagination import TimelineCursorPagination
 from medical.serializers import (
     MAX_DOCUMENT_SIZE_BYTES,
+    MAX_AUDIO_SIZE_BYTES,
     SUPPORTED_AUDIO_MIME_TYPES,
     SUPPORTED_DOCUMENT_MIME_PREFIXES,
     SUPPORTED_DOCUMENT_MIME_TYPES,
@@ -40,7 +58,12 @@ from medical.services import (
     log_audit_event,
     summary_export_json,
 )
-from medical.tasks import explain_document_task, ingest_document_task, ingest_note_task
+from medical.tasks import (
+    explain_document_task,
+    ingest_document_task,
+    ingest_note_task,
+    purge_storage_deletions_task,
+)
 from ai.providers import get_stt_provider
 
 AUDIO_MIME_BY_EXTENSION = {
@@ -244,6 +267,7 @@ class DocumentQuerysetMixin:
         return (
             Document.objects.filter(user=self.request.user, deleted_at__isnull=True)
             .select_related("subject")
+            .prefetch_related("assets__blob")
         )
 
     def resolve_subject(self):
@@ -308,6 +332,14 @@ class DocumentDetailView(DocumentQuerysetMixin, generics.RetrieveDestroyAPIView)
             instance.deleted_at = deleted_at
             instance.save(update_fields=("deleted_at", "updated_at"))
             instance.medical_events.filter(deleted_at__isnull=True).update(deleted_at=deleted_at)
+            release_assets(instance.assets.select_related("blob"))
+            log_audit_event(
+                user=self.request.user,
+                action=AuditLog.Action.ORIGINAL_DELETE,
+                request=self.request,
+                metadata={"document_id": str(instance.id)},
+            )
+        transaction.on_commit(lambda: purge_storage_deletions_task.delay())
 
 
 def _reconcile_failed_ingestion_task(document):
@@ -390,6 +422,12 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
         document = self.get_object()
         if document.status in (Document.Status.PROCESSING, Document.Status.PROCESSED):
             return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
+        if document.assets.exists():
+            return self._error_response(
+                code="original_already_stored",
+                message="The original is already stored. Retry processing without uploading it again.",
+                http_status=status.HTTP_409_CONFLICT,
+            )
 
         uploads = request.FILES.getlist("files") or request.FILES.getlist("file")
         if not uploads:
@@ -404,7 +442,7 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
         if total_size > MAX_DOCUMENT_SIZE_BYTES:
             return self._error_response(
                 code="file_too_large",
-                message="File must be 5 MB or smaller.",
+                message="Files must total 25 MB or less.",
                 http_status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             )
 
@@ -423,60 +461,107 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
                 details={"mime_type": [self._unsupported_mime_type_message(document)]},
             )
 
-        file_parts = [(upload.read(), mime_type) for upload, mime_type in zip(uploads, mime_types)]
-        content_hasher = hashlib.sha256()
-        for file_bytes, mime_type in file_parts:
-            content_hasher.update(len(file_bytes).to_bytes(8, "big"))
-            content_hasher.update(mime_type.encode("utf-8"))
-            content_hasher.update(file_bytes)
-        content_hash = content_hasher.hexdigest()
-        duplicate = self._processed_duplicate(document=document, content_hash=content_hash)
-        if duplicate is not None:
-            # The first, pending document exists only to receive an upload. It
-            # has no retained content or events, so remove it before returning
-            # the existing result to the client.
-            document.delete()
-            return self._error_response(
-                code="document_already_processed",
-                message="This document was already processed and added to your story.",
-                http_status=status.HTTP_409_CONFLICT,
-                details={"document_id": str(duplicate.id)},
+        try:
+            content_hash = self._persist_uploads(
+                document=document,
+                uploads=uploads,
+                mime_types=mime_types,
             )
+        except InvalidOriginalType:
+            return self._error_response(
+                code="invalid_original_type",
+                message="File contents do not match the selected PDF or image type.",
+                http_status=status.HTTP_400_BAD_REQUEST,
+            )
+        except MalwareDetected:
+            return self._error_response(
+                code="malware_detected",
+                message="This file was rejected by the security scanner.",
+                http_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        except MalwareScannerUnavailable:
+            return self._error_response(
+                code="malware_scanner_unavailable",
+                message="File scanning is temporarily unavailable. Try again later.",
+                http_status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except OriginalQuotaExceeded:
+            return self._error_response(
+                code="original_storage_quota_exceeded",
+                message="Your 2 GB original-file storage limit has been reached.",
+                http_status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            )
+        except OriginalStorageError:
+            return self._error_response(
+                code="original_storage_unavailable",
+                message="Private file storage is temporarily unavailable.",
+                http_status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
         job = self._mark_processing_and_create_job(
             document=document,
             uploads=uploads,
             mime_types=mime_types,
             content_hash=content_hash,
-            file_parts=file_parts,
         )
         self._dispatch_ingestion(
             document=document,
             job=job,
-            file_parts=file_parts,
-            mime_type=mime_types[0],
             language=self._resolve_language(request),
         )
         document.refresh_from_db()
 
         return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
 
-    def _processed_duplicate(self, *, document, content_hash):
-        return (
-            Document.objects.filter(
-                user=document.user,
-                content_hash=content_hash,
-                deleted_at__isnull=True,
-                status=Document.Status.PROCESSED,
-                medical_events__deleted_at__isnull=True,
+    def _persist_uploads(self, *, document, uploads, mime_types, is_transient=False):
+        created_assets = []
+        pending_blob_ids = []
+        fingerprints = []
+        try:
+            for position, (upload, mime_type) in enumerate(
+                zip(uploads, mime_types),
+                start=1,
+            ):
+                payload = upload.read()
+                if document.doc_type != Document.DocumentType.AUDIO:
+                    validate_original_signature(payload, mime_type)
+                scan_for_malware(payload)
+                stored = store_upload(
+                    user=document.user,
+                    payload=payload,
+                    is_transient=is_transient,
+                )
+                pending_blob_ids.append(stored.blob.id)
+                fingerprints.append(stored.blob.fingerprint)
+                created_assets.append(
+                    DocumentAsset.objects.create(
+                        document=document,
+                        blob=stored.blob,
+                        position=position,
+                        file_name=Path(upload.name).name[:255],
+                        mime_type=mime_type,
+                        size_bytes=upload.size,
+                        is_transient=is_transient,
+                    )
+                )
+                pending_blob_ids.remove(stored.blob.id)
+        except Exception:
+            release_assets(
+                DocumentAsset.objects.filter(id__in=[asset.id for asset in created_assets])
+                .select_related("blob")
             )
-            .exclude(id=document.id)
-            .order_by("-created_at")
-            .first()
-        )
+            for blob_id in pending_blob_ids:
+                release_blob_reference(blob_id)
+            purge_storage_deletions()
+            raise
+        bundle = hashlib.sha256()
+        for fingerprint in fingerprints:
+            bundle.update(fingerprint.encode("ascii"))
+        return bundle.hexdigest()
 
     def _mark_processing_and_create_job(
         self, *, document, content_hash, upload=None, mime_type=None,
-        uploads=None, mime_types=None, file_parts=None
+        uploads=None, mime_types=None
     ):
         uploads = uploads or [upload]
         mime_types = mime_types or [mime_type]
@@ -487,38 +572,34 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
             document.size_bytes = sum(item.size for item in uploads)
             document.content_hash = content_hash
             document.save(update_fields=("status", "error_message", "mime_type", "size_bytes", "content_hash", "updated_at"))
-            document.assets.all().delete()
-            for position, (asset_upload, asset_mime) in enumerate(zip(uploads, mime_types), start=1):
-                asset_bytes = file_parts[position - 1][0] if file_parts else b""
-                DocumentAsset.objects.create(
-                    document=document,
-                    position=position,
-                    file_name=Path(asset_upload.name).name[:255],
-                    mime_type=asset_mime,
-                    size_bytes=asset_upload.size,
-                    content_hash=hashlib.sha256(asset_bytes).hexdigest() if asset_bytes else content_hash,
-                )
             return ProcessingJob.objects.create(
                 user=document.user,
                 document=document,
                 status=ProcessingJob.Status.QUEUED,
             )
 
-    def _dispatch_ingestion(self, *, document, job, mime_type, language=None, file_bytes=None, file_parts=None):
-        encoded_parts = None
-        if file_parts:
-            encoded_parts = [
-                {"bytes_b64": base64.b64encode(part_bytes).decode("ascii"), "mime_type": part_mime}
-                for part_bytes, part_mime in file_parts
-            ]
-        result = ingest_document_task.delay(
-            str(document.id),
-            str(job.id),
-            base64.b64encode(file_bytes).decode("ascii") if file_bytes is not None else "",
-            mime_type,
-            language,
-            encoded_parts,
-        )
+    def _dispatch_ingestion(self, *, document, job, language=None):
+        try:
+            result = ingest_document_task.delay(
+                str(document.id),
+                str(job.id),
+                language,
+            )
+        except Exception:
+            # The original is already durably stored at this point. A broker
+            # outage must expose Retry/Delete instead of encouraging the client
+            # to upload another copy or silently deleting the only original.
+            with transaction.atomic():
+                ProcessingJob.objects.filter(id=job.id).update(
+                    status=ProcessingJob.Status.FAILED,
+                    error_message="processing_dispatch_failed",
+                    finished_at=timezone.now(),
+                )
+                Document.objects.filter(id=document.id).update(
+                    status=Document.Status.FAILED,
+                    error_message="processing_dispatch_failed",
+                )
+            return
         job.task_id = result.id or ""
         job.save(update_fields=("task_id", "updated_at"))
 
@@ -537,11 +618,7 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
     def _is_supported_mime_type(self, document, mime_type):
         if document.doc_type == Document.DocumentType.AUDIO:
             return mime_type in SUPPORTED_AUDIO_MIME_TYPES
-        if mime_type in SUPPORTED_AUDIO_MIME_TYPES:
-            return False
-        if mime_type in SUPPORTED_DOCUMENT_MIME_TYPES:
-            return True
-        return any(mime_type.startswith(prefix) for prefix in SUPPORTED_DOCUMENT_MIME_PREFIXES)
+        return mime_type in SUPPORTED_DOCUMENT_MIME_TYPES
 
     def _unsupported_mime_type_message(self, document):
         if document.doc_type == Document.DocumentType.AUDIO:
@@ -576,7 +653,7 @@ class DocumentAudioUploadView(DocumentIngestView):
                 details={"file": ["This field is required."]},
             )
 
-        if upload.size > MAX_DOCUMENT_SIZE_BYTES:
+        if upload.size > MAX_AUDIO_SIZE_BYTES:
             return self._error_response(
                 code="file_too_large",
                 message="File must be 5 MB or smaller.",
@@ -609,23 +686,168 @@ class DocumentAudioUploadView(DocumentIngestView):
         serializer.is_valid(raise_exception=True)
         document = serializer.save()
 
-        file_bytes = upload.read()
+        try:
+            content_hash = self._persist_uploads(
+                document=document,
+                uploads=[upload],
+                mime_types=[mime_type],
+                is_transient=True,
+            )
+        except MalwareDetected:
+            document.delete()
+            return self._error_response(
+                code="malware_detected",
+                message="This recording was rejected by the security scanner.",
+                http_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        except MalwareScannerUnavailable:
+            document.delete()
+            return self._error_response(
+                code="malware_scanner_unavailable",
+                message="File scanning is temporarily unavailable. Try again later.",
+                http_status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except OriginalStorageError:
+            document.delete()
+            return self._error_response(
+                code="original_storage_unavailable",
+                message="Private temporary storage is unavailable.",
+                http_status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
         job = self._mark_processing_and_create_job(
             document=document,
             upload=upload,
             mime_type=mime_type,
-            content_hash=hashlib.sha256(file_bytes).hexdigest(),
+            content_hash=content_hash,
         )
-        self._dispatch_ingestion(
-            document=document,
-            job=job,
-            file_bytes=file_bytes,
-            mime_type=mime_type,
-            language=language,
-        )
+        self._dispatch_ingestion(document=document, job=job, language=language)
         document.refresh_from_db()
 
         return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
+
+
+class DocumentRetryProcessingView(DocumentIngestView):
+    parser_classes = (JSONParser, FormParser)
+
+    def post(self, request, *args, **kwargs):
+        document = self.get_object()
+        if document.status == Document.Status.PROCESSED:
+            return Response(
+                DocumentSerializer(document, context={"request": request}).data,
+                status=status.HTTP_202_ACCEPTED,
+            )
+        if document.status == Document.Status.PROCESSING:
+            return Response(
+                DocumentSerializer(document, context={"request": request}).data,
+                status=status.HTTP_202_ACCEPTED,
+            )
+        if document.doc_type == Document.DocumentType.AUDIO or not document.assets.exists():
+            return self._error_response(
+                code="original_unavailable",
+                message="The original must be uploaded again before processing can be retried.",
+                http_status=status.HTTP_409_CONFLICT,
+            )
+        with transaction.atomic():
+            document.status = Document.Status.PROCESSING
+            document.error_message = ""
+            document.save(update_fields=("status", "error_message", "updated_at"))
+            job = ProcessingJob.objects.create(
+                user=document.user,
+                document=document,
+                status=ProcessingJob.Status.QUEUED,
+            )
+        self._dispatch_ingestion(
+            document=document,
+            job=job,
+            language=self._resolve_language(request),
+        )
+        document.refresh_from_db()
+        return Response(
+            DocumentSerializer(document, context={"request": request}).data,
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class DocumentAssetContentView(APIView):
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "user"
+
+    @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY})
+    def get(self, request, *args, **kwargs):
+        asset = (
+            DocumentAsset.objects.select_related("document", "blob")
+            .filter(
+                id=kwargs["asset_id"],
+                document_id=kwargs["id"],
+                document__user=request.user,
+                document__deleted_at__isnull=True,
+                is_transient=False,
+            )
+            .first()
+        )
+        if asset is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        disposition = request.query_params.get("disposition", "inline")
+        if disposition not in {"inline", "attachment"}:
+            return Response(
+                {
+                    "error": {
+                        "code": "validation_error",
+                        "message": "disposition must be inline or attachment.",
+                    }
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            payload = load_asset_bytes(asset)
+        except OriginalIntegrityError:
+            return Response(
+                {
+                    "error": {
+                        "code": "original_integrity_error",
+                        "message": "The stored original failed integrity verification.",
+                    }
+                },
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        except OriginalStorageError:
+            return Response(
+                {
+                    "error": {
+                        "code": "original_storage_unavailable",
+                        "message": "The stored original is temporarily unavailable.",
+                    }
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        as_attachment = disposition == "attachment"
+        response = StreamingHttpResponse(
+            iter((payload,)),
+            content_type=asset.mime_type,
+        )
+        response["Content-Length"] = str(len(payload))
+        response["Content-Disposition"] = content_disposition_header(
+            as_attachment,
+            asset.file_name,
+        )
+        response["Cache-Control"] = "private, no-store"
+        response["Pragma"] = "no-cache"
+        response["X-Content-Type-Options"] = "nosniff"
+        log_audit_event(
+            user=request.user,
+            action=(
+                AuditLog.Action.ORIGINAL_DOWNLOAD
+                if as_attachment
+                else AuditLog.Action.ORIGINAL_OPEN
+            ),
+            request=request,
+            metadata={
+                "document_id": str(asset.document_id),
+                "asset_id": str(asset.id),
+            },
+        )
+        return response
 
 
 class CaptureTranscriptionView(DocumentIngestView):
@@ -637,14 +859,29 @@ class CaptureTranscriptionView(DocumentIngestView):
         upload = request.FILES.get("file")
         if upload is None:
             return self._error_response(code="validation_error", message="file is required.", http_status=status.HTTP_400_BAD_REQUEST)
-        if upload.size > MAX_DOCUMENT_SIZE_BYTES:
+        if upload.size > MAX_AUDIO_SIZE_BYTES:
             return self._error_response(code="file_too_large", message="File must be 5 MB or smaller.", http_status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
         mime_type = self._normalize_mime_type(request.data.get("mime_type") or getattr(upload, "content_type", None), upload)
         if mime_type not in SUPPORTED_AUDIO_MIME_TYPES:
             return self._error_response(code="unsupported_mime_type", message="Unsupported MIME type.", http_status=status.HTTP_400_BAD_REQUEST)
+        payload = upload.read()
+        try:
+            scan_for_malware(payload)
+        except MalwareDetected:
+            return self._error_response(
+                code="malware_detected",
+                message="This recording was rejected by the security scanner.",
+                http_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        except MalwareScannerUnavailable:
+            return self._error_response(
+                code="malware_scanner_unavailable",
+                message="File scanning is temporarily unavailable. Try again later.",
+                http_status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
         try:
             transcript = get_stt_provider().transcribe(
-                audio_bytes=upload.read(), mime=mime_type, lang=self._resolve_language(request)
+                audio_bytes=payload, mime=mime_type, lang=self._resolve_language(request)
             )
         except Exception:
             return self._error_response(code="audio_unreadable", message="We could not understand this recording.", http_status=status.HTTP_422_UNPROCESSABLE_ENTITY)

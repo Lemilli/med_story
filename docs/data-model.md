@@ -86,7 +86,8 @@ Supports the secondary audience (e.g. a parent managing a child). Each user alwa
 | created_at / updated_at | timestamptz | |
 
 ### 3.3 Document
-A medical file or audio note tracked by metadata. Binary lives on the user's device.
+A user-owned logical medical source. PDF/image originals are retained encrypted in private object
+storage; audio and typed-note source binaries are transient.
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -96,7 +97,7 @@ A medical file or audio note tracked by metadata. Binary lives on the user's dev
 | title | varchar | User- or AI-derived |
 | doc_type | enum | lab_result, report, prescription, procedure_summary, note, image, audio, other |
 | mime_type | varchar | |
-| local_uri_hint | varchar (nullable) | Client-supplied local identifier hint (not canonical for access) |
+| local_uri_hint | varchar | Deprecated, read-only, and empty; originals are addressed by server assets |
 | size_bytes | bigint | |
 | status | enum | pending_ingest, processing, processed, failed |
 | extracted_text | text (nullable) | OCR/STT output |
@@ -106,13 +107,39 @@ A medical file or audio note tracked by metadata. Binary lives on the user's dev
 | created_at / updated_at | timestamptz | |
 | deleted_at | timestamptz (nullable) | Soft delete |
 
-### 3.4 DocumentAsset
-Ordered metadata for each original in a logical source bundle. A PDF/audio/text source normally has
-one asset (text has none); a photographed multi-page document has multiple assets. Fields are
-`document_id`, `position`, `file_name`, `mime_type`, `size_bytes`, and `content_hash`. Original bytes
-and device paths are never stored by the backend.
+### 3.4 EncryptedBlob
+A user-owned distinct ciphertext object. Blob sharing is allowed only between identical originals
+inside one account.
 
-### 3.5 MedicalEvent
+| Field | Type | Notes |
+|-------|------|-------|
+| id | UUID (PK) | Immutable encryption-context identifier |
+| user_id | FK → User | Deduplication/quotas never cross this boundary |
+| object_key | varchar unique | Random opaque Garage key; no filenames, user IDs, or health terms |
+| encrypted_key | binary | Deployment-master-key-wrapped unique blob wrapping key |
+| master_key_version | integer | Selects the mounted versioned 256-bit master key |
+| encryption_format | varchar | Currently `aws-esdk-v1` framed encryption with commitment |
+| fingerprint | char(64) | User-scoped keyed HMAC; never stored in Garage |
+| plaintext_size / ciphertext_size | bigint | Authenticated size and operational ciphertext size |
+| reference_count | integer | Number of active `DocumentAsset` references |
+| state | enum | available, deletion_pending |
+
+The active `(user_id, fingerprint)` pair is unique. Destroying `encrypted_key` at the final
+reference is the cryptographic-erasure boundary.
+
+### 3.5 DocumentAsset
+Ordered safe display metadata for each original in a logical source bundle. A PDF has one asset; a
+photographed multi-page document can have several. Fields are `document_id`, nullable `blob_id`,
+`position`, `file_name`, `mime_type`, `size_bytes`, and `is_transient`. The display filename stays
+in PostgreSQL and is never sent as Garage object metadata. Text sources have no asset. Audio assets
+are transient and removed after processing.
+
+### 3.6 StorageDeletionJob
+An account-independent durable queue row containing only an opaque Garage `object_key`, status,
+attempt count, safe error code, and timestamps. It survives deletion of the user row so ciphertext
+cleanup can retry after Garage outages. Object version retention is disabled.
+
+### 3.7 MedicalEvent
 The core timeline item. Source-backed captures have exactly one active event, enforced by a partial
 unique constraint on `source_document_id`. Mixed-content sources use `medical_record` and retain
 their supported facts inside structured attributes.
@@ -129,7 +156,7 @@ their supported facts inside structured attributes.
 | event_date | date | Primary date (drives timeline ordering) |
 | event_end_date | date (nullable) | For ranges (e.g. medication course, hospitalization) |
 | attributes | JSONB | Type-specific structured fields (see §4) |
-| source_page_positions | JSONB list | One-based uploaded-asset positions when known; empty/absent opens the first local asset or file start |
+| source_page_positions | JSONB list | One-based uploaded-asset positions when known; empty/absent opens the first online asset or file start |
 | source | enum | user_manual, ai_document, ai_voice |
 | confidence | float (nullable) | AI extraction confidence (0–1) |
 | created_at / updated_at | timestamptz | |
@@ -137,12 +164,12 @@ their supported facts inside structured attributes.
 
 Indexes: `(user_id, subject_id, event_date desc)`, `(event_type)`, GIN on `attributes`.
 
-### 3.6 EventRevision
+### 3.8 EventRevision
 An AI-proposed revision stores `current_snapshot` and `suggested_changes` separately from the active
 event. Its status is `pending`, `applied`, or `discarded`. Regeneration never overwrites user edits;
 only explicitly selected fields are applied.
 
-### 3.7 DocumentExplanation
+### 3.9 DocumentExplanation
 LLM-produced plain-language explanation of a document (Scenario B).
 
 | Field | Type | Notes |
@@ -156,7 +183,7 @@ LLM-produced plain-language explanation of a document (Scenario B).
 | language | varchar(10) | |
 | created_at | timestamptz | |
 
-### 3.6 MedicalSummary (Prepare for a Visit)
+### 3.10 MedicalSummary (Prepare for a Visit)
 Versioned snapshot of a concise, source-linked briefing designed to be read by a doctor or patient
 in about 60 seconds. A new version is created only when the user explicitly refreshes it.
 
@@ -191,7 +218,7 @@ assets and are not individually rendered or addressable in the current MVP; that
 file/document start. Existing events and extractions without reliable asset metadata use the same
 start-of-document fallback.
 
-### 3.7 VisitPreparation
+### 3.11 VisitPreparation
 One sensitive, user-authored free-text reason for the visit per subject. It is saved until changed
 and is supplied to summary generation as untrusted, prioritization-only data. It cannot add facts,
 change output rules, or request unrelated AI behavior.
@@ -204,7 +231,7 @@ change output rules, or request unrelated AI behavior.
 | reason | text | Visit reason; may be empty; maximum 300 characters |
 | created_at / updated_at | timestamptz | |
 
-### 3.8 Tag & EventTag
+### 3.12 Tag & EventTag
 Lightweight categorization / grouping (e.g. by condition).
 
 | Tag field | Type | Notes |
@@ -216,7 +243,7 @@ Lightweight categorization / grouping (e.g. by condition).
 
 `EventTag` is a join table: `(event_id, tag_id)`.
 
-### 3.9 ProcessingJob
+### 3.13 ProcessingJob
 Tracks async pipeline work for observability and retries.
 
 | Field | Type | Notes |
@@ -232,7 +259,7 @@ Tracks async pipeline work for observability and retries.
 | started_at / finished_at | timestamptz (nullable) | |
 | created_at / updated_at | timestamptz | |
 
-### 3.9 AuditLog (privacy/compliance)
+### 3.14 AuditLog (privacy/compliance)
 Append-only record of sensitive actions (delete, login). See
 [security-privacy.md](./security-privacy.md).
 

@@ -38,6 +38,7 @@ void main() {
     when(
       () => fileStore.saveAll(any()),
     ).thenAnswer((_) async => [_storedFile()]);
+    when(() => repository.deleteOwnedSources(any())).thenAnswer((_) async {});
   });
 
   tearDown(() async {
@@ -220,11 +221,69 @@ void main() {
     },
   );
 
-  test('blocks a matching file already in the queue', () async {
+  test('retries processing from the retained server original', () async {
+    final container = _container(repository, database);
+    addTearDown(container.dispose);
+    final now = DateTime.now();
+    await database
+        .into(database.uploadQueueItems)
+        .insert(
+          UploadQueueItemsCompanion.insert(
+            id: 'failed-item',
+            displayName: 'lab.pdf',
+            fingerprint: 'lab.pdf::3',
+            localPath: '/missing/lab.pdf',
+            storedFileName: 'lab.pdf',
+            mimeType: 'application/pdf',
+            sizeBytes: 3,
+            docType: DocumentType.labResult.name,
+            title: 'Lab results',
+            status: UploadQueueStage.failed.name,
+            documentId: const Value('document-1'),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+    when(() => repository.retryProcessing('document-1')).thenAnswer(
+      (_) async => const DocumentStatusUpdate(
+        id: 'document-1',
+        status: DocumentStatus.processing,
+      ),
+    );
+    when(
+      () => repository.pollDocumentUntilTerminal(id: 'document-1'),
+    ).thenAnswer((_) async => _document(status: DocumentStatus.processed));
+
+    await container.read(documentUploadControllerProvider.future);
+    await container
+        .read(documentUploadControllerProvider.notifier)
+        .retry('failed-item');
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(
+      container
+          .read(documentUploadControllerProvider)
+          .requireValue
+          .single
+          .stage,
+      UploadQueueStage.completed,
+    );
+    verify(() => repository.retryProcessing('document-1')).called(1);
+    verifyNever(
+      () => repository.createAndUploadStored(
+        any(),
+        any(),
+        onUploadProgress: any(named: 'onUploadProgress'),
+      ),
+    );
+  });
+
+  test('blocks a matching file already being uploaded', () async {
     final container = _container(repository, database);
     addTearDown(container.dispose);
     final source = await _sourceFile(tempDirectory);
     final now = DateTime.now();
+    await container.read(documentUploadControllerProvider.future);
     await database
         .into(database.uploadQueueItems)
         .insert(
@@ -240,7 +299,7 @@ void main() {
             title: 'Lab results',
             subjectId: const Value.absent(),
             language: const Value.absent(),
-            status: UploadQueueStage.completed.name,
+            status: UploadQueueStage.uploading.name,
             documentId: const Value.absent(),
             errorMessage: const Value.absent(),
             createdAt: now,
@@ -248,7 +307,6 @@ void main() {
           ),
         );
 
-    await container.read(documentUploadControllerProvider.future);
     expect(
       await container
           .read(documentUploadControllerProvider.notifier)

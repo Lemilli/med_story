@@ -92,9 +92,8 @@ class Document(models.Model):
     language = models.CharField(max_length=10, blank=True)
     document_date = models.DateField(null=True, blank=True)
     error_message = models.TextField(blank=True)
-    # SHA-256 of the transient bytes supplied for ingestion. This lets us
-    # recognize the same file even when it has a different name or is added to
-    # another profile belonging to the same account.
+    # Bundle digest over user-scoped keyed asset fingerprints. This is not a
+    # raw content hash and cannot be compared across accounts.
     content_hash = models.CharField(max_length=64, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -114,20 +113,64 @@ class Document(models.Model):
         return self.title
 
 
-class DocumentAsset(models.Model):
-    """Metadata for one device-local original within a logical document.
+class EncryptedBlob(models.Model):
+    """One user-owned encrypted object retained in private object storage."""
 
-    The backend never stores the original bytes. Assets make page ordering and
-    integrity explicit while the mobile client retains the local originals.
-    """
+    class State(models.TextChoices):
+        AVAILABLE = "available", "Available"
+        DELETION_PENDING = "deletion_pending", "Deletion pending"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="encrypted_blobs",
+    )
+    object_key = models.CharField(max_length=255, unique=True)
+    encrypted_key = models.BinaryField()
+    master_key_version = models.PositiveIntegerField(default=1)
+    encryption_format = models.CharField(max_length=50, default="aws-esdk-v1")
+    fingerprint = models.CharField(max_length=64)
+    plaintext_size = models.BigIntegerField()
+    ciphertext_size = models.BigIntegerField()
+    reference_count = models.PositiveIntegerField(default=1)
+    state = models.CharField(max_length=30, choices=State.choices, default=State.AVAILABLE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "fingerprint"),
+                condition=Q(state="available"),
+                name="unique_encrypted_blob_fingerprint_per_user",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("user", "state"), name="blob_user_state_idx"),
+        ]
+
+    def __str__(self):
+        return str(self.id)
+
+
+class DocumentAsset(models.Model):
+    """Metadata for one server-retained original within a logical document."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="assets")
+    blob = models.ForeignKey(
+        EncryptedBlob,
+        on_delete=models.RESTRICT,
+        related_name="document_assets",
+        null=True,
+        blank=True,
+    )
     position = models.PositiveIntegerField()
     file_name = models.CharField(max_length=255)
     mime_type = models.CharField(max_length=255)
     size_bytes = models.BigIntegerField()
-    content_hash = models.CharField(max_length=64)
+    is_transient = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -138,6 +181,33 @@ class DocumentAsset(models.Model):
 
     def __str__(self):
         return f"{self.document_id}:{self.position}"
+
+
+class StorageDeletionJob(models.Model):
+    """Opaque, user-independent object deletion retry record."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    object_key = models.CharField(max_length=255)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveIntegerField(default=0)
+    error_code = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("created_at",)
+        indexes = [
+            models.Index(fields=("status", "created_at"), name="storage_delete_status_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.object_key}:{self.status}"
 
 
 class ProcessingJob(models.Model):
@@ -360,6 +430,9 @@ class AuditLog(models.Model):
     class Action(models.TextChoices):
         LOGIN = "login", "Login"
         ACCOUNT_DELETE = "account_delete", "Account delete"
+        ORIGINAL_OPEN = "original_open", "Original open"
+        ORIGINAL_DOWNLOAD = "original_download", "Original download"
+        ORIGINAL_DELETE = "original_delete", "Original delete"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(

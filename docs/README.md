@@ -49,4 +49,5 @@ understandable health story.
 - Value should compound over time; the medical story is continuously updated.
 - Information must be understandable to non-medical users.
 - The user is always in control of their data.
-- MVP document/audio binaries are local-only (no cross-device sync/backup).
+- PDF/image originals are MedStory-encrypted in private server storage and available online across
+  authenticated devices. Voice recordings remain transient. V1 has no original-object backup.

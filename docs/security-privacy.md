@@ -41,19 +41,38 @@ control. This document defines the controls to achieve that.
 
 - **In transit**: TLS 1.2+ everywhere (client↔API, API↔DB/Redis, API↔AI providers).
 - **At rest**:
-  - On-device documents/audio rely on OS sandbox protections and device encryption.
+  - PDF/image originals use framed AWS Encryption SDK encryption with key commitment before
+    Garage receives them. A unique wrapping key and SDK data key are generated per blob.
+  - Only the versioned deployment-master-key-wrapped blob key is stored in PostgreSQL. The
+    256-bit master key is mounted read-only and never appears in Git, DB, Garage metadata,
+    Compose environment output, or logs. Data-key caching is disabled.
   - Database encryption at rest (managed disk/volume encryption).
-  - Backups encrypted.
+  - The Garage volume uses full-disk encryption. V1 deliberately has no object backup.
 - **Secrets**: managed via environment/secret manager; never committed; rotated periodically.
 - **Roadmap**: application-level field encryption and per-user keys for highest-sensitivity
   fields (post-MVP, toward HIPAA-readiness).
 
-## 5. Document & Local File Security
+## 5. Private Original Storage
 
-- Documents and audio are stored only in the app sandbox on the user's device.
-- Backend accepts transient ingestion uploads only; raw files are discarded after processing.
-- File-type/size validation enforced at API boundary; max upload size is **5 MB**.
-- Antivirus/malware scan remains a post-MVP hardening item.
+- Garage runs single-node on a dedicated encrypted EU/EEA volume. S3, admin, and RPC ports are
+  absent from public networks; API/workers reach S3 through a verified private TLS proxy.
+- Upload, authenticated user read, processing read, and deletion use independent bucket-scoped
+  credentials. Flutter receives no Garage credential, address, or presigned URL.
+- Ciphertext keys are random opaque identifiers. Garage sees no user IDs, filenames, MIME types,
+  medical terms, plaintext hashes, or health metadata.
+- Plaintext staging uses a size-limited `tmpfs`. PDF/JPEG/PNG/HEIC/HEIF magic bytes must match the
+  declared MIME type. Self-hosted ClamAV is fail-closed: positive files are rejected and scanner
+  outages return `503`.
+- The logical document limit is 25 MB and distinct per-account originals are limited to 2 GB.
+  Keyed fingerprints enable reference-counted deduplication only within one account.
+- Django scopes both document and asset IDs to `request.user`, decrypts and streams the response,
+  and sets `private, no-store`/`nosniff`. Ciphertext tampering, context mismatch, or missing keys
+  fails closed.
+- Flutter stores original metadata only. Picker/camera and viewer files are temporary and cleaned
+  after acknowledgement/use and on startup/logout. Explicit Download/Share creates a user-controlled
+  copy. Originals require online authenticated access from any signed-in device.
+- Voice objects are encrypted transient staging only. Successful transcription deletes local and
+  server recordings; failures retain the local recording for retry, with scheduled server cleanup.
 
 ## 6. AI Provider Data Handling
 
@@ -62,9 +81,8 @@ control. This document defines the controls to achieve that.
 - Prefer providers offering **no-training-on-customer-data / zero or minimal retention**.
 - Record provider + model + prompt version per output for traceability (metadata only).
 - Document all sub-processors (AI, OCR, STT) in the privacy policy.
-- The [subprocessor register](./compliance/subprocessor-register.md) and
-  [DPA checklist](./compliance/dpa-execution-checklist.md) are optional compliance references;
-  they do not block provider configuration or production startup.
+- Every health-data subprocessor requires a signed DPA, EU region/transfer review, no-training
+  controls, and minimal-retention verification before production.
 
 ## 7. GDPR Alignment
 
@@ -73,7 +91,7 @@ control. This document defines the controls to achieve that.
 | Lawful basis & consent | Explicit consent at signup; clear privacy policy; consent for AI processing of health data |
 | Data minimization | Only collect what serves the feature; redact for AI where possible |
 | Purpose limitation | Health data used only to organize/explain the user's own history |
-| Right to erasure | `DELETE /me` purges DB rows (incl. backups per policy) |
+| Right to erasure | Wrapped keys are destroyed first; opaque object-deletion jobs survive account removal |
 | Right to rectification | Users edit/confirm/delete events and documents |
 | Storage limitation | Retention policy + deletion of orphaned/temp data |
 | Records of processing | Sub-processor list + data-flow documentation maintained |
@@ -83,6 +101,10 @@ control. This document defines the controls to achieve that.
 - Soft delete (`deleted_at`) for in-app UX; `DELETE /me` immediately hard-deletes the
   account and cascaded backend records, making existing access tokens unusable because the
   user no longer exists. A provided refresh token is blacklisted best-effort before deletion.
+- Document deletion hides derived events and destroys the wrapped blob key when the final
+  per-account reference disappears. The independent deletion job retries physical Garage cleanup.
+  Account deletion destroys all wrapped keys before removing the user. Garage version retention is
+  disabled. Deleting only an event does not delete its source document.
 - The saved visit reason is sensitive, user-authored data. During an explicit summary refresh it may
   be sent to the configured AI provider as delimited, untrusted, prioritization-only context. It is
   length-limited, cannot add medical facts or alter system instructions, and is never logged.
@@ -111,7 +133,7 @@ The Flutter debug HTTP logger records request method/URL/status only. Authorizat
 request/response bodies, extracted text, transcripts, and other medical content are disabled.
 
 - **No health content in logs**; logs carry IDs/metadata only.
-- **AuditLog** table records sensitive actions (login and deletion) with IP + timestamp.
+- **AuditLog** records login, original open/download, and deletion using IDs/metadata only.
 - Error tracking (e.g. Sentry) with PII scrubbing enabled.
 - Alerts on auth anomalies, elevated error rates, and AI cost spikes.
 
@@ -138,7 +160,7 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 | Status | Item |
 |--------|------|
 | MVP | GDPR alignment, TLS, encryption at rest, isolation, erasure |
-| Hardening | Malware scanning, field-level encryption, pen-test, biometric lock, cert pinning |
+| Hardening | Pen-test, hardware/remote key management, biometric lock, cert pinning |
 | HIPAA-ready (later) | BAAs with vendors, expanded audit controls, formal risk assessments, access reviews |
 
 ## 14. Security Checklist (pre-launch)
@@ -146,10 +168,13 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 - [ ] TLS enforced end-to-end; HSTS on.
 - [ ] Passwords Argon2; login throttled; reset hardened.
 - [ ] JWT rotation + blacklist working.
-- [ ] On-device file storage is sandboxed/encrypted by platform defaults.
+- [x] Originals encrypted before private object storage; no durable automatic device copies.
 - [ ] Per-user queryset isolation verified by tests.
-- [x] Backend account-deletion flow verified by tests; backups policy still requires ops/legal review.
+- [x] Document/account cryptographic-erasure and durable deletion-job flows covered by tests.
 - [ ] No health data in logs; PII scrubbing on.
-- [ ] Optional: review DPAs and maintain the subprocessor register where applicable.
+- [ ] Garage AGPLv3 use approved for proprietary MedStory.
+- [ ] EU/EEA hosting and external-AI DPA/transfer/no-training/minimal-retention review approved.
+- [ ] Offline sealed recovery copy of the master key verified.
+- [ ] Single-disk/no-object-backup permanent-loss risk explicitly accepted.
 - [x] Dependency + secret scanning in CI; no secrets in repo.
 - [ ] Incident response runbook in place.

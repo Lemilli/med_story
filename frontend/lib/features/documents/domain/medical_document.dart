@@ -18,7 +18,7 @@ abstract class MedicalDocument with _$MedicalDocument {
     @JsonKey(name: 'subject_id') String? subjectId,
     @JsonKey(name: 'document_date') String? documentDate,
     @Default('') String language,
-    @JsonKey(name: 'local_only') @Default(true) bool localOnly,
+    @JsonKey(name: 'local_only') @Default(false) bool localOnly,
     @JsonKey(name: 'extracted_text_available')
     @Default(false)
     bool extractedTextAvailable,
@@ -42,6 +42,7 @@ abstract class DocumentAssetMetadata with _$DocumentAssetMetadata {
     @JsonKey(name: 'file_name') required String fileName,
     @JsonKey(name: 'mime_type') required String mimeType,
     @JsonKey(name: 'size_bytes') required int sizeBytes,
+    @Default(true) bool available,
   }) = _DocumentAssetMetadata;
 
   factory DocumentAssetMetadata.fromJson(Map<String, dynamic> json) =>

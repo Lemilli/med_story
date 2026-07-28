@@ -5,8 +5,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from medical.models import AuditLog
+from medical.models import AuditLog, DocumentAsset
+from medical.original_storage import release_assets
 from medical.services import log_audit_event
+from medical.tasks import purge_storage_deletions_task
 from config.throttling import ClientIPScopedRateThrottle
 from users.serializers import LogoutSerializer, RegisterSerializer, UserSerializer
 
@@ -67,7 +69,11 @@ class MeView(generics.RetrieveUpdateDestroyAPIView):
                 request=request,
                 metadata={"refresh_token_blacklist_requested": bool(refresh_token)},
             )
+            release_assets(
+                DocumentAsset.objects.filter(document__user=user).select_related("blob")
+            )
             user.delete()
+        transaction.on_commit(lambda: purge_storage_deletions_task.delay())
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

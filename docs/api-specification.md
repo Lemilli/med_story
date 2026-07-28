@@ -92,29 +92,34 @@ Standard retrieve/update/delete. The default subject cannot be deleted.
 ## 4. Documents
 
 ### POST /documents
-Create a document metadata record (the binary stays on-device).
+Create a pending document metadata record. The original becomes server-authoritative only after a
+successful ingest response.
 ```jsonc
 // Request
 { "title": "Lab results May", "doc_type": "lab_result", "mime_type": "application/pdf",
   "size_bytes": 482113, "document_date": "2026-05-12", "subject_id": "uuid?",
-  "local_uri_hint": "app://documents/uuid-or-local-path" }
+  "local_uri_hint": "" }
 // 201 Response
 { "id": "uuid", "status": "pending_ingest" }
 ```
 
 ### POST /documents/{id}/ingest
-Send file bytes for transient processing and enqueue the ingestion pipeline.
-The backend does not persist the raw file.
+Validate, malware-scan, encrypt, and retain PDF/image originals, then enqueue processing. `202` is
+returned only after Garage acknowledges ciphertext and the ordered assets are committed.
 
 `Content-Type: multipart/form-data`
 ```
-file=<binary>; mime_type=application/pdf|image/png|audio/mpeg
+file=<binary>; mime_type=application/pdf|image/jpeg|image/png|image/heic|image/heif
 # or, for pages of one photographed document:
 files=<image page 1>; files=<image page 2>; ...
 ```
 
 Constraints:
-- Max total bundle size: **5 MB** (`413 file_too_large` beyond this limit).
+- Max PDF/image bundle size: **25 MB** (`413 file_too_large` beyond this limit).
+- Allowed retained types are PDF, JPEG, PNG, HEIC, and HEIF. Declared MIME and magic bytes must
+  match; scanner outage fails closed.
+- Distinct retained plaintext is limited to **2 GB per account**. Same-user identical assets share
+  a blob and count once; comparisons and deduplication never cross accounts.
 - Multi-asset bundles accept images only and preserve multipart order as page order.
 - Non-audio documents allow PDFs and image files.
 - Audio documents (`doc_type=audio`) allow `audio/mpeg`, `audio/mp3`, `audio/mp4`,
@@ -125,10 +130,8 @@ Constraints:
 Processing succeeds only after exactly one active event is created atomically. A terminal document
 therefore has either `status=processed` with one `event_id`, or `status=failed` with no event.
 
-If the exact same PDF or image was already processed for the account and produced active events,
-the request returns `409 document_already_processed` with the existing `document_id` in
-`error.details`. The check applies across the account's profiles. After that original document is
-deleted, the same file can be added again.
+Identical assets can back multiple logical documents for the same account via reference-counted
+blob reuse. The Celery message contains document/job/blob identifiers only—never raw bytes or base64.
 
 If an image/PDF has no readable text, processing finishes with `status: "failed"` and
 `error_message: "document_unreadable"`. If the extracted content is not a medical document,
@@ -142,23 +145,42 @@ titles and extracted text while list responses continue to return metadata only.
 ```jsonc
 { "id": "uuid", "title": "...", "doc_type": "lab_result", "status": "processed",
   "document_date": "2026-05-12", "language": "en",
-  "local_only": true,
+  "local_only": false,
   "extracted_text_available": true,
   "explanation_available": true,
   "event_count": 1, "event_id": "uuid",
   "assets": [{ "id": "uuid", "position": 1, "file_name": "page-1.jpg",
-    "mime_type": "image/jpeg", "size_bytes": 12345 }],
+    "mime_type": "image/jpeg", "size_bytes": 12345, "available": true }],
   "created_at": "...", "updated_at": "..." }
 ```
 `status` is polled by the client until `processed` or `failed`.
 
 ### DELETE /documents/{id}
-Soft-deletes the document and its derived events (configurable). → `204`.
+Immediately hides the document and derived events, decrements blob references, destroys the wrapped
+blob key at the final reference, and records an opaque durable Garage deletion job. → `204`.
+Deleting only a timeline event does not delete its document or original.
+
+### POST /documents/{id}/retry-processing
+Retries OCR/AI from an already retained PDF/image without another upload. Valid sessions may retry
+only their own document. A missing original or audio source returns `409 original_unavailable`.
+Processing/broker failures preserve Retry/Delete access.
+
+→ `202 { "id": "uuid", "status": "processing" }`
+
+### GET /documents/{id}/assets/{asset_id}/content
+Authenticated online access to a retained original. Both path IDs are scoped to `request.user`;
+unknown, guessed, cross-user, cross-document, deleted, and transient assets return `404`.
+
+Query: `disposition=inline|attachment` (default `inline`). MedStory verifies/decrypts and streams the
+content with `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`. The response
+never includes a Garage URL, key, credential, or presigned URL. Integrity/context/key failures fail
+closed.
 
 ### POST /documents/upload-audio
-Convenience endpoint for voice-first capture (`doc_type=audio`) with transient ingestion.
+Convenience endpoint for voice-first capture (`doc_type=audio`) with encrypted transient staging.
 `multipart/form-data`, max file size **5 MB**. Creates the audio document and enqueues
-STT → LLM structuring in one request. Raw audio is discarded after dispatch.
+STT → LLM structuring in one request. The server object is deleted after processing; abandoned
+staging objects are removed by scheduled cleanup.
 
 Fields:
 - `file` required.
@@ -307,8 +329,9 @@ Poll an async job (used after regenerate / ingestions when a job_id is returned)
 
 ## 9. Privacy (GDPR)
 
-`DELETE /me` permanently removes the account and backend records. Original uploaded files
-are not persisted server-side.
+`DELETE /me` revokes access, destroys all wrapped blob keys, records account-independent opaque
+Garage deletion jobs, and removes the account data. Cleanup retries survive removal of the user row.
+Garage object version retention is disabled so erasure does not leave hidden versions.
 
 > See [security-privacy.md](./security-privacy.md) for retention, encryption, and erasure details.
 
@@ -330,8 +353,10 @@ All errors share one envelope:
 | 403 | permission_denied | Not the owner of the resource |
 | 404 | not_found, not_ready | Missing, or AI result not yet generated |
 | 409 | conflict | e.g. document already completed |
-| 413 | file_too_large | Upload exceeds limit |
+| 413 | file_too_large, original_storage_quota_exceeded | Upload or account quota exceeds limit |
+| 422 | malware_detected, original_integrity_error | Content rejected or ciphertext verification failed |
 | 429 | throttled | Rate limit hit |
+| 503 | malware_scanner_unavailable, original_storage_unavailable | Required private-storage dependency unavailable |
 | 500 | server_error | Unexpected |
 
 Throttled responses include a `Retry-After` header and
@@ -351,9 +376,11 @@ Throttled responses include a `Retry-After` header and
 | GET/POST | /subjects | List/create patient profiles |
 | GET/PATCH/DELETE | /subjects/{id} | Manage a profile |
 | POST | /documents | Create document metadata |
-| POST | /documents/{id}/ingest | Upload bytes transiently + trigger ingestion |
+| POST | /documents/{id}/ingest | Validate, encrypt, retain originals + trigger processing |
 | GET | /documents | List documents |
 | GET/DELETE | /documents/{id} | Read/delete document |
+| POST | /documents/{id}/retry-processing | Retry from retained original |
+| GET | /documents/{id}/assets/{asset_id}/content | Authenticated decrypted original stream |
 | POST | /documents/upload-audio | Voice capture |
 | POST | /capture/transcribe | Transcribe ephemeral voice draft |
 | POST | /capture/notes | Process final edited note |

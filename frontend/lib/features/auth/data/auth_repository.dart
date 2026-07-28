@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/storage/local_database.dart';
 import '../../../core/storage/secure_token_storage.dart';
+import '../../../core/storage/temporary_file_cleanup.dart';
 import '../domain/auth_models.dart';
 import 'auth_api.dart';
 
@@ -25,6 +26,7 @@ class AuthRepository {
   final LocalDatabase localDatabase;
 
   Future<AuthState> restoreSession() async {
+    await clearSensitiveTemporaryFiles();
     final accessToken = await tokenStorage.readAccessToken();
     final refreshToken = await tokenStorage.readRefreshToken();
     if (accessToken == null ||
@@ -87,6 +89,7 @@ class AuthRepository {
     }
     await tokenStorage.clearTokens();
     await localDatabase.clearAll();
+    await clearSensitiveTemporaryFiles();
   }
 
   Future<AppUser> updateLocale(String locale) {
@@ -98,5 +101,6 @@ class AuthRepository {
     await api.deleteMe(refreshToken: refreshToken);
     await tokenStorage.clearTokens();
     await localDatabase.clearAll();
+    await clearSensitiveTemporaryFiles();
   }
 }

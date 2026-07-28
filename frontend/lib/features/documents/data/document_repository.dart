@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -7,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../core/error/app_failure.dart';
 import '../../../core/storage/local_database.dart' as db;
+import '../../../core/storage/temporary_file_cleanup.dart';
 import '../domain/medical_document.dart';
 import 'document_api.dart';
 
@@ -15,11 +17,13 @@ final documentLocalFileStoreProvider = Provider<DocumentLocalFileStore>((ref) {
 });
 
 final documentRepositoryProvider = Provider<DocumentRepository>((ref) {
-  return DocumentRepository(
+  final repository = DocumentRepository(
     api: ref.watch(documentApiProvider),
     localFileStore: ref.watch(documentLocalFileStoreProvider),
     database: ref.watch(db.localDatabaseProvider),
   );
+  unawaited(repository.cleanupTemporaryOriginals());
+  return repository;
 });
 
 class DocumentRepository {
@@ -58,16 +62,6 @@ class DocumentRepository {
         documentDate: draft.documentDate,
         onSendProgress: onUploadProgress,
       );
-      await database?.replaceDocumentLocalAssets(uploaded.id, [
-        db.DocumentLocalAssetsCompanion.insert(
-          documentId: uploaded.id,
-          position: 1,
-          localPath: localFile.path,
-          fileName: localFile.fileName,
-          mimeType: localFile.mimeType,
-          sizeBytes: localFile.sizeBytes,
-        ),
-      ]);
       return DocumentIngestionResult(
         documentId: uploaded.id,
         localFiles: localFiles,
@@ -87,31 +81,14 @@ class DocumentRepository {
         language: draft.language,
       ),
     );
-    await database?.replaceDocumentLocalAssets(created.id, [
-      for (var index = 0; index < localFiles.length; index++)
-        db.DocumentLocalAssetsCompanion.insert(
-          documentId: created.id,
-          position: index + 1,
-          localPath: localFiles[index].path,
-          fileName: localFiles[index].fileName,
-          mimeType: localFiles[index].mimeType,
-          sizeBytes: localFiles[index].sizeBytes,
-        ),
-    ]);
-    late final DocumentStatusUpdate ingest;
-    try {
-      ingest = await api.ingestDocument(
-        documentId: created.id,
-        files: [
-          for (final file in localFiles)
-            (path: file.path, fileName: file.fileName, mimeType: file.mimeType),
-        ],
-        onSendProgress: onUploadProgress,
-      );
-    } on Object {
-      await _deleteCreatedDocument(created.id);
-      rethrow;
-    }
+    final ingest = await api.ingestDocument(
+      documentId: created.id,
+      files: [
+        for (final file in localFiles)
+          (path: file.path, fileName: file.fileName, mimeType: file.mimeType),
+      ],
+      onSendProgress: onUploadProgress,
+    );
     return DocumentIngestionResult(
       documentId: created.id,
       localFiles: localFiles,
@@ -141,17 +118,59 @@ class DocumentRepository {
     return api.getDocument(id);
   }
 
+  Future<DocumentStatusUpdate> retryProcessing(String id) {
+    return api.retryProcessing(id);
+  }
+
+  Future<Uint8List> loadAssetBytes({
+    required String documentId,
+    required String assetId,
+    bool attachment = false,
+  }) {
+    return api.getAssetContent(
+      documentId: documentId,
+      assetId: assetId,
+      attachment: attachment,
+    );
+  }
+
+  Future<String> downloadAssetToTemporaryFile({
+    required String documentId,
+    required DocumentAssetMetadata asset,
+  }) async {
+    final bytes = await loadAssetBytes(
+      documentId: documentId,
+      assetId: asset.id,
+      attachment: true,
+    );
+    final root = await getTemporaryDirectory();
+    final directory = Directory(p.join(root.path, 'medstory_originals'));
+    await directory.create(recursive: true);
+    final safeName = _safeFileName(asset.fileName);
+    final path = p.join(
+      directory.path,
+      '${DateTime.now().microsecondsSinceEpoch}_${asset.id}_$safeName',
+    );
+    await File(path).writeAsBytes(bytes, flush: true);
+    return path;
+  }
+
+  Future<void> cleanupTemporaryOriginals() async {
+    await clearOriginalTemporaryFiles();
+  }
+
+  Future<void> deleteOwnedSources(Iterable<StoredDocumentFile> files) async {
+    for (final file in files.where((item) => item.deleteAfterUpload)) {
+      final source = File(file.path);
+      if (await source.exists()) {
+        await source.delete();
+      }
+    }
+  }
+
   Future<void> deleteDocument(String id) async {
     await api.deleteDocument(id);
     await database?.removeEventsForDocument(id);
-  }
-
-  Future<void> _deleteCreatedDocument(String id) async {
-    try {
-      await deleteDocument(id);
-    } on Object {
-      // Preserve the original upload/processing failure for retry messaging.
-    }
   }
 
   Future<MedicalDocument> pollDocumentUntilTerminal({
@@ -206,22 +225,16 @@ class AppSandboxDocumentFileStore implements DocumentLocalFileStore {
       throw const AppFailure('document_source_file_missing');
     }
 
-    final root = await getApplicationDocumentsDirectory();
-    final documentsDirectory = Directory(p.join(root.path, 'documents'));
-    await documentsDirectory.create(recursive: true);
-
     final safeName = _safeFileName(source.fileName);
-    final storedName = '${DateTime.now().microsecondsSinceEpoch}_$safeName';
-    final destinationPath = p.join(documentsDirectory.path, storedName);
-    final copied = await sourceFile.copy(destinationPath);
-    final sizeBytes = await copied.length();
+    final sizeBytes = await sourceFile.length();
 
     return StoredDocumentFile(
-      path: copied.path,
-      fileName: storedName,
+      path: sourceFile.path,
+      fileName: safeName,
       mimeType: source.mimeType,
       sizeBytes: sizeBytes,
-      localUriHint: 'app://documents/$storedName',
+      localUriHint: '',
+      deleteAfterUpload: source.deleteAfterUpload,
     );
   }
 
@@ -235,12 +248,12 @@ class AppSandboxDocumentFileStore implements DocumentLocalFileStore {
     }
     return saved;
   }
+}
 
-  String _safeFileName(String value) {
-    final name = p.basename(value.trim());
-    final fallback = name.isEmpty ? 'document' : name;
-    return fallback.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
-  }
+String _safeFileName(String value) {
+  final name = p.basename(value.trim());
+  final fallback = name.isEmpty ? 'document' : name;
+  return fallback.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
 }
 
 class DocumentUploadDraft {
@@ -267,11 +280,13 @@ class DocumentSourceFile {
     required this.path,
     required this.fileName,
     required this.mimeType,
+    this.deleteAfterUpload = false,
   });
 
   final String path;
   final String fileName;
   final String mimeType;
+  final bool deleteAfterUpload;
 }
 
 class StoredDocumentFile {
@@ -281,6 +296,7 @@ class StoredDocumentFile {
     required this.mimeType,
     required this.sizeBytes,
     required this.localUriHint,
+    this.deleteAfterUpload = false,
   });
 
   final String path;
@@ -288,6 +304,7 @@ class StoredDocumentFile {
   final String mimeType;
   final int sizeBytes;
   final String localUriHint;
+  final bool deleteAfterUpload;
 }
 
 class DocumentIngestionResult {

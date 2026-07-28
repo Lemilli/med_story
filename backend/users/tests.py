@@ -4,10 +4,26 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from medical.models import AuditLog, Document, MedicalEvent, Subject
+from medical.models import (
+    AuditLog,
+    Document,
+    DocumentAsset,
+    EncryptedBlob,
+    MedicalEvent,
+    StorageDeletionJob,
+    Subject,
+)
+from medical.original_storage import MemoryObjectStore, store_upload
 
 
 class AuthTests(APITestCase):
+    def setUp(self):
+        MemoryObjectStore.clear()
+
+    def tearDown(self):
+        MemoryObjectStore.clear()
+        super().tearDown()
+
     def test_register_returns_user_and_tokens(self):
         response = self.client.post(
             "/api/v1/auth/register",
@@ -107,6 +123,16 @@ class AuthTests(APITestCase):
             mime_type="application/pdf",
             size_bytes=512,
         )
+        stored = store_upload(user=user, payload=b"private original")
+        DocumentAsset.objects.create(
+            document=document,
+            blob=stored.blob,
+            position=1,
+            file_name="lab.pdf",
+            mime_type="application/pdf",
+            size_bytes=len(b"private original"),
+        )
+        object_key = stored.blob.object_key
         MedicalEvent.objects.create(
             user=user,
             subject=subject,
@@ -138,6 +164,10 @@ class AuthTests(APITestCase):
         self.assertFalse(get_user_model().objects.filter(id=user.id).exists())
         self.assertFalse(Subject.objects.filter(user_id=user.id).exists())
         self.assertFalse(Document.objects.filter(user_id=user.id).exists())
+        self.assertFalse(EncryptedBlob.objects.filter(user_id=user.id).exists())
+        self.assertTrue(
+            StorageDeletionJob.objects.filter(object_key=object_key).exists()
+        )
         self.assertFalse(MedicalEvent.objects.filter(user_id=user.id).exists())
         self.assertTrue(get_user_model().objects.filter(id=other_user.id).exists())
         self.assertTrue(MedicalEvent.objects.filter(user=other_user, title="Other event").exists())

@@ -2,6 +2,7 @@ from django.urls import path
 
 from medical.views import (
     DocumentAudioUploadView,
+    DocumentAssetContentView,
     CaptureTranscriptionView,
     NoteProcessView,
     DocumentDetailView,
@@ -9,6 +10,7 @@ from medical.views import (
     DocumentExplanationView,
     DocumentIngestView,
     DocumentListCreateView,
+    DocumentRetryProcessingView,
     EventDetailView,
     EventRevisionDetailView,
     EventRevisionListCreateView,
@@ -34,6 +36,16 @@ urlpatterns = [
     path("capture/notes", NoteProcessView.as_view(), name="capture-note-process"),
     path("documents/<uuid:id>", DocumentDetailView.as_view(), name="document-detail"),
     path("documents/<uuid:id>/ingest", DocumentIngestView.as_view(), name="document-ingest"),
+    path(
+        "documents/<uuid:id>/retry-processing",
+        DocumentRetryProcessingView.as_view(),
+        name="document-retry-processing",
+    ),
+    path(
+        "documents/<uuid:id>/assets/<uuid:asset_id>/content",
+        DocumentAssetContentView.as_view(),
+        name="document-asset-content",
+    ),
     path("documents/<uuid:id>/explanation", DocumentExplanationView.as_view(), name="document-explanation"),
     path(
         "documents/<uuid:id>/explanation/regenerate",

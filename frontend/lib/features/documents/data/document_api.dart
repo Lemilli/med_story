@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -180,6 +182,36 @@ class DocumentApi {
       return MedicalDocument.fromJson(response.data ?? <String, dynamic>{});
     } on DioException catch (error) {
       throw mapDioException(error, fallback: 'document_load_failed');
+    }
+  }
+
+  Future<DocumentStatusUpdate> retryProcessing(String id) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/documents/$id/retry-processing',
+      );
+      return DocumentStatusUpdate.fromJson(
+        response.data ?? <String, dynamic>{},
+      );
+    } on DioException catch (error) {
+      throw mapDioException(error, fallback: 'document_retry_failed');
+    }
+  }
+
+  Future<Uint8List> getAssetContent({
+    required String documentId,
+    required String assetId,
+    bool attachment = false,
+  }) async {
+    try {
+      final response = await _dio.get<List<int>>(
+        '/documents/$documentId/assets/$assetId/content',
+        queryParameters: {'disposition': attachment ? 'attachment' : 'inline'},
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Uint8List.fromList(response.data ?? const <int>[]);
+    } on DioException catch (error) {
+      throw mapDioException(error, fallback: 'document_original_load_failed');
     }
   }
 

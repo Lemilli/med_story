@@ -22,7 +22,7 @@ _MedicalDocument _$MedicalDocumentFromJson(Map<String, dynamic> json) =>
       subjectId: json['subject_id'] as String?,
       documentDate: json['document_date'] as String?,
       language: json['language'] as String? ?? '',
-      localOnly: json['local_only'] as bool? ?? true,
+      localOnly: json['local_only'] as bool? ?? false,
       extractedTextAvailable:
           json['extracted_text_available'] as bool? ?? false,
       eventCount: (json['event_count'] as num?)?.toInt() ?? 0,
@@ -93,6 +93,7 @@ _DocumentAssetMetadata _$DocumentAssetMetadataFromJson(
   fileName: json['file_name'] as String,
   mimeType: json['mime_type'] as String,
   sizeBytes: (json['size_bytes'] as num).toInt(),
+  available: json['available'] as bool? ?? true,
 );
 
 Map<String, dynamic> _$DocumentAssetMetadataToJson(
@@ -103,6 +104,7 @@ Map<String, dynamic> _$DocumentAssetMetadataToJson(
   'file_name': instance.fileName,
   'mime_type': instance.mimeType,
   'size_bytes': instance.sizeBytes,
+  'available': instance.available,
 };
 
 _DocumentCreateRequest _$DocumentCreateRequestFromJson(

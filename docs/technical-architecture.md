@@ -12,7 +12,7 @@ The architecture is driven directly by the BRD's principles and non-functional r
 | BRD Driver | Architectural Implication |
 |-----------|---------------------------|
 | Simplicity & low data-entry burden | AI/OCR/STT ingestion pipeline that auto-structures raw input |
-| Long-term value (years of data) | Durable on-device files, scalable timeline queries, manually refreshed visit summary |
+| Long-term value (years of data) | Server-retained encrypted originals, scalable timeline queries, manually refreshed visit summary |
 | Clarity for non-medical users | Server-side LLM "explanation" + "summary" generation services |
 | Privacy & user control | Per-user data isolation, encryption, and account deletion |
 | Voice-first | Audio capture → transient upload → STT → structuring pipeline |
@@ -30,7 +30,7 @@ MedStory is a **mobile client + API backend + asynchronous AI pipeline**.
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                         Flutter App (iOS / Android)                        │
-│ UI · State (Riverpod) · Drift cache + local files · Secure tokens   │
+│ UI · State (Riverpod) · Metadata cache · Temporary files · Secure tokens   │
 └───────────────────────────────┬──────────────────────────────────────────┘
                                  │ HTTPS / REST (JSON) + JWT
                                  ▼
@@ -48,6 +48,12 @@ MedStory is a **mobile client + API backend + asynchronous AI pipeline**.
 │  PostgreSQL   │               │      Redis        │
 │ (structured)  │               │ (broker + cache)  │
 └───────────────┘               └────────┬─────────┘
+        │
+        ▼
+┌───────────────────────────────┐
+│ Garage (private S3 API only)  │
+│ MedStory-encrypted ciphertext │
+└───────────────────────────────┘
                                           │ tasks
                                           ▼
                                           ┌───────────────────────────────┐
@@ -72,13 +78,16 @@ MedStory is a **mobile client + API backend + asynchronous AI pipeline**.
 - Stores JWTs in platform secure storage (Keychain / Keystore).
 - Caches the timeline and summary locally with Drift for fast, partly-offline reads.
 - Handles capture: document scan/photo, file upload, and voice recording.
-- Keeps raw document/audio files on-device only (no cross-device sync/backup in MVP).
+- Keeps document/image capture files only until durable upload acknowledgement. Originals are
+  online-only and fetched through authenticated MedStory endpoints; voice recordings remain
+  temporary and are deleted after successful transcription.
 - Details in [frontend-architecture.md](./frontend-architecture.md).
 
 ### 3.2 API Backend (Django + DRF)
 The synchronous request/response surface. Responsibilities:
 - **Auth**: registration, login, JWT issue/refresh; password reset is planned.
-- **Documents**: metadata, transient ingestion upload, status polling.
+- **Documents**: metadata, validated encrypted-original ingestion, authenticated content streaming,
+  retry, deletion, and status polling.
 - **Medical Events**: CRUD for the structured medical history.
 - **Timeline**: chronological, paginated read model.
 - **Prepare for a Visit**: read the latest structured, source-linked summary; explicitly trigger regeneration.
@@ -102,8 +111,13 @@ client polls. Full design in [ai-pipeline.md](./ai-pipeline.md).
 ### 3.4 Data Stores
 - **PostgreSQL** — structured medical history, users, jobs, summaries. JSONB used for
   flexible, type-specific event attributes.
-- **On-device file storage (mobile app sandbox)** — original documents and audio are stored
-  locally on the user's device for long-term access. The backend never persists raw files.
+- **Garage on an encrypted production volume** — stores only opaque-keyed ciphertext. Garage has no
+  public port and is reached through a verified internal TLS proxy with separate upload, read,
+  processing, and deletion credentials.
+- **PostgreSQL encrypted-blob records** — store wrapped per-blob keys, keyed user-scoped
+  fingerprints, sizes, reference counts, and durable opaque deletion jobs.
+- **Device temporary storage** — camera/gallery picker copies, PDF viewer files, and voice retry
+  recordings only. Drift contains metadata, never original binaries.
 - **Redis** — Celery broker/result backend and short-lived API caches.
 
 ### 3.5 External AI Providers
@@ -116,18 +130,20 @@ plus a cloud OCR and STT service.
 
 ### 4.1 Document Ingestion (Scenario A + B)
 ```
-1. App stores file locally and creates metadata record        → POST /documents
-2. App sends file bytes for one-time processing              → POST /documents/{id}/ingest
-3. API streams bytes to worker pipeline; no server file save
-4. Worker: OCR/STT → LLM structuring → create exactly one MedicalEvent + DocumentExplanation
-5. Worker updates document.status = processed only after the event exists
-6. App polls GET /documents/{id} until status = processed
-7. The new event appears on the timeline; explanation is available
+1. App creates metadata record                               → POST /documents
+2. App uploads PDF/image originals                           → POST /documents/{id}/ingest
+3. API validates signatures, scans in tmpfs, fingerprints per user, encrypts, and stores ciphertext
+4. API persists ordered assets and returns 202 only after Garage acknowledges durable storage
+5. Celery receives document/blob IDs only, decrypts in the worker, and runs OCR/LLM structuring
+6. Worker creates exactly one MedicalEvent + DocumentExplanation or marks processing failed
+7. A failed processing job preserves the original for POST /documents/{id}/retry-processing
+8. App removes only MedStory-owned capture temporaries and polls until terminal
 ```
 
 ### 4.2 Voice Capture (voice-first NFR)
 ```
-Record audio → save locally → transient ingest upload → STT → LLM structuring → one event
+Record audio → temporary encrypted server staging → STT → delete server object and local recording
+on success → LLM structuring → one event. A failed transcription keeps the local recording for retry.
 ```
 
 ### 4.3 Prepare for a Visit (Scenario D)
@@ -136,11 +152,12 @@ User presses refresh:
   enqueue summary task → LLM selects concise items from all active subject events
   → validate source event IDs → enrich provenance → store MedicalSummary version
 App keeps the previous summary visible while polling and reads GET /summary (latest)
-Source icon → one Event (or source-selection sheet) → local original at known asset or file start
+Source icon → one Event (or source-selection sheet) → authenticated online original
 ```
 The saved per-subject visit reason is passed as untrusted prioritization-only context. It cannot add
 medical facts or change the prompt contract. Failed generation leaves the prior current summary
-intact. Source links are in-app only; the backend never needs access to the original local bytes.
+intact. Source links fetch originals through the MedStory API; Flutter never receives Garage
+credentials, object addresses, or presigned URLs.
 One-based provenance positions address uploaded assets such as pages of a multi-image scan. Internal
 pages within one PDF are not separately represented in the MVP and open at the PDF/file start.
 
@@ -158,7 +175,7 @@ GET /timeline?cursor=...&types=...  → paginated chronological events (read fro
 | Auth | `djangorestframework-simplejwt` | Stateless JWT, mobile-friendly |
 | Async | Celery + Redis | Standard Django async task stack |
 | DB | PostgreSQL 16 | Relational + JSONB + full-text search |
-| Files | Streaming multipart ingestion in DRF | Backend processes bytes transiently; no file persistence |
+| Files | Garage 2.3 + AWS Encryption SDK framed encryption | Private self-hosted ciphertext storage with key commitment |
 | Config | `django-environ` / 12-factor env vars | Cloud-agnostic deployment |
 | Server | Gunicorn (or Uvicorn for ASGI) | Production WSGI/ASGI |
 | Docs | `drf-spectacular` (OpenAPI) | Auto-generated API schema |
@@ -171,7 +188,7 @@ go_router, dio, freezed, flutter_secure_storage, Drift.
 | Concern | Choice |
 |--------|--------|
 | Packaging | Docker images per service (api, worker, beat) |
-| Local dev | docker-compose (api, worker, postgres, redis) |
+| Local dev | docker-compose (api, worker, beat, postgres, redis, Garage, ClamAV, TLS proxy) |
 | Reverse proxy / TLS | Nginx (or managed LB) |
 | Prod orchestration | Cloud-agnostic containers (Compose → Kubernetes when needed) |
 | CI/CD | Build, test, lint, image build, deploy |
@@ -182,20 +199,22 @@ go_router, dio, freezed, flutter_secure_storage, Drift.
 Internet ──TLS──▶ Load Balancer / Nginx ──▶ [ Django API containers (N) ]
                                               │
                                               ├──▶ PostgreSQL (managed or container + backups)
-                                              ├──▶ Redis (broker/cache)
+                                              ├──▶ Redis (broker/cache; IDs only)
+                                              ├──▶ internal TLS proxy ──▶ Garage ciphertext volume
                                               └──▶ [ Celery worker containers (M) ] ──▶ AI APIs
                                                    [ Celery beat (1) for scheduled jobs ]
 ```
 
 - API and workers scale independently (workers scale with AI load).
 - A single Celery **beat** instance schedules periodic jobs (e.g. retry stuck documents).
-- Database backups preserve metadata/events. Raw document durability is owned by the user's
-  device storage lifecycle.
+- V1 deliberately uses one encrypted EU/EEA disk and no object backup. Loss of that server/disk can
+  permanently destroy every original. PostgreSQL backup policy does not restore object ciphertext.
 
 ### Environments
-- **dev** — docker-compose, local transient ingestion, mock/cheap AI provider.
+- **dev** — docker-compose private storage stack and mock AI providers.
 - **staging** — production-like, real AI providers, synthetic data only.
-- **production** — managed Postgres, real AI providers, no persistent server-side file storage.
+- **production** — dedicated EU/EEA host, encrypted volume, private Garage, ClamAV, and reviewed AI
+  subprocessors. Garage S3/admin/RPC ports are not internet-exposed.
 
 ## 7. Cross-Cutting Concerns
 
@@ -213,7 +232,7 @@ Internet ──TLS──▶ Load Balancer / Nginx ──▶ [ Django API contain
 |---|----------|-----|
 | 1 | Async AI pipeline (Celery) instead of inline | AI/OCR is slow & external; keep API responsive |
 | 2 | Provider-abstraction layer for AI | Avoid vendor lock-in; swap LLM/OCR/STT freely |
-| 3 | Device-local file ownership + transient backend ingestion | User keeps originals; backend stores metadata only |
+| 3 | Server-authoritative, MedStory-encrypted private originals | Cross-device access without exposing Garage or retaining device copies |
 | 4 | Unified `MedicalEvent` + typed JSONB attributes | One timeline model, flexible per event type |
 | 5 | Versioned `MedicalSummary` snapshots | Auditable, lets summary evolve over time |
 | 6 | JWT (stateless) auth | Simple, scalable, mobile-friendly |
@@ -224,7 +243,7 @@ Internet ──TLS──▶ Load Balancer / Nginx ──▶ [ Django API contain
 
 - Push notifications / WebSockets instead of polling.
 - On-device/self-hosted models for stronger privacy.
-- Field-level encryption / per-user encryption keys.
+- Hardware-backed or remote master-key management and redundant encrypted object backups.
 - Full-text & semantic (vector) search over history.
 - Web client (architecture already API-first).
 - Multi-subject households as a first-class feature.
