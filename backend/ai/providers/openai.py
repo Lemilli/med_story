@@ -2,6 +2,7 @@ import base64
 import copy
 import json
 import logging
+import re
 from io import BytesIO
 
 from django.conf import settings
@@ -41,8 +42,23 @@ Return event as null when the source cannot create a medical-history event."""
 
 OCR_SYSTEM_PROMPT = (
     "You extract readable text from medical documents for the user's private medical organizer. "
-    "Transcribe all visible text faithfully. Do not summarize, diagnose, or add information."
+    "Transcribe all visible text faithfully and identify the document's primary language. "
+    "Return the language as a lowercase ISO 639-1 code such as en, ru, or kk. "
+    "Do not summarize, diagnose, or add information."
 )
+
+OCR_RESPONSE_JSON_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "text": {"type": "string"},
+        "language": {
+            "type": "string",
+            "description": "Lowercase ISO 639-1 code for the document's primary language.",
+        },
+    },
+    "required": ["text", "language"],
+}
 
 logger = logging.getLogger(__name__)
 
@@ -143,12 +159,27 @@ class OpenAIOCRProvider:
                         "content": content,
                     },
                 ],
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "ocr_result",
+                        "schema": OCR_RESPONSE_JSON_SCHEMA,
+                        "strict": True,
+                    }
+                },
                 timeout=settings.AI_OPENAI_TIMEOUT_SECONDS,
             )
         except Exception as exc:
             raise _provider_error("OCR request", exc) from exc
 
-        return OCRResult(text=response.output_text.strip(), language=None)
+        try:
+            payload = json.loads(response.output_text)
+            text = payload["text"].strip()
+            language = _normalize_ocr_language(payload["language"])
+        except (AttributeError, json.JSONDecodeError, KeyError, TypeError) as exc:
+            raise OpenAIProviderError("OpenAI returned invalid OCR JSON.") from exc
+
+        return OCRResult(text=text, language=language)
 
 
 class OpenAISTTProvider:
@@ -207,6 +238,15 @@ def _openai_structured_output_schema(schema: dict) -> dict:
     openai_schema = copy.deepcopy(schema)
     _remove_unsupported_schema_keywords(openai_schema)
     return openai_schema
+
+
+def _normalize_ocr_language(value) -> str | None:
+    if not isinstance(value, str):
+        return None
+    language = value.strip().lower()
+    if not re.fullmatch(r"[a-z]{2}", language):
+        return None
+    return language
 
 
 def _remove_unsupported_schema_keywords(value):

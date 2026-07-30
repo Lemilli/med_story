@@ -21,10 +21,19 @@ class QuickNoteScreen extends ConsumerStatefulWidget {
 
 class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
   final _text = TextEditingController();
+  late final DocumentApi _documentApi;
+  late final VoiceCaptureController _voiceController;
   bool _transcribing = false;
   bool _transcriptionFailed = false;
   bool _submitting = false;
   String? _message;
+
+  @override
+  void initState() {
+    super.initState();
+    _documentApi = ref.read(documentApiProvider);
+    _voiceController = ref.read(voiceCaptureControllerProvider.notifier);
+  }
 
   @override
   void dispose() {
@@ -52,9 +61,7 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
       onPopInvokedWithResult: (didPop, _) async {
         if (!didPop && !busy) return;
         if (!didPop) return;
-        await ref
-            .read(voiceCaptureControllerProvider.notifier)
-            .discardRecording();
+        await _voiceController.discardRecording();
       },
       child: Scaffold(
         appBar: AppBar(
@@ -157,7 +164,7 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
       _message = null;
       _transcriptionFailed = false;
     });
-    await ref.read(voiceCaptureControllerProvider.notifier).startRecording();
+    await _voiceController.startRecording();
   }
 
   Future<void> _transcribe(VoiceCaptureState recording) async {
@@ -171,19 +178,19 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
     });
     try {
       final language = Localizations.localeOf(context).languageCode;
-      final transcript = await ref
-          .read(documentApiProvider)
-          .transcribeAudio(
-            filePath: path,
-            fileName: name,
-            mimeType: voiceCaptureMimeType,
-            language: language,
-          );
+      final transcript = await _documentApi.transcribeAudio(
+        filePath: path,
+        fileName: name,
+        mimeType: voiceCaptureMimeType,
+        language: language,
+      );
+      if (!mounted) {
+        await _voiceController.discardRecording();
+        return;
+      }
       final separator = _text.text.trim().isEmpty ? '' : '\n\n';
       _text.text = '${_text.text.trimRight()}$separator$transcript';
-      await ref
-          .read(voiceCaptureControllerProvider.notifier)
-          .discardRecording();
+      await _voiceController.discardRecording();
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -208,13 +215,11 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
       _message = null;
     });
     try {
-      final queued = await ref
-          .read(documentApiProvider)
-          .processNote(
-            text: text,
-            subjectId: subject?.selectedSubjectId,
-            language: Localizations.localeOf(context).languageCode,
-          );
+      final queued = await _documentApi.processNote(
+        text: text,
+        subjectId: subject?.selectedSubjectId,
+        language: Localizations.localeOf(context).languageCode,
+      );
       await _waitForResult(queued.id);
     } catch (_) {
       if (mounted) {
@@ -228,26 +233,30 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
   Future<void> _waitForResult(String id) async {
     while (mounted) {
       await Future<void>.delayed(const Duration(seconds: 1));
-      final document = await ref.read(documentApiProvider).getDocument(id);
+      if (!mounted) {
+        return;
+      }
+      final document = await _documentApi.getDocument(id);
+      if (!mounted) {
+        return;
+      }
       if (document.status == DocumentStatus.processing) continue;
       if (document.status == DocumentStatus.processed) {
         ref.invalidate(timelineControllerProvider);
-        if (mounted) Navigator.of(context).pop();
+        Navigator.of(context).pop();
         return;
       }
-      if (mounted) {
-        setState(
-          () => _message = document.errorMessage.isEmpty
-              ? context.l10n.audioNotMedicalMessage
-              : document.errorMessage,
-        );
-      }
+      setState(
+        () => _message = document.errorMessage.isEmpty
+            ? context.l10n.audioNotMedicalMessage
+            : document.errorMessage,
+      );
       return;
     }
   }
 
   Future<void> _discardAndClose() async {
-    await ref.read(voiceCaptureControllerProvider.notifier).discardRecording();
+    await _voiceController.discardRecording();
     if (mounted) Navigator.of(context).pop();
   }
 }

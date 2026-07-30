@@ -67,10 +67,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/notes/new',
         builder: (context, state) => const QuickNoteScreen(),
       ),
-      GoRoute(
-        path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
-      ),
+      GoRoute(path: '/settings', redirect: (_, _) => '/timeline/settings'),
       GoRoute(
         path: '/events/:id',
         builder: (context, state) =>
@@ -105,6 +102,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/timeline',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: TimelineScreen()),
+                routes: [
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, state) => const SettingsScreen(),
+                  ),
+                ],
               ),
             ],
           ),

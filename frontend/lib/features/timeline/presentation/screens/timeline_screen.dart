@@ -158,7 +158,7 @@ class _TimelineHeader extends StatelessWidget {
         ),
         IconButton(
           tooltip: context.l10n.navSettings,
-          onPressed: () => context.push('/settings'),
+          onPressed: () => context.push('/timeline/settings'),
           icon: const Icon(Icons.settings_outlined),
         ),
       ],
@@ -267,7 +267,7 @@ class _TimelineFilters extends StatelessWidget {
       showDragHandle: true,
       builder: (context) => _TimelineFilterSheet(initial: filters),
     );
-    if (selected != null) onChanged(selected);
+    if (selected != null && context.mounted) onChanged(selected);
   }
 }
 

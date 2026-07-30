@@ -22,10 +22,15 @@ class SummaryScreen extends ConsumerWidget {
       if (state == null) return;
       final message = _snackMessage(l10n, state);
       if (message == null) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-      );
-      ref.read(summaryControllerProvider.notifier).consumeActionMessages();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+        );
+        ref.read(summaryControllerProvider.notifier).consumeActionMessages();
+      });
     });
 
     return SafeArea(
@@ -295,12 +300,13 @@ class _VisitReasonRow extends ConsumerWidget {
     WidgetRef ref,
     String initial,
   ) async {
+    final controller = ref.read(summaryControllerProvider.notifier);
     final result = await showDialog<String>(
       context: context,
       builder: (_) => _VisitReasonDialog(initial: initial),
     );
     if (result != null) {
-      await ref.read(summaryControllerProvider.notifier).updateReason(result);
+      await controller.updateReason(result);
     }
   }
 }

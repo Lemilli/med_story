@@ -312,14 +312,23 @@ def process_document_ingestion(
         else:
             parts = file_parts or [(file_bytes, mime_type)]
             extracted_pages = []
-            extracted_language = ""
+            language_weights = {}
             for position, (part_bytes, part_mime) in enumerate(parts, start=1):
                 ocr_result = get_ocr_provider().extract_text(file_bytes=part_bytes, mime=part_mime)
-                if not extracted_language:
-                    extracted_language = ocr_result.language or ""
-                if ocr_result.text and ocr_result.text.strip():
-                    extracted_pages.append(f"--- Page {position} ---\n{ocr_result.text.strip()}")
+                page_text = (ocr_result.text or "").strip()
+                if page_text:
+                    extracted_pages.append(f"--- Page {position} ---\n{page_text}")
+                    page_language = (ocr_result.language or "").strip()
+                    if page_language:
+                        language_weights[page_language] = (
+                            language_weights.get(page_language, 0) + len(page_text)
+                        )
             extracted_text = "\n\n".join(extracted_pages)
+            extracted_language = (
+                max(language_weights, key=language_weights.get)
+                if language_weights
+                else ""
+            )
             event_source = MedicalEvent.Source.AI_DOCUMENT
             logger.info(
                 "Document ingestion phase=ocr_complete document_id=%s job_id=%s extracted_text_length=%s language=%s",

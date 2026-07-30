@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
@@ -24,14 +25,34 @@ class SettingsScreen extends ConsumerWidget {
       if (message == null) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-      );
-      ref.read(settingsControllerProvider.notifier).consumeActionMessages();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+        );
+        ref.read(settingsControllerProvider.notifier).consumeActionMessages();
+      });
     });
 
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: () {
+            final navigator = Navigator.of(context);
+            if (navigator.canPop()) {
+              navigator.pop();
+            } else {
+              context.go('/timeline');
+            }
+          },
+          icon: const Icon(Icons.arrow_back_rounded),
+        ),
+      ),
       body: SafeArea(
+        top: false,
         child: authState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, _) => _SettingsMessage(message: l10n.networkFailedMessage),
@@ -373,6 +394,9 @@ class _AccountActionsPanel extends ConsumerWidget {
             onPressed: state.isDeletingAccount
                 ? null
                 : () async {
+                    final controller = ref.read(
+                      settingsControllerProvider.notifier,
+                    );
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (context) => const _DeleteAccountDialog(),
@@ -380,9 +404,7 @@ class _AccountActionsPanel extends ConsumerWidget {
                     if (confirmed != true) {
                       return;
                     }
-                    await ref
-                        .read(settingsControllerProvider.notifier)
-                        .deleteAccount();
+                    await controller.deleteAccount();
                   },
           ),
         ],

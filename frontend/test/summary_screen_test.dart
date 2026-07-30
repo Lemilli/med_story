@@ -201,6 +201,36 @@ void main() {
     ).called(1);
     expect(find.text('Review new test results'), findsOneWidget);
   });
+
+  testWidgets('save failure shows feedback without mutating during build', (
+    tester,
+  ) async {
+    when(
+      () => summaryRepository.getCurrentSummary(subjectId: 'subject-1'),
+    ).thenAnswer((_) async => SummaryLoadResult.ready(_summary(version: 2)));
+    when(
+      () => visitPreparationApi.save('subject-1', any()),
+    ).thenThrow(StateError('save failed'));
+    await _pumpScreen(
+      tester,
+      subjectRepository,
+      summaryRepository,
+      visitPreparationApi,
+    );
+    await tester.pumpAndSettle();
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(SummaryScreen)),
+    )!;
+
+    await tester.tap(find.byTooltip(l10n.summaryVisitReasonEdit));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Review new test results');
+    await tester.tap(find.text(l10n.visitPrepSave));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.summaryVisitReasonSaveFailed), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<void> _pumpScreen(

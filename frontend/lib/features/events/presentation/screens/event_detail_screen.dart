@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:open_filex/open_filex.dart';
+import 'package:open_app_file/open_app_file.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -13,6 +13,7 @@ import '../../../../app/widgets/app_alert_dialog.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../documents/data/document_repository.dart';
 import '../../../documents/domain/medical_document.dart';
+import '../../data/original_asset_file_opener.dart';
 import '../../domain/medical_event.dart';
 import '../controllers/event_controllers.dart';
 import '../event_type_l10n.dart';
@@ -152,6 +153,7 @@ class _EventDetailBody extends ConsumerWidget {
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
+    final controller = ref.read(eventFormControllerProvider.notifier);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AppAlertDialog(
@@ -181,7 +183,7 @@ class _EventDetailBody extends ConsumerWidget {
     if (confirmed != true) {
       return;
     }
-    await ref.read(eventFormControllerProvider.notifier).delete(event.id);
+    await controller.delete(event.id);
     if (context.mounted) {
       context.go('/timeline');
     }
@@ -234,6 +236,8 @@ class _OriginalSourceScreen extends ConsumerStatefulWidget {
 class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
   late final PageController _pageController;
   late final Future<MedicalDocument?> _documentFuture;
+  late final DocumentRepository _documentRepository;
+  late final OriginalAssetFileOpener _originalAssetFileOpener;
   var _currentPage = 0;
   var _didApplyRequestedPage = false;
   var _sharing = false;
@@ -242,16 +246,18 @@ class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _documentRepository = ref.read(documentRepositoryProvider);
+    _originalAssetFileOpener = ref.read(originalAssetFileOpenerProvider);
     final documentId = widget.event.sourceDocumentId;
     _documentFuture = documentId == null
         ? Future.value(null)
-        : ref.read(documentRepositoryProvider).getDocument(documentId);
+        : _documentRepository.getDocument(documentId);
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    ref.read(documentRepositoryProvider).cleanupTemporaryOriginals();
+    _documentRepository.cleanupTemporaryOriginals();
     super.dispose();
   }
 
@@ -456,17 +462,27 @@ class _OriginalSourceScreenState extends ConsumerState<_OriginalSourceScreen> {
     DocumentAssetMetadata asset,
   ) async {
     try {
-      final path = await ref
-          .read(documentRepositoryProvider)
-          .downloadAssetToTemporaryFile(documentId: documentId, asset: asset);
-      await OpenFilex.open(path, type: asset.mimeType);
-    } on Object {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.eventOriginalUnavailable)),
-        );
+      final path = await _documentRepository.downloadAssetToTemporaryFile(
+        documentId: documentId,
+        asset: asset,
+      );
+      final result = await _originalAssetFileOpener.open(
+        path,
+        mimeType: asset.mimeType,
+      );
+      if (result.type != ResultType.done) {
+        _showOriginalUnavailable();
       }
+    } on Object {
+      _showOriginalUnavailable();
     }
+  }
+
+  void _showOriginalUnavailable() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.eventOriginalUnavailable)),
+    );
   }
 
   Future<void> _shareAssets(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:med_story/app/theme/app_theme.dart';
 import 'package:med_story/features/auth/data/auth_repository.dart';
 import 'package:med_story/features/auth/domain/auth_models.dart';
@@ -56,6 +57,46 @@ void main() {
     await tester.tap(find.text(l10n.settingsLanguageRussian));
     await tester.pumpAndSettle();
     verify(() => authRepository.updateLocale('ru')).called(1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('back action returns to timeline from a direct settings route', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/settings',
+      routes: [
+        GoRoute(
+          path: '/timeline',
+          builder: (_, _) => const Scaffold(body: Text('Timeline')),
+        ),
+        GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authRepositoryProvider.overrideWithValue(authRepository)],
+        child: MaterialApp.router(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final backTooltip = MaterialLocalizations.of(
+      tester.element(find.byType(SettingsScreen)),
+    ).backButtonTooltip;
+    await tester.tap(find.byTooltip(backTooltip));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Timeline'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('requires typed confirmation before account deletion', (
@@ -120,9 +161,7 @@ Future<void> _pumpScreen(
 ) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [
-        authRepositoryProvider.overrideWithValue(authRepository),
-      ],
+      overrides: [authRepositoryProvider.overrideWithValue(authRepository)],
       child: MaterialApp(
         theme: AppTheme.light(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,

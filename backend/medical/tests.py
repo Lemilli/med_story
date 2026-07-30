@@ -840,6 +840,51 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(event.event_type, MedicalEvent.EventType.EXAMINATION)
         self.assertEqual(event.attributes["measurements"][1]["label"], "Platelets")
 
+    @override_settings(
+        CELERY_TASK_ALWAYS_EAGER=True,
+        AI_OPENAI_API_KEY="test-key",
+        AI_OPENAI_OCR_MODEL="gpt-test-ocr",
+        AI_OCR_PROVIDER="openai",
+    )
+    def test_openai_ocr_detected_language_is_persisted_on_document(self):
+        document = self._create_document(
+            Document.DocumentType.LAB_RESULT,
+            mime_type="image/png",
+        )
+        payload = (TEST_ASSET_DIR / "olymp_blood_test.png").read_bytes()
+        fake_client = FakeOpenAIClient(
+            output_text=json.dumps(
+                {
+                    "text": (
+                        "Synthetic lab report. Date: 2026-05-12. "
+                        "C-reactive protein (CRP): 12 mg/L. Reference range: < 5 mg/L."
+                    ),
+                    "language": "en",
+                }
+            )
+        )
+
+        with patch(
+            "ai.providers.openai._build_client",
+            return_value=fake_client,
+        ):
+            response = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {
+                    "file": self._upload(
+                        "synthetic-lab.png",
+                        payload,
+                        "image/png",
+                    )
+                },
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.PROCESSED)
+        self.assertEqual(document.language, "en")
+
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_is_idempotent_for_processed_document(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
@@ -1823,6 +1868,47 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(response.data["event_count"], 1)
         self.assertIsNotNone(response.data["event_id"])
 
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_multi_page_upload_uses_text_weighted_primary_language(self):
+        document = self._create_document(Document.DocumentType.MEDICAL_RECORD)
+
+        class MixedLanguageOCRProvider:
+            results = {
+                b"blank-cover": OCRResult(text="  ", language="kk"),
+                b"english-cover": OCRResult(text="Lab report", language="en"),
+                b"russian-results": OCRResult(
+                    text="Результаты анализа: CRP 12 mg/L, референсное значение < 5 mg/L.",
+                    language="ru",
+                ),
+            }
+
+            def extract_text(self, *, file_bytes, mime):
+                return self.results[file_bytes]
+
+        with patch(
+            "medical.services.get_ocr_provider",
+            return_value=MixedLanguageOCRProvider(),
+        ):
+            response = self.client.post(
+                f"/api/v1/documents/{document.id}/ingest",
+                {
+                    "files": [
+                        self._upload("page-1.png", b"blank-cover", "image/png"),
+                        self._upload("page-2.png", b"english-cover", "image/png"),
+                        self._upload("page-3.png", b"russian-results", "image/png"),
+                    ]
+                },
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document.refresh_from_db()
+        self.assertEqual(document.status, Document.Status.PROCESSED)
+        self.assertEqual(document.language, "ru")
+        self.assertNotIn("--- Page 1 ---", document.extracted_text)
+        self.assertIn("--- Page 2 ---", document.extracted_text)
+        self.assertIn("--- Page 3 ---", document.extracted_text)
+
     def test_database_rejects_two_active_events_for_one_source(self):
         document = self._create_processed_document(extracted_text="CRP 12 mg/L")
         subject = document.subject
@@ -1948,15 +2034,27 @@ class AIProviderTests(SimpleTestCase):
         from ai.providers.openai import OpenAIOCRProvider
 
         payload = (TEST_ASSET_DIR / "olymp_blood_test.png").read_bytes()
-        fake_client = FakeOpenAIClient(output_text=" Extracted blood test text \n")
+        fake_client = FakeOpenAIClient(
+            output_text=json.dumps(
+                {"text": " Extracted blood test text \n", "language": " EN "}
+            )
+        )
 
         with patch("ai.providers.openai._build_client", return_value=fake_client):
             result = OpenAIOCRProvider().extract_text(file_bytes=payload, mime="image/png")
 
         self.assertEqual(result.text, "Extracted blood test text")
+        self.assertEqual(result.language, "en")
         call = fake_client.responses.calls[0]
         self.assertEqual(call["model"], "gpt-test-ocr")
         self.assertEqual(call["timeout"], 12)
+        self.assertEqual(call["text"]["format"]["type"], "json_schema")
+        self.assertEqual(call["text"]["format"]["name"], "ocr_result")
+        self.assertTrue(call["text"]["format"]["strict"])
+        self.assertEqual(
+            set(call["text"]["format"]["schema"]["required"]),
+            {"text", "language"},
+        )
 
         user_content = call["input"][1]["content"]
         image_part = next(part for part in user_content if part["type"] == "input_image")
@@ -1964,6 +2062,28 @@ class AIProviderTests(SimpleTestCase):
         self.assertTrue(image_part["image_url"].startswith(prefix))
         encoded_payload = image_part["image_url"][len(prefix):]
         self.assertEqual(base64.b64decode(encoded_payload), payload)
+
+    @override_settings(
+        AI_OPENAI_API_KEY="test-key",
+        AI_OPENAI_OCR_MODEL="gpt-test-ocr",
+    )
+    def test_openai_ocr_provider_discards_invalid_language_code(self):
+        from ai.providers.openai import OpenAIOCRProvider
+
+        fake_client = FakeOpenAIClient(
+            output_text=json.dumps(
+                {"text": "Extracted text", "language": "English"}
+            )
+        )
+
+        with patch("ai.providers.openai._build_client", return_value=fake_client):
+            result = OpenAIOCRProvider().extract_text(
+                file_bytes=b"synthetic image",
+                mime="image/png",
+            )
+
+        self.assertEqual(result.text, "Extracted text")
+        self.assertIsNone(result.language)
 
     @override_settings(
         AI_OPENAI_API_KEY="test-key",
