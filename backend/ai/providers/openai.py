@@ -95,6 +95,7 @@ class OpenAILLMProvider:
         try:
             response = self.client.responses.create(
                 model=model or self.model,
+                store=False,
                 input=[
                     {
                         "role": "system",
@@ -149,6 +150,7 @@ class OpenAIOCRProvider:
         try:
             response = self.client.responses.create(
                 model=self.model,
+                store=False,
                 input=[
                     {
                         "role": "system",

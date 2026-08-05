@@ -116,8 +116,9 @@ remain for deterministic local tests.
 
 ### Phase 6 — Privacy, Hardening & Launch Prep
 **Status:** Server-retained private originals, verified-email/privacy/consent flows, cost controls,
-production hardening, OVH deployment automation, API throttling, and CI dependency/secret scanning
-implemented; external legal/processor approval remains a real-data launch gate.
+production hardening, OVH deployment automation, API throttling, CI dependency/secret scanning,
+and founder-led processor/DPA review implemented; account-specific production evidence and the
+remaining launch checks are still required.
 **Goal:** GDPR flows, security checklist, store readiness.
 - Backend: private single-node Garage behind internal TLS, ClamAV fail-closed scanning, framed
   envelope encryption with key commitment, same-user keyed dedupe, 100 MiB demo quota,
@@ -126,14 +127,16 @@ implemented; external legal/processor approval remains a real-data launch gate.
 - Cost controls: 100 verified-account cap, registration/AI kill switches, one constrained worker,
   and atomic 10/user/day, 20/global/day, 150/global/month AI-unit limits. **Implemented.**
 - CI: blocking dependency and full-history secret scans plus weekly Dependabot updates.
-- Compliance launch gates: Garage AGPLv3 approval; EU/EEA hosting; external-AI DPA,
-  cross-border/no-training/minimal-retention review; sealed offline master-key recovery copy; and
-  explicit acceptance that the single disk/no object backup can permanently lose originals.
+- Compliance launch gates: Garage AGPLv3 approval; verified EU/EEA hosting order and account copies
+  of accepted provider terms; sealed offline master-key recovery copy; explicit acceptance of the
+  Standard Automated Backup's one daily point and approximately 24-hour loss window; and a passed
+  QEMU-assisted full synthetic restore before real registration is enabled.
 - Frontend: settings (delete account, locale), onboarding disclaimer ("organizer, not
   a doctor"), accessibility pass. **Implemented.**
 - Ops: hardened single-node OVH VPS Compose/Caddy runbook, one encrypted production disk, no
-  application-managed backup or recovery promise, OpenAI budget alerts, and the remaining external
-  launch checklist (`security-privacy.md` §14). **Repository implementation complete.**
+  application-managed backup, a Standard Automated Backup recovery drill, automated full
+  production-Compose smoke coverage, OpenAI budget alerts, and the remaining external launch
+  checklist (`security-privacy.md` §14). **Restore evidence remains a launch gate.**
 - **Exit:** account-erasure work; security checklist green; app store builds ready.
 
 This milestone is a breaking MVP reset. Migration `0016_private_original_storage` creates the new

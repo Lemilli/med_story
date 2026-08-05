@@ -2103,6 +2103,7 @@ class AIProviderTests(SimpleTestCase):
         self.assertEqual(result.language, "en")
         call = fake_client.responses.calls[0]
         self.assertEqual(call["model"], "gpt-test-ocr")
+        self.assertIs(call["store"], False)
         self.assertEqual(call["timeout"], 12)
         self.assertEqual(call["text"]["format"]["type"], "json_schema")
         self.assertEqual(call["text"]["format"]["name"], "ocr_result")
@@ -2448,6 +2449,7 @@ class AIProviderTests(SimpleTestCase):
         self.assertEqual(result["events"], [])
         call = fake_client.responses.calls[0]
         self.assertEqual(call["model"], "gpt-test-llm")
+        self.assertIs(call["store"], False)
         sent_schema = call["text"]["format"]["schema"]
         serialized_schema = json.dumps(sent_schema)
         self.assertNotIn('"format"', serialized_schema)

@@ -1,0 +1,19 @@
+# Resolver: pip-tools==7.5.3
+# Regenerate from backend/ with:
+# python -m piptools compile --resolver=backtracking --strip-extras --output-file=requirements.txt requirements.in
+
+Django==5.2.16
+djangorestframework==3.16.1
+djangorestframework-simplejwt>=5.5.1,<5.6
+drf-spectacular>=0.27,<0.28
+django-environ>=0.11,<0.12
+django-cors-headers>=4.4,<4.5
+psycopg[binary]>=3.2,<3.3
+celery>=5.4,<5.5
+redis>=5.0,<5.1
+argon2-cffi>=23.1,<24.0
+gunicorn>=22.0,<23.0
+openai>=1.95,<2.0
+reportlab>=4.2,<4.3
+boto3>=1.39,<2.0
+aws-encryption-sdk>=4.0,<5.0

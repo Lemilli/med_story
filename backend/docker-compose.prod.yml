@@ -1,3 +1,52 @@
+x-app-environment: &app_environment
+  DEBUG: "${DEBUG:?DEBUG is required}"
+  SECRET_KEY: "${SECRET_KEY:?SECRET_KEY is required}"
+  ALLOWED_HOSTS: "${ALLOWED_HOSTS:?ALLOWED_HOSTS is required}"
+  CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-}"
+  CSRF_TRUSTED_ORIGINS: "${CSRF_TRUSTED_ORIGINS:?CSRF_TRUSTED_ORIGINS is required}"
+  ENABLE_ADMIN: "${ENABLE_ADMIN:-False}"
+  ENABLE_API_DOCS: "${ENABLE_API_DOCS:-False}"
+  PUBLIC_API_BASE_URL: "${PUBLIC_API_BASE_URL:?PUBLIC_API_BASE_URL is required}"
+  PRIVACY_NOTICE_VERSION: "${PRIVACY_NOTICE_VERSION:?PRIVACY_NOTICE_VERSION is required}"
+  EMAIL_BACKEND: "${EMAIL_BACKEND:?EMAIL_BACKEND is required}"
+  EMAIL_HOST: "${EMAIL_HOST:-}"
+  EMAIL_PORT: "${EMAIL_PORT:-587}"
+  EMAIL_USE_TLS: "${EMAIL_USE_TLS:-True}"
+  EMAIL_HOST_USER: "${EMAIL_HOST_USER:-}"
+  DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL:?DEFAULT_FROM_EMAIL is required}"
+  EMAIL_CHALLENGE_TTL_SECONDS: "${EMAIL_CHALLENGE_TTL_SECONDS:-900}"
+  EMAIL_CHALLENGE_MAX_ATTEMPTS: "${EMAIL_CHALLENGE_MAX_ATTEMPTS:-5}"
+  DEMO_MAX_VERIFIED_USERS: "${DEMO_MAX_VERIFIED_USERS:-100}"
+  REGISTRATION_ENABLED: "${REGISTRATION_ENABLED:-False}"
+  DATABASE_URL: "${DATABASE_URL:?DATABASE_URL is required}"
+  CELERY_BROKER_URL: "${CELERY_BROKER_URL:?CELERY_BROKER_URL is required}"
+  CELERY_RESULT_BACKEND: "${CELERY_RESULT_BACKEND:?CELERY_RESULT_BACKEND is required}"
+  THROTTLE_CACHE_URL: "${THROTTLE_CACHE_URL:?THROTTLE_CACHE_URL is required}"
+  THROTTLE_TRUSTED_PROXY_COUNT: "${THROTTLE_TRUSTED_PROXY_COUNT:-1}"
+  AI_LLM_PROVIDER: "${AI_LLM_PROVIDER:-mock}"
+  AI_OCR_PROVIDER: "${AI_OCR_PROVIDER:-mock}"
+  AI_STT_PROVIDER: "${AI_STT_PROVIDER:-mock}"
+  AI_OPENAI_MODEL: "${AI_OPENAI_MODEL:-gpt-5.4-nano}"
+  AI_OPENAI_SUMMARY_MODEL: "${AI_OPENAI_SUMMARY_MODEL:-gpt-5.4-mini}"
+  AI_OPENAI_OCR_MODEL: "${AI_OPENAI_OCR_MODEL:-gpt-5.4-nano}"
+  AI_OPENAI_STT_MODEL: "${AI_OPENAI_STT_MODEL:-gpt-4o-mini-transcribe}"
+  AI_OPENAI_TIMEOUT_SECONDS: "${AI_OPENAI_TIMEOUT_SECONDS:-60}"
+  AI_ENABLED: "${AI_ENABLED:-True}"
+  AI_USER_DAILY_UNITS: "${AI_USER_DAILY_UNITS:-10}"
+  AI_GLOBAL_DAILY_UNITS: "${AI_GLOBAL_DAILY_UNITS:-20}"
+  AI_GLOBAL_MONTHLY_UNITS: "${AI_GLOBAL_MONTHLY_UNITS:-150}"
+  ORIGINAL_STORAGE_BACKEND: "${ORIGINAL_STORAGE_BACKEND:-s3}"
+  ORIGINAL_STORAGE_REQUIRE_S3: "${ORIGINAL_STORAGE_REQUIRE_S3:-True}"
+  ORIGINAL_STORAGE_ENDPOINT: "${ORIGINAL_STORAGE_ENDPOINT:-https://garage-proxy}"
+  ORIGINAL_STORAGE_REGION: "${ORIGINAL_STORAGE_REGION:-medstory}"
+  ORIGINAL_STORAGE_BUCKET: "${ORIGINAL_STORAGE_BUCKET:-medstory-originals}"
+  ORIGINAL_STORAGE_VERIFY_TLS: "${ORIGINAL_STORAGE_VERIFY_TLS:-True}"
+  ORIGINAL_MASTER_KEY_VERSION: "${ORIGINAL_MASTER_KEY_VERSION:-1}"
+  ORIGINAL_STRICT_FILE_VALIDATION: "${ORIGINAL_STRICT_FILE_VALIDATION:-True}"
+  ORIGINAL_MALWARE_SCANNER: "${ORIGINAL_MALWARE_SCANNER:-clamav}"
+  ORIGINAL_STORAGE_QUOTA_BYTES: "${ORIGINAL_STORAGE_QUOTA_BYTES:-104857600}"
+  CLAMAV_HOST: "${CLAMAV_HOST:-clamav}"
+
 services:
   api:
     build: .
@@ -12,7 +61,6 @@ services:
       --max-requests 500
       --max-requests-jitter 50
       --worker-tmp-dir /dev/shm
-      --access-logfile -
       --error-logfile -
     restart: unless-stopped
     init: true
@@ -29,9 +77,10 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    env_file:
-      - .env.production
     environment:
+      <<: *app_environment
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD:-}"
+      AI_OPENAI_API_KEY: "${AI_OPENAI_API_KEY:-}"
       ORIGINAL_STORAGE_SERVICE_ROLE: api
       ORIGINAL_STORAGE_UPLOAD_ACCESS_KEY_FILE: /run/secrets/garage_upload_access_key
       ORIGINAL_STORAGE_UPLOAD_SECRET_KEY_FILE: /run/secrets/garage_upload_secret_key
@@ -55,7 +104,7 @@ services:
       - garage_deletion_secret_key
       - storage_ca_certificate
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${API_HOST_PORT:-8000}:8000"
     healthcheck:
       test:
         - CMD
@@ -72,7 +121,7 @@ services:
       redis:
         condition: service_healthy
       garage-proxy:
-        condition: service_started
+        condition: service_healthy
       clamav:
         condition: service_started
     networks:
@@ -98,9 +147,9 @@ services:
     cpus: 1.5
     pids_limit: 128
     logging: *service_logging
-    env_file:
-      - .env.production
     environment:
+      <<: *app_environment
+      AI_OPENAI_API_KEY: "${AI_OPENAI_API_KEY:-}"
       ORIGINAL_STORAGE_SERVICE_ROLE: worker
       ORIGINAL_STORAGE_PROCESSING_ACCESS_KEY_FILE: /run/secrets/garage_processing_access_key
       ORIGINAL_STORAGE_PROCESSING_SECRET_KEY_FILE: /run/secrets/garage_processing_secret_key
@@ -125,7 +174,7 @@ services:
       redis:
         condition: service_healthy
       garage-proxy:
-        condition: service_started
+        condition: service_healthy
       clamav:
         condition: service_started
     networks:
@@ -149,8 +198,8 @@ services:
     cpus: 0.25
     pids_limit: 64
     logging: *service_logging
-    env_file:
-      - .env.production
+    environment:
+      <<: *app_environment
     tmpfs:
       - /var/run/celery:size=16777216,mode=0700,uid=10001,gid=10001
       - /tmp:size=33554432,mode=1777
@@ -159,6 +208,30 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  migrate:
+    build: .
+    command: python manage.py migrate --noinput --skip-checks
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    logging: *service_logging
+    environment:
+      <<: *app_environment
+      DATABASE_URL: "${MIGRATION_DATABASE_URL:?MIGRATION_DATABASE_URL is required}"
+    tmpfs:
+      - /tmp:size=67108864,mode=1777
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - operations
 
   garage:
     build:
@@ -204,8 +277,9 @@ services:
       - storage_internal
 
   garage-proxy:
-    image: nginx:1.29-alpine
+    image: nginx:1.29.8-alpine3.23
     restart: unless-stopped
+    user: "101:101"
     read_only: true
     security_opt:
       - no-new-privileges:true
@@ -218,9 +292,9 @@ services:
     pids_limit: 64
     logging: *service_logging
     tmpfs:
-      - /var/cache/nginx:size=16777216,mode=0755
-      - /var/run:size=16777216,mode=0755
-      - /tmp:size=16777216,mode=1777
+      - /var/cache/nginx:size=16777216,mode=0750,uid=101,gid=101
+      - /var/run:size=16777216,mode=0750,uid=101,gid=101
+      - /tmp:size=16777216,mode=1777,uid=101,gid=101
     volumes:
       - ./garage-proxy.conf:/etc/nginx/nginx.conf:ro
     secrets:
@@ -228,11 +302,19 @@ services:
       - storage_tls_private_key
     depends_on:
       - garage
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget --quiet --spider --no-check-certificate https://127.0.0.1/healthz
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - storage_internal
 
   clamav:
-    image: clamav/clamav-debian:1.5_base
+    image: clamav/clamav-debian:1.5.3_base
     restart: unless-stopped
     init: true
     mem_limit: 3g
@@ -246,7 +328,7 @@ services:
       - storage_internal
 
   db:
-    image: postgres:16
+    image: postgres:16.14-trixie
     restart: unless-stopped
     init: true
     security_opt:
@@ -257,10 +339,13 @@ services:
     logging: *service_logging
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-medstory}
-      POSTGRES_USER: ${POSTGRES_USER:-medstory}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: medstory_admin
+      POSTGRES_PASSWORD: "${POSTGRES_ADMIN_PASSWORD:?POSTGRES_ADMIN_PASSWORD is required}"
+      POSTGRES_MIGRATOR_PASSWORD: "${POSTGRES_MIGRATOR_PASSWORD:?POSTGRES_MIGRATOR_PASSWORD is required}"
+      POSTGRES_APP_PASSWORD: "${POSTGRES_APP_PASSWORD:?POSTGRES_APP_PASSWORD is required}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./deploy/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-medstory-roles.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -268,7 +353,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.10-alpine3.21
     restart: unless-stopped
     init: true
     security_opt:

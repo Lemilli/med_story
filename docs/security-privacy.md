@@ -8,8 +8,9 @@ MedStory stores sensitive personal health data. Per the BRD's **Privacy** and **
 non-functional requirements, the user must feel confident their information stays under their
 control. This document defines the controls to achieve that.
 
-> Note: This is engineering guidance, not legal advice. A qualified DPO/legal review is
-> required before production launch with real user data.
+> Note: This is engineering guidance, not legal advice. The operator owns the production decision
+> and should seek jurisdiction-specific specialist advice when a material risk cannot be understood
+> or accepted; outside legal sign-off is not an engineering launch prerequisite.
 
 ## 1. Data Classification
 
@@ -63,14 +64,17 @@ control. This document defines the controls to achieve that.
 - ClamAV exposes no host port. It joins the application network for outbound signature refreshes
   and the private storage network for API/worker scan requests.
 - Upload, authenticated user read, processing read, and deletion use independent bucket-scoped
-  credentials. Flutter receives no Garage credential, address, or presigned URL.
+  credentials. Garage 2.3 bucket ACLs expose `read`, `write`, and `owner` rather than action-level
+  policies, so upload and deletion are separately rotated identities but both necessarily have the
+  bucket `write` capability (put/delete); read-only identities cannot put or delete. Flutter
+  receives no Garage credential, address, or presigned URL.
 - Ciphertext keys are random opaque identifiers. Garage sees no user IDs, filenames, MIME types,
   medical terms, plaintext hashes, or health metadata.
 - Plaintext staging uses a size-limited `tmpfs`. PDF/JPEG/PNG/HEIC/HEIF magic bytes must match the
   declared MIME type. Self-hosted ClamAV is fail-closed: positive files are rejected and scanner
   outages return `503`.
 - The logical document limit is 25 MB and distinct per-account originals are limited to 100 MiB in
-  the low-cost demonstration.
+  the low-cost single-VPS launch.
   Keyed fingerprints enable reference-counted deduplication only within one account.
 - Django scopes both document and asset IDs to `request.user`, decrypts and streams the response,
   and sets `private, no-store`/`nosniff`. Ciphertext tampering, context mismatch, or missing keys
@@ -170,7 +174,7 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 - Least-privilege IAM for DB/secret access; per-service credentials.
 - Production access restricted, MFA-protected, and logged.
 
-### Low-cost public demonstration
+### Low-cost single-VPS production deployment
 
 The repository includes a hardened, single-node OVHcloud deployment. Django fails closed on an
 unsafe production secret, wildcard/placeholder hosts, non-PostgreSQL database, missing Redis
@@ -179,11 +183,13 @@ logs, least-privilege storage credentials, read-only filesystems where supported
 capabilities, and a non-root API/worker/beat user. Only Caddy is public; `/healthz` is liveness and
 `/readyz` checks required dependencies without naming the failed dependency to clients.
 
-There is intentionally no application-managed backup or restore promise. Loss of the VPS/disk may
-permanently destroy both structured records and originals. Any infrastructure-provider snapshot is
-incidental, is not a recovery mechanism, and may retain deleted bytes for the provider's retention
-window. Users must see and accept the current versioned notice before registration, while AI
-processing remains a separate optional consent.
+There is no application-managed database/object backup. The selected OVHcloud Standard Automated
+Backup provides one daily full-VPS restore point on a 24-hour rotation, so up to approximately 24
+hours of changes may be lost and no older point is available. It is not treated as a recovery
+guarantee until the QEMU guest agent is active and a full synthetic restore has recovered both a
+PostgreSQL marker and an application-encrypted Garage object. Backup copies may retain deleted bytes
+until rotation. Users must see and accept the current versioned notice before registration, while
+AI processing remains a separate optional consent.
 
 ## 13. Compliance Posture & Roadmap
 
@@ -203,8 +209,11 @@ processing remains a separate optional consent.
 - [x] Document/account cryptographic-erasure and durable deletion-job flows covered by tests.
 - [ ] No health data in logs; PII scrubbing on.
 - [ ] Garage AGPLv3 use approved for proprietary MedStory.
-- [ ] EU/EEA hosting and external-AI DPA/transfer/no-training/minimal-retention review approved.
+- [ ] Ordered production hosting is verified as EU/EEA and its account contract evidence retained.
+- [x] Processor DPA/transfer/no-training/retention self-review approved and recorded.
 - [ ] Offline sealed recovery copy of the master key verified.
-- [x] Single-disk/no-application-backup permanent-loss notice and explicit signup acceptance implemented.
+- [x] One-daily-point/no-application-backup data-loss notice and explicit signup acceptance implemented.
+- [ ] QEMU guest agent verified; full OVHcloud restore drill recovers PostgreSQL, encrypted Garage,
+  readiness, decryption, and Celery before registration is enabled.
 - [x] Dependency + secret scanning in CI; no secrets in repo.
 - [ ] Incident response runbook in place.

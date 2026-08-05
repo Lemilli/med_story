@@ -34,6 +34,22 @@ Run tests:
 docker compose run --rm api python manage.py test
 ```
 
+## Dependency lock
+
+`requirements.in` is the maintainable list of direct Python dependencies. `requirements.txt` is
+the complete, exact, hash-free lock installed by Docker and CI. Regenerate it with Python 3.12.13
+and the pinned resolver version, then run the backend suite and dependency audit before committing
+the result:
+
+```bash
+python -m pip install pip-tools==7.5.3 pip-audit==2.10.1
+python -m piptools compile --resolver=backtracking --strip-extras \
+  --output-file=requirements.txt requirements.in
+python -m pip install --requirement requirements.txt
+python -m pip check
+python -m pip_audit --requirement requirements.txt --no-deps --disable-pip
+```
+
 Useful URLs:
 
 - API: `http://localhost:8000/api/v1/`
@@ -66,7 +82,8 @@ need the same AI settings because ingestion is queued from the API and processed
 Use the hardened production Compose file and the complete
 [`deploy/ovh/README.md`](./deploy/ovh/README.md) runbook. It covers the selected low-cost server,
 domain/TLS/email setup, host firewall and SSH hardening, secret provisioning, deployment,
-verification, updates, rollback, cost controls, and the intentional no-recovery posture.
+verification, updates, rollback, cost controls, the OVHcloud Standard Automated Backup limits, and
+the mandatory pre-registration restore drill.
 
 The short path after the VPS prerequisites are complete is:
 
@@ -80,4 +97,4 @@ sudoedit .env.production
 Do not run the development Compose file publicly. Do not expose PostgreSQL, Redis, Garage, ClamAV,
 or port 8000. The demonstration is a single-node environment with no application-managed backup or
 availability guarantee; accepting real health data additionally requires the documented legal and
-subprocessor approvals.
+subprocessor approvals and a successful full OVHcloud restore drill.
