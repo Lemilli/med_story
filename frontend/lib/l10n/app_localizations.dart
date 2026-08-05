@@ -644,6 +644,84 @@ abstract class AppLocalizations {
   /// **'MedStory helps organize and explain your records. It does not diagnose, recommend treatment, or replace care from a clinician.'**
   String get settingsOrganizerNoticeDescription;
 
+  /// No description provided for @settingsAiSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI processing'**
+  String get settingsAiSectionTitle;
+
+  /// No description provided for @settingsAiConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow AI-assisted organization'**
+  String get settingsAiConsentTitle;
+
+  /// No description provided for @settingsAiConsentDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, MedStory can send the minimum necessary content to its configured AI provider to organize and explain it. Turn this off at any time to stop future AI processing. Manual timeline features remain available.'**
+  String get settingsAiConsentDescription;
+
+  /// No description provided for @settingsAiConsentUpdatedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'AI processing preference updated.'**
+  String get settingsAiConsentUpdatedMessage;
+
+  /// No description provided for @settingsAiConsentUpdateFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not update your AI processing preference. Try again.'**
+  String get settingsAiConsentUpdateFailedMessage;
+
+  /// No description provided for @settingsConsentLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your AI processing preference.'**
+  String get settingsConsentLoadFailedMessage;
+
+  /// No description provided for @settingsUsageSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo limits'**
+  String get settingsUsageSectionTitle;
+
+  /// No description provided for @settingsUsageLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load current usage.'**
+  String get settingsUsageLoadFailedMessage;
+
+  /// No description provided for @settingsAiUnitsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI uses remaining today'**
+  String get settingsAiUnitsLabel;
+
+  /// No description provided for @settingsAiUnitsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{None remaining} =1{1 use} other{{count} uses}}'**
+  String settingsAiUnitsValue(int count);
+
+  /// No description provided for @settingsStorageUsageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Original file storage'**
+  String get settingsStorageUsageLabel;
+
+  /// No description provided for @settingsStorageUsageValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} MB of {limit} MB used'**
+  String settingsStorageUsageValue(int used, int limit);
+
+  /// No description provided for @settingsUsageUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available'**
+  String get settingsUsageUnavailable;
+
   /// No description provided for @captureHeadline.
   ///
   /// In en, this message translates to:
@@ -1501,6 +1579,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We could not create your account. Check your details and try again.'**
   String get authRegisterFailedMessage;
+
+  /// No description provided for @authDemoCapacityReachedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This demo is currently full. Please try again later.'**
+  String get authDemoCapacityReachedMessage;
+
+  /// No description provided for @authPrivacyConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'I accept the privacy notice'**
+  String get authPrivacyConsentTitle;
+
+  /// No description provided for @authPrivacyConsentDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Required. This explains how the demo stores, processes, and deletes your medical information.'**
+  String get authPrivacyConsentDescription;
+
+  /// No description provided for @authPrivacyConsentValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept the privacy notice to create an account.'**
+  String get authPrivacyConsentValidation;
+
+  /// No description provided for @authPrivacyDetailsShowAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the privacy notice'**
+  String get authPrivacyDetailsShowAction;
+
+  /// No description provided for @authPrivacyDetailsHideAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide the privacy notice'**
+  String get authPrivacyDetailsHideAction;
+
+  /// No description provided for @authPrivacyDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy notice · 5 August 2026'**
+  String get authPrivacyDetailsTitle;
+
+  /// No description provided for @authPrivacyDetailsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'MedStory is a demonstration service, not medical advice. Your information is kept until you delete it or the demo infrastructure is lost; recovery is not guaranteed. Infrastructure-provider snapshots may retain deleted bytes temporarily. When you enable AI processing, the minimum necessary content is sent to the configured AI provider. You can revoke AI processing later and can delete your account and stored data in Settings.'**
+  String get authPrivacyDetailsMessage;
+
+  /// No description provided for @authAiConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow AI processing'**
+  String get authAiConsentTitle;
+
+  /// No description provided for @authAiConsentDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional and off by default. AI can organize and explain content, but does not diagnose or recommend treatment. You can still use manual features without it.'**
+  String get authAiConsentDescription;
+
+  /// No description provided for @authForgotPasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get authForgotPasswordAction;
+
+  /// No description provided for @authVerifyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email'**
+  String get authVerifyTitle;
+
+  /// No description provided for @authVerifySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the six-digit code sent to {email}. It expires in 15 minutes.'**
+  String authVerifySubtitle(String email);
+
+  /// No description provided for @authVerificationCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code'**
+  String get authVerificationCodeLabel;
+
+  /// No description provided for @authVerificationCodeHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Six digits'**
+  String get authVerificationCodeHelper;
+
+  /// No description provided for @authVerificationCodeValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the six-digit code.'**
+  String get authVerificationCodeValidation;
+
+  /// No description provided for @authVerifyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify email'**
+  String get authVerifyAction;
+
+  /// No description provided for @authResendCodeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a new code'**
+  String get authResendCodeAction;
+
+  /// No description provided for @authResendingCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending code…'**
+  String get authResendingCode;
+
+  /// No description provided for @authCodeResentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'A new code has been sent. Only the newest code will work.'**
+  String get authCodeResentMessage;
+
+  /// No description provided for @authVerificationInvalidMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'That code is incorrect or has expired. Check the code or request a new one.'**
+  String get authVerificationInvalidMessage;
+
+  /// No description provided for @authTooManyAttemptsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a while before trying again.'**
+  String get authTooManyAttemptsMessage;
+
+  /// No description provided for @authBackToLoginAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to login'**
+  String get authBackToLoginAction;
+
+  /// No description provided for @authResetPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset your password'**
+  String get authResetPasswordTitle;
+
+  /// No description provided for @authResetPasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your account email. If an account exists, we’ll send a six-digit reset code.'**
+  String get authResetPasswordSubtitle;
+
+  /// No description provided for @authResetCodeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code sent to {email}, then choose a new password.'**
+  String authResetCodeSubtitle(String email);
+
+  /// No description provided for @authSendResetCodeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Send reset code'**
+  String get authSendResetCodeAction;
+
+  /// No description provided for @authNewPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get authNewPasswordLabel;
+
+  /// No description provided for @authResetPasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Set new password'**
+  String get authResetPasswordAction;
+
+  /// No description provided for @authResetCompleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated'**
+  String get authResetCompleteTitle;
+
+  /// No description provided for @authResetCompleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You can now log in with your new password.'**
+  String get authResetCompleteMessage;
+
+  /// No description provided for @authResetFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not reset your password. Check the code and try again.'**
+  String get authResetFailedMessage;
 
   /// No description provided for @networkFailedMessage.
   ///

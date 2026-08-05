@@ -1,13 +1,13 @@
 import json
 import logging
-from datetime import date
+from datetime import date, datetime, time, timedelta
 from io import BytesIO
 from textwrap import wrap
 from xml.sax.saxutils import escape
 
 from django.conf import settings
-from django.db.models import Max
-from django.db import transaction
+from django.db.models import F, Max
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from ai.providers.factory import get_llm_provider, get_ocr_provider, get_stt_provider
@@ -21,8 +21,11 @@ from ai.schemas import (
     validate_event_extraction,
     validate_medical_summary,
 )
+from config.client_ip import get_client_ip
 from medical.models import (
     AuditLog,
+    AIQuotaBucket,
+    AIQuotaReservation,
     Document,
     EventRevision,
     MedicalEvent,
@@ -32,6 +35,7 @@ from medical.models import (
     VisitPreparation,
 )
 from medical.summary_content import normalize_summary_content
+from users.services import has_ai_consent
 
 
 STRUCTURING_SYSTEM_PROMPT = (
@@ -150,6 +154,91 @@ Within every section:
 Do not give medical advice, interpret risk, recommend actions, or draw conclusions beyond the events."""
 
 logger = logging.getLogger(__name__)
+
+
+class AIUnavailableError(ValueError):
+    def __init__(self, code, reset_at=None):
+        self.code = code
+        self.reset_at = reset_at
+        super().__init__(code)
+
+
+def _quota_periods(now):
+    today = now.date()
+    month = today.replace(day=1)
+    next_day = datetime.combine(today + timedelta(days=1), time.min, tzinfo=timezone.get_current_timezone())
+    if month.month == 12:
+        next_month_date = month.replace(year=month.year + 1, month=1)
+    else:
+        next_month_date = month.replace(month=month.month + 1)
+    next_month = datetime.combine(next_month_date, time.min, tzinfo=timezone.get_current_timezone())
+    return today, month, next_day, next_month
+
+
+def reserve_ai_quota(*, user, operation, units=1):
+    if not getattr(settings, "AI_ENABLED", True):
+        raise AIUnavailableError("ai_disabled")
+    if not has_ai_consent(user):
+        raise AIUnavailableError("ai_consent_required")
+    if units < 1:
+        raise ValueError("AI quota units must be positive.")
+
+    now = timezone.now()
+    today, month, next_day, next_month = _quota_periods(now)
+    limits = (
+        (AIQuotaBucket.Scope.USER_DAY, user, today, getattr(settings, "AI_USER_DAILY_UNITS", 10), next_day),
+        (AIQuotaBucket.Scope.GLOBAL_DAY, None, today, getattr(settings, "AI_GLOBAL_DAILY_UNITS", 20), next_day),
+        (AIQuotaBucket.Scope.GLOBAL_MONTH, None, month, getattr(settings, "AI_GLOBAL_MONTHLY_UNITS", 150), next_month),
+    )
+    with transaction.atomic():
+        for scope, bucket_user, period_start, limit, reset_at in limits:
+            try:
+                with transaction.atomic():
+                    bucket, _ = AIQuotaBucket.objects.get_or_create(
+                        scope=scope,
+                        user=bucket_user,
+                        period_start=period_start,
+                        defaults={"units_used": 0},
+                    )
+            except IntegrityError:
+                bucket = AIQuotaBucket.objects.get(
+                    scope=scope,
+                    user=bucket_user,
+                    period_start=period_start,
+                )
+            updated = AIQuotaBucket.objects.filter(
+                id=bucket.id,
+                units_used__lte=max(0, limit - units),
+            ).update(units_used=F("units_used") + units)
+            if not updated:
+                raise AIUnavailableError("ai_quota_exceeded", reset_at=reset_at)
+        return AIQuotaReservation.objects.create(user=user, operation=operation, units=units)
+
+
+def get_ai_usage(user):
+    now = timezone.now()
+    today, month, next_day, next_month = _quota_periods(now)
+    user_used = AIQuotaBucket.objects.filter(
+        scope=AIQuotaBucket.Scope.USER_DAY,
+        user=user,
+        period_start=today,
+    ).values_list("units_used", flat=True).first() or 0
+    global_day_used = AIQuotaBucket.objects.filter(
+        scope=AIQuotaBucket.Scope.GLOBAL_DAY,
+        user__isnull=True,
+        period_start=today,
+    ).values_list("units_used", flat=True).first() or 0
+    global_month_used = AIQuotaBucket.objects.filter(
+        scope=AIQuotaBucket.Scope.GLOBAL_MONTH,
+        user__isnull=True,
+        period_start=month,
+    ).values_list("units_used", flat=True).first() or 0
+    return {
+        "enabled": getattr(settings, "AI_ENABLED", True),
+        "user_daily": {"used": user_used, "limit": getattr(settings, "AI_USER_DAILY_UNITS", 10), "reset_at": next_day},
+        "global_daily": {"used": global_day_used, "limit": getattr(settings, "AI_GLOBAL_DAILY_UNITS", 20), "reset_at": next_day},
+        "global_monthly": {"used": global_month_used, "limit": getattr(settings, "AI_GLOBAL_MONTHLY_UNITS", 150), "reset_at": next_month},
+    }
 
 
 class DocumentRejectionError(ValueError):
@@ -688,13 +777,6 @@ def log_audit_event(*, user, action, request=None, metadata=None):
         metadata=metadata or {},
         ip_address=get_client_ip(request) if request is not None else None,
     )
-
-
-def get_client_ip(request):
-    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "") if request is not None else ""
-    if forwarded_for:
-        return forwarded_for.split(",", 1)[0].strip() or None
-    return request.META.get("REMOTE_ADDR") if request is not None else None
 
 
 def _build_document_explanation(*, document, extracted_text, language):

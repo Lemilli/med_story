@@ -28,6 +28,10 @@ control. This document defines the controls to achieve that.
 - Refresh-token **rotation + blacklist** on logout/compromise.
 - Tokens stored client-side only in **secure enclave** (Keychain/Keystore).
 - Password reset via single-use, expiring tokens; responses avoid email enumeration.
+- Public registration creates an inactive account. Six-digit email verification/reset challenges
+  expire after 15 minutes, allow five attempts, invalidate on resend/use, and are persisted only as
+  HMAC-SHA256 digests keyed by the deployment secret and challenge UUID. Unverified accounts are
+  removed after 24 hours.
 
 ## 3. Authorization & Tenant Isolation
 
@@ -65,7 +69,8 @@ control. This document defines the controls to achieve that.
 - Plaintext staging uses a size-limited `tmpfs`. PDF/JPEG/PNG/HEIC/HEIF magic bytes must match the
   declared MIME type. Self-hosted ClamAV is fail-closed: positive files are rejected and scanner
   outages return `503`.
-- The logical document limit is 25 MB and distinct per-account originals are limited to 2 GB.
+- The logical document limit is 25 MB and distinct per-account originals are limited to 100 MiB in
+  the low-cost demonstration.
   Keyed fingerprints enable reference-counted deduplication only within one account.
 - Django scopes both document and asset IDs to `request.user`, decrypts and streams the response,
   and sets `private, no-store`/`nosniff`. Ciphertext tampering, context mismatch, or missing keys
@@ -85,6 +90,8 @@ control. This document defines the controls to achieve that.
 - Document all sub-processors (AI, OCR, STT) in the privacy policy.
 - Every health-data subprocessor requires a signed DPA, EU region/transfer review, no-training
   controls, and minimal-retention verification before production.
+- Provider exception bodies are never returned or logged. Public API responses are `no-store`, and
+  production admin/schema/docs endpoints are disabled.
 
 ## 7. GDPR Alignment
 
@@ -119,9 +126,13 @@ control. This document defines the controls to achieve that.
   added authoritatively by the backend rather than trusted from model output.
 - **Output**: consistent error envelope; never leak stack traces or internal IDs to clients.
 - **Rate limiting / throttling**: login/registration are limited to 5 requests/IP/hour;
-  refresh/logout to 20/IP/hour; ingestion and AI regenerations to 10/user/hour; other traffic
-  to 120 requests/minute. Production throttle state is shared through Redis. The reverse proxy
-  must replace `X-Forwarded-For`; `THROTTLE_TRUSTED_PROXY_COUNT=1` enables that trusted address.
+  verification and password-reset routes have stricter per-IP/per-email limits; refresh/logout are
+  limited to 20/IP/hour; AI routes are also throttled to 10/user/hour; other traffic to 120/minute.
+  Production throttle state is shared through Redis. Caddy replaces `X-Forwarded-For`, and exactly
+  one trusted proxy is required in production.
+- **Cost/abuse controls**: registration and AI have operator kill switches; verified accounts are
+  capped at 100; AI quota reservations are atomic and charged before queue/provider work. Defaults
+  are 10 units/user/day, 20 globally/day, and 150 globally/month.
 - **Dependency hygiene**: automated `pip-audit` and OSV scans cover Python and Flutter
   dependencies, and Dependabot proposes weekly updates for supported manifests and CI actions.
 - **Secrets scanning**: Gitleaks scans full committed history in CI.
@@ -159,6 +170,21 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 - Least-privilege IAM for DB/secret access; per-service credentials.
 - Production access restricted, MFA-protected, and logged.
 
+### Low-cost public demonstration
+
+The repository includes a hardened, single-node OVHcloud deployment. Django fails closed on an
+unsafe production secret, wildcard/placeholder hosts, non-PostgreSQL database, missing Redis
+throttle cache, or an unexpected proxy count. Containers use resource/PID limits, rotated local
+logs, least-privilege storage credentials, read-only filesystems where supported, dropped
+capabilities, and a non-root API/worker/beat user. Only Caddy is public; `/healthz` is liveness and
+`/readyz` checks required dependencies without naming the failed dependency to clients.
+
+There is intentionally no application-managed backup or restore promise. Loss of the VPS/disk may
+permanently destroy both structured records and originals. Any infrastructure-provider snapshot is
+incidental, is not a recovery mechanism, and may retain deleted bytes for the provider's retention
+window. Users must see and accept the current versioned notice before registration, while AI
+processing remains a separate optional consent.
+
 ## 13. Compliance Posture & Roadmap
 
 | Status | Item |
@@ -170,15 +196,15 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 ## 14. Security Checklist (pre-launch)
 
 - [ ] TLS enforced end-to-end; HSTS on.
-- [ ] Passwords Argon2; login throttled; reset hardened.
-- [ ] JWT rotation + blacklist working.
+- [x] Passwords Argon2; login throttled; reset hardened.
+- [x] JWT rotation + blacklist working.
 - [x] Originals encrypted before private object storage; no durable automatic device copies.
-- [ ] Per-user queryset isolation verified by tests.
+- [x] Per-user queryset isolation verified by tests.
 - [x] Document/account cryptographic-erasure and durable deletion-job flows covered by tests.
 - [ ] No health data in logs; PII scrubbing on.
 - [ ] Garage AGPLv3 use approved for proprietary MedStory.
 - [ ] EU/EEA hosting and external-AI DPA/transfer/no-training/minimal-retention review approved.
 - [ ] Offline sealed recovery copy of the master key verified.
-- [ ] Single-disk/no-object-backup permanent-loss risk explicitly accepted.
+- [x] Single-disk/no-application-backup permanent-loss notice and explicit signup acceptance implemented.
 - [x] Dependency + secret scanning in CI; no secrets in repo.
 - [ ] Incident response runbook in place.

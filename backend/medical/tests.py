@@ -19,6 +19,8 @@ from ai.providers.base import OCRResult
 from ai.providers.mock import MockLLMProvider, MockOCRProvider
 from ai.schemas import SchemaValidationError
 from medical.models import (
+    AIQuotaBucket,
+    AIQuotaReservation,
     Document,
     DocumentAsset,
     DocumentExplanation,
@@ -36,8 +38,15 @@ from medical.original_storage import (
     OriginalStorageUnavailable,
     purge_storage_deletions,
 )
-from medical.services import DocumentProcessingCancelled, process_document_ingestion
+from medical.services import (
+    AIUnavailableError,
+    DocumentProcessingCancelled,
+    process_document_ingestion,
+    reserve_ai_quota,
+)
 from medical.tasks import ingest_document_task
+from users.models import ConsentRecord
+from users.services import record_consent
 
 
 TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
@@ -56,6 +65,8 @@ class MedicalApiTests(APITestCase):
             password="StrongPass123!",
             full_name="Other User",
         )
+        for user in (self.user, self.other_user):
+            record_consent(user=user, kind=ConsentRecord.Kind.AI_PROCESSING, granted=True)
         self.client.force_authenticate(user=self.user)
 
     def tearDown(self):
@@ -1936,6 +1947,51 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(detail.status_code, status.HTTP_200_OK)
         self.assertEqual(detail.data["source_text"], original)
 
+    def test_text_capture_stores_text_before_id_only_task_dispatch(self):
+        original = "Sensitive typed health note"
+        with patch("medical.views.ingest_note_task.delay", return_value=SimpleNamespace(id="task-1")) as delay:
+            response = self.client.post("/api/v1/capture/notes", {"text": original}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        document = Document.objects.get(id=response.data["id"])
+        self.assertEqual(document.extracted_text, original)
+        delay.assert_called_once_with(str(document.id), str(document.processing_jobs.get().id), None)
+
+    def test_text_capture_rejects_more_than_20000_characters(self):
+        response = self.client.post("/api/v1/capture/notes", {"text": "x" * 20001}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["error"]["code"], "validation_error")
+        self.assertFalse(Document.objects.filter(doc_type=Document.DocumentType.NOTE).exists())
+
+    @override_settings(AI_USER_DAILY_UNITS=2, AI_GLOBAL_DAILY_UNITS=20, AI_GLOBAL_MONTHLY_UNITS=150)
+    def test_ai_quota_reservation_is_durable_and_rejects_over_limit(self):
+        reserve_ai_quota(user=self.user, operation="first", units=2)
+        with self.assertRaises(AIUnavailableError) as context:
+            reserve_ai_quota(user=self.user, operation="second", units=1)
+        self.assertEqual(context.exception.code, "ai_quota_exceeded")
+        self.assertEqual(AIQuotaReservation.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(
+            AIQuotaBucket.objects.get(scope=AIQuotaBucket.Scope.USER_DAY, user=self.user).units_used,
+            2,
+        )
+
+    def test_ai_endpoint_requires_active_consent(self):
+        user = get_user_model().objects.create_user(email="no-ai@example.com", password="StrongPass123!")
+        subject = Subject.objects.create(user=user, display_name="No AI", is_default=True)
+        self.client.force_authenticate(user=user)
+        response = self.client.post(
+            "/api/v1/capture/notes",
+            {"text": "A health note", "subject_id": str(subject.id)},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data["error"]["code"], "ai_consent_required")
+
+    @override_settings(AI_ENABLED=False)
+    def test_ai_kill_switch_blocks_calls(self):
+        response = self.client.post("/api/v1/capture/notes", {"text": "A health note"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(response.data["error"]["code"], "ai_disabled")
+
     def test_event_regeneration_creates_draft_and_does_not_overwrite_edit(self):
         document = self._create_processed_document(extracted_text="CRP 12 mg/L on 2026-05-12")
         event = MedicalEvent.objects.create(
@@ -2444,7 +2500,7 @@ class AIProviderTests(SimpleTestCase):
         self.assertNotIn(EVENT_EXTRACTION_USER_PROMPT, user_text)
 
     @override_settings(AI_OPENAI_API_KEY="test-key", AI_OPENAI_MODEL="gpt-test-llm")
-    def test_openai_llm_provider_includes_api_error_body(self):
+    def test_openai_llm_provider_sanitizes_api_error_body(self):
         from ai.providers.openai import OpenAIProviderError, OpenAILLMProvider
         from ai.schemas import EVENT_EXTRACTION_JSON_SCHEMA
 
@@ -2455,16 +2511,19 @@ class AIProviderTests(SimpleTestCase):
         )
 
         with patch("ai.providers.openai._build_client", return_value=fake_client):
-            with self.assertRaises(OpenAIProviderError) as raised:
-                OpenAILLMProvider().complete_json(
-                    system="System prompt",
-                    user="OCR text",
-                    schema=EVENT_EXTRACTION_JSON_SCHEMA,
-                )
+            with self.assertLogs("ai.providers.openai", level="ERROR") as captured_logs:
+                with self.assertRaises(OpenAIProviderError) as raised:
+                    OpenAILLMProvider().complete_json(
+                        system="System prompt",
+                        user="OCR text",
+                        schema=EVENT_EXTRACTION_JSON_SCHEMA,
+                    )
 
         message = str(raised.exception)
-        self.assertIn("OpenAI structured output request failed status=400", message)
-        self.assertIn("Invalid schema for response_format", message)
+        self.assertEqual(message, "AI provider request failed.")
+        self.assertNotIn("Invalid schema for response_format", message)
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("Invalid schema for response_format", "\n".join(captured_logs.output))
 
 
 class FakeOpenAIClient:

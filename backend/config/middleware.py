@@ -12,6 +12,12 @@ class RequestIDMiddleware:
         response = self.get_response(request)
         response["X-Request-ID"] = request.request_id
 
+        if request.path.startswith("/api/"):
+            # Authenticated medical responses must never be stored by browsers,
+            # reverse proxies, or intermediary caches.
+            response["Cache-Control"] = "private, no-store"
+            response["Pragma"] = "no-cache"
+
         if (
             request.path.startswith("/api/")
             and response.status_code >= 400

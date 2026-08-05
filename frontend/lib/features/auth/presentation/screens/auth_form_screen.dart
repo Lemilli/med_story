@@ -24,6 +24,10 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _fullNameController = TextEditingController();
+  bool _privacyAccepted = false;
+  bool _aiConsent = false;
+  bool _showPrivacyDetails = false;
+  bool _showPrivacyError = false;
 
   bool get _isRegister => widget.mode == AuthFormMode.register;
 
@@ -86,6 +90,62 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                         return null;
                       },
                     ),
+                    if (_isRegister) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      _ConsentOption(
+                        value: _privacyAccepted,
+                        enabled: !isLoading,
+                        title: l10n.authPrivacyConsentTitle,
+                        description: l10n.authPrivacyConsentDescription,
+                        onChanged: (value) => setState(() {
+                          _privacyAccepted = value;
+                          if (value) _showPrivacyError = false;
+                        }),
+                      ),
+                      if (_showPrivacyError)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            left: AppSpacing.md,
+                            top: AppSpacing.xs,
+                          ),
+                          child: Text(
+                            l10n.authPrivacyConsentValidation,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.error),
+                          ),
+                        ),
+                      TextButton(
+                        onPressed: isLoading
+                            ? null
+                            : () => setState(
+                                () =>
+                                    _showPrivacyDetails = !_showPrivacyDetails,
+                              ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _showPrivacyDetails
+                                ? l10n.authPrivacyDetailsHideAction
+                                : l10n.authPrivacyDetailsShowAction,
+                          ),
+                        ),
+                      ),
+                      if (_showPrivacyDetails)
+                        _InlineNotice(
+                          title: l10n.authPrivacyDetailsTitle,
+                          message: l10n.authPrivacyDetailsMessage,
+                        ),
+                      const SizedBox(height: AppSpacing.sm),
+                      _ConsentOption(
+                        value: _aiConsent,
+                        enabled: !isLoading,
+                        title: l10n.authAiConsentTitle,
+                        description: l10n.authAiConsentDescription,
+                        onChanged: (value) => setState(() {
+                          _aiConsent = value;
+                        }),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _passwordController,
@@ -129,6 +189,13 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                                   : l10n.authLoginAction,
                             ),
                     ),
+                    if (!_isRegister)
+                      TextButton(
+                        onPressed: isLoading
+                            ? null
+                            : () => context.go('/forgot-password'),
+                        child: Text(l10n.authForgotPasswordAction),
+                      ),
                     const SizedBox(height: AppSpacing.md),
                     TextButton(
                       onPressed: isLoading ? null : _switchMode,
@@ -170,6 +237,8 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
         return l10n.authPasswordNotAcceptedMessage;
       case 'auth_register_failed':
         return l10n.authRegisterFailedMessage;
+      case 'demo_capacity_reached':
+        return l10n.authDemoCapacityReachedMessage;
       case 'network_failed':
         return l10n.networkFailedMessage;
       default:
@@ -182,16 +251,34 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
+    if (_isRegister && !_privacyAccepted) {
+      setState(() => _showPrivacyError = true);
+      return;
+    }
 
     final locale = Localizations.localeOf(context).languageCode;
     final controller = ref.read(authControllerProvider.notifier);
     if (_isRegister) {
-      await controller.register(
-        email: _emailController.text.trim(),
+      final email = _emailController.text.trim();
+      final result = await controller.register(
+        email: email,
         password: _passwordController.text,
         fullName: _fullNameController.text.trim(),
         locale: locale,
+        acceptPrivacyNotice: _privacyAccepted,
+        aiProcessingConsent: _aiConsent,
       );
+      if (result != null && mounted) {
+        context.go(
+          Uri(
+            path: '/verify-email',
+            queryParameters: {
+              'email': email,
+              if (result.emailMasked.isNotEmpty) 'masked': result.emailMasked,
+            },
+          ).toString(),
+        );
+      }
     } else {
       await controller.login(
         email: _emailController.text.trim(),
@@ -202,6 +289,95 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
 
   void _switchMode() {
     context.go(_isRegister ? '/login' : '/register');
+  }
+}
+
+class _ConsentOption extends StatelessWidget {
+  const _ConsentOption({
+    required this.value,
+    required this.enabled,
+    required this.title,
+    required this.description,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final bool enabled;
+  final String title;
+  final String description;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      child: CheckboxListTile(
+        value: value,
+        enabled: enabled,
+        onChanged: (next) => onChanged(next ?? false),
+        controlAffinity: ListTileControlAffinity.leading,
+        contentPadding: EdgeInsets.zero,
+        minVerticalPadding: AppSpacing.sm,
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: AppColors.patientInk,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.xs),
+          child: Text(
+            description,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.secondaryInk,
+              height: 1.35,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InlineNotice extends StatelessWidget {
+  const _InlineNotice({required this.title, required this.message});
+
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.quietSurface,
+        border: Border.all(color: AppColors.clinicalLine),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: AppColors.patientInk,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.secondaryInk,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -39,6 +39,116 @@ void main() {
     verify(() => api.updateMe(locale: 'ru')).called(1);
   });
 
+  test(
+    'registration returns verification requirement without storing tokens',
+    () async {
+      const registration = RegistrationResult(
+        verificationRequired: true,
+        emailMasked: 'a***@example.com',
+      );
+      when(
+        () => api.register(
+          email: 'alex@example.com',
+          password: 'strong-password',
+          fullName: 'Alex',
+          locale: 'en',
+          acceptPrivacyNotice: true,
+          aiProcessingConsent: false,
+        ),
+      ).thenAnswer((_) async => registration);
+
+      final result = await repository.register(
+        email: 'alex@example.com',
+        password: 'strong-password',
+        fullName: 'Alex',
+        locale: 'en',
+        acceptPrivacyNotice: true,
+        aiProcessingConsent: false,
+      );
+
+      expect(result.emailMasked, 'a***@example.com');
+      verifyNever(
+        () => tokenStorage.saveTokens(
+          accessToken: any(named: 'accessToken'),
+          refreshToken: any(named: 'refreshToken'),
+        ),
+      );
+    },
+  );
+
+  test('email verification stores returned session tokens', () async {
+    final user = _user(locale: 'en');
+    when(
+      () => api.verifyEmail(email: 'alex@example.com', code: '123456'),
+    ).thenAnswer(
+      (_) async => AuthSession(
+        user: user,
+        tokens: const AuthTokens(
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+        ),
+      ),
+    );
+    when(
+      () => tokenStorage.saveTokens(
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      ),
+    ).thenAnswer((_) async {});
+
+    final state = await repository.verifyEmail(
+      email: 'alex@example.com',
+      code: '123456',
+    );
+
+    expect(state.isAuthenticated, isTrue);
+    expect(state.user?.id, 'user-1');
+    verify(
+      () => tokenStorage.saveTokens(
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      ),
+    ).called(1);
+  });
+
+  test('AI consent is updated through the dedicated endpoint', () async {
+    const updated = ConsentStatus(
+      privacyNoticeAccepted: true,
+      privacyNoticeVersion: '2026-08-05',
+      aiProcessingAllowed: true,
+    );
+    when(
+      () => api.updateAiConsent(granted: true),
+    ).thenAnswer((_) async => updated);
+
+    final result = await repository.updateAiConsent(true);
+
+    expect(result.aiProcessingAllowed, isTrue);
+    verify(() => api.updateAiConsent(granted: true)).called(1);
+  });
+
+  test('parses consent records and nested demo usage', () {
+    final consents = ConsentStatus.fromRecords(const [
+      {
+        'kind': 'privacy_notice',
+        'notice_version': '2026-08-05',
+        'granted': true,
+      },
+      {'kind': 'ai_processing', 'notice_version': '', 'granted': false},
+    ]);
+    final usage = AccountUsage.fromJson(const {
+      'ai': {
+        'user_daily': {'used': 3, 'limit': 10},
+      },
+      'storage': {'used_bytes': 1048576, 'limit_bytes': 104857600},
+    });
+
+    expect(consents.privacyNoticeAccepted, isTrue);
+    expect(consents.aiProcessingAllowed, isFalse);
+    expect(usage.aiUnitsRemainingToday, 7);
+    expect(usage.storageBytesUsed, 1048576);
+  });
+
   test('delete account sends refresh token and clears local state', () async {
     when(
       () => tokenStorage.readRefreshToken(),

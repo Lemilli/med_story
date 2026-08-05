@@ -1,0 +1,27 @@
+{
+	admin off
+}
+
+api.example.com {
+	encode zstd gzip
+
+	request_body {
+		max_size 32MB
+	}
+
+	@private path /admin* /api/docs* /api/schema*
+	respond @private 404
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy same-origin
+	}
+
+	reverse_proxy 127.0.0.1:8000 {
+		header_up -X-Forwarded-For
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-Proto https
+	}
+}

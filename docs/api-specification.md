@@ -18,24 +18,37 @@
 - **Errors**: consistent envelope (see §8).
 - **Idempotency**: mutating ingestion calls keyed by document ID; safe to retry. Exact-byte
   document and photo duplicates are also rejected per account once they have produced active events.
-- **Rate limiting**: registration/login are 5/IP/hour, refresh/logout 20/IP/hour, and
-  AI-triggering uploads/regenerations 10/user/hour; other traffic is 120/minute (HTTP 429).
+- **Rate limiting**: authentication, verification, and reset routes have strict per-IP and/or
+  per-email limits; refresh/logout are 20/IP/hour; AI-triggering routes are also 10/user/hour;
+  other traffic is 120/minute (HTTP 429). AI budget units are a separate daily/monthly control.
 
 ## 2. Authentication
 
-**Phase 0 status:** registration, login, refresh, logout, and authenticated `/me` are implemented.
-Password reset endpoints are planned but not implemented yet.
+Registration, email verification, login, refresh, logout, password reset, and authenticated `/me`
+are implemented. The demonstration accepts at most 100 verified accounts by default.
 
 ### POST /auth/register
-Create an account (email/password only).
+Create an inactive account and email a six-digit verification code. Privacy-notice acceptance is
+required; AI processing consent is separate and optional.
 ```jsonc
 // Request
-{ "email": "user@example.com", "password": "••••••••", "full_name": "Jane Doe", "locale": "en" }
-// 201 Response
+{ "email": "user@example.com", "password": "••••••••", "full_name": "Jane Doe", "locale": "en",
+  "privacy_notice_version": "2026-08-05", "privacy_accepted": true,
+  "ai_processing_accepted": false }
+// 202 Response
 { "user": { "id": "uuid", "email": "user@example.com", "full_name": "Jane Doe",
-    "locale": "en", "date_joined": "..." },
-  "access": "jwt...", "refresh": "jwt..." }
+    "locale": "en", "email_verified": false, "date_joined": "..." },
+  "verification_required": true }
 ```
+
+### POST /auth/verify-email
+`{ "email": "user@example.com", "code": "123456" }` → `200` with `user`, `access`, and
+`refresh`. Codes expire after 15 minutes, are stored only as keyed digests, are single-use, and
+allow at most five attempts.
+
+### POST /auth/resend-verification
+`{ "email": "user@example.com" }` → `202`. The response does not disclose whether an eligible
+inactive account exists.
 
 ### POST /auth/login
 ```jsonc
@@ -54,12 +67,11 @@ Create an account (email/password only).
 Blacklists the refresh token. `{ "refresh": "jwt..." }` → `205`.
 
 ### POST /auth/password/reset/request
-Planned.
 `{ "email": "user@example.com" }` → `202` (always, to avoid email enumeration).
 
 ### POST /auth/password/reset/confirm
-Planned.
-`{ "token": "...", "new_password": "••••••••" }` → `200`.
+`{ "email": "user@example.com", "code": "123456", "new_password": "••••••••" }` → `204`.
+The code is single-use and existing refresh tokens are blacklisted.
 
 ## 3. Profile & Subjects
 
@@ -75,6 +87,21 @@ Update `full_name`, `locale`. → `200` updated user.
 ### DELETE /me
 Immediately hard-deletes the account and backend records. Optional body:
 `{ "refresh": "jwt..." }` for best-effort refresh-token blacklist. → `204`.
+
+### GET /me/consents
+Returns the latest privacy-notice and AI-processing consent records.
+
+### PUT /me/consents/ai-processing
+`{ "granted": true }` records a new consent decision for the current notice version. AI routes
+return `403 ai_consent_required` unless the latest current-version decision is granted.
+
+### GET /me/usage
+Returns the user's daily AI usage, global daily/monthly demo usage, reset timestamps, and retained
+original storage usage/limit. This contains counters only, never health content.
+
+### GET /legal/notices/current
+Public endpoint returning the current English or Russian privacy and AI-processing notices. Pass
+`?locale=en|ru`.
 
 ### GET /subjects
 List subjects (patient profiles). The default self-subject is always present.
@@ -118,7 +145,7 @@ Constraints:
 - Max PDF/image bundle size: **25 MB** (`413 file_too_large` beyond this limit).
 - Allowed retained types are PDF, JPEG, PNG, HEIC, and HEIF. Declared MIME and magic bytes must
   match; scanner outage fails closed.
-- Distinct retained plaintext is limited to **2 GB per account**. Same-user identical assets share
+- Distinct retained plaintext is limited to **100 MiB per account** by default. Same-user identical assets share
   a blob and count once; comparisons and deduplication never cross accounts.
 - Multi-asset bundles accept images only and preserve multipart order as page order.
 - Non-audio documents allow PDFs and image files.
@@ -366,17 +393,32 @@ envelope.
 Throttled responses include a `Retry-After` header and
 `error.details.retry_after_seconds`.
 
+AI budget failures use `403 ai_consent_required`, `503 ai_disabled`, or `429 ai_quota_exceeded`.
+Reservations are made atomically before work is queued and are not refunded if downstream work
+fails. A document costs one unit plus one unit per asset; transcription, note extraction,
+explanation, event revision, and summary generation cost one unit each. Default demo limits are 10
+units/user/day, 20 units globally/day, and 150 units globally/month.
+
+`GET /healthz` is a public liveness probe. `GET /readyz` verifies the database, shared cache,
+private object storage, and malware scanner without exposing dependency details.
+
 ## 11. Endpoint Summary
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | POST | /auth/register | Sign up |
+| POST | /auth/verify-email | Verify email and issue JWTs |
+| POST | /auth/resend-verification | Send another verification code |
 | POST | /auth/login | Log in |
 | POST | /auth/refresh | Refresh access token |
 | POST | /auth/logout | Invalidate refresh token |
-| POST | /auth/password/reset/request | Start password reset (planned) |
-| POST | /auth/password/reset/confirm | Complete password reset (planned) |
+| POST | /auth/password/reset/request | Start password reset |
+| POST | /auth/password/reset/confirm | Complete password reset |
 | GET/PATCH/DELETE | /me | Profile / account deletion |
+| GET | /me/consents | Latest consent decisions |
+| PUT | /me/consents/ai-processing | Change AI-processing consent |
+| GET | /me/usage | AI and retained-storage usage |
+| GET | /legal/notices/current | Current public notices |
 | GET/POST | /subjects | List/create patient profiles |
 | GET/PATCH/DELETE | /subjects/{id} | Manage a profile |
 | POST | /documents | Create document metadata |

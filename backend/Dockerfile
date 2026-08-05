@@ -8,7 +8,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+RUN addgroup --system --gid 10001 medstory \
+    && adduser --system --uid 10001 --ingroup medstory --home /app --no-create-home medstory
+
+COPY --chown=medstory:medstory . .
+
+USER medstory
 
 EXPOSE 8000
 

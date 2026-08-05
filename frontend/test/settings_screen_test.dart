@@ -24,6 +24,27 @@ void main() {
     ).thenAnswer((_) async => _user(locale: 'ru'));
     when(() => authRepository.deleteAccount()).thenAnswer((_) async {});
     when(() => authRepository.logout()).thenAnswer((_) async {});
+    when(() => authRepository.consents()).thenAnswer(
+      (_) async => const ConsentStatus(
+        privacyNoticeAccepted: true,
+        privacyNoticeVersion: '2026-08-05',
+        aiProcessingAllowed: false,
+      ),
+    );
+    when(() => authRepository.updateAiConsent(true)).thenAnswer(
+      (_) async => const ConsentStatus(
+        privacyNoticeAccepted: true,
+        privacyNoticeVersion: '2026-08-05',
+        aiProcessingAllowed: true,
+      ),
+    );
+    when(() => authRepository.usage()).thenAnswer(
+      (_) async => const AccountUsage(
+        aiUnitsRemainingToday: 8,
+        storageBytesUsed: 1024 * 1024,
+        storageBytesLimit: 100 * 1024 * 1024,
+      ),
+    );
   });
 
   testWidgets('renders privacy, language, and account actions', (tester) async {
@@ -35,6 +56,10 @@ void main() {
     )!;
 
     expect(find.text(l10n.settingsPrivacySectionTitle), findsOneWidget);
+    await _scrollToText(tester, l10n.settingsAiConsentTitle);
+    expect(find.text(l10n.settingsAiConsentTitle), findsOneWidget);
+    await _scrollToText(tester, l10n.settingsUsageSectionTitle);
+    expect(find.text(l10n.settingsAiUnitsValue(8)), findsOneWidget);
     await _scrollToText(tester, l10n.settingsLanguageRussian);
     expect(find.text(l10n.settingsLanguageRussian), findsOneWidget);
     final deleteAction = find.widgetWithText(
@@ -43,6 +68,21 @@ void main() {
     );
     await _scrollToFinder(tester, deleteAction);
     expect(deleteAction, findsOneWidget);
+  });
+
+  testWidgets('enables optional AI processing from settings', (tester) async {
+    await _pumpScreen(tester, authRepository);
+    await tester.pumpAndSettle();
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(SettingsScreen)),
+    )!;
+
+    await _scrollToText(tester, l10n.settingsAiConsentTitle);
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    verify(() => authRepository.updateAiConsent(true)).called(1);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('updates locale', (tester) async {

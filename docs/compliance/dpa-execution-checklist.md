@@ -1,8 +1,8 @@
 # Data Processing Agreement Execution Checklist
 
-Use this optional checklist when reviewing a production processor. Store any agreements and
-supporting evidence in the approved legal repository, never in Git. It does not gate launch or
-provider configuration.
+Use this checklist before a production processor receives real personal or health data. Store any
+agreements and supporting evidence in the approved legal repository, never in Git. Provider
+configuration may be validated with synthetic data, but real-data launch is gated on completion.
 
 ## Processor record
 
@@ -15,7 +15,7 @@ provider configuration.
 
 ## Required approvals
 
-- [ ] If desired, DPA/addendum is executed by authorized parties.
+- [ ] Required DPA/addendum is executed by authorized parties.
 - [ ] Instructions, confidentiality, security measures, assistance with data-subject rights,
   deletion/return, audit rights, and breach-notification duties are reviewed.
 - [ ] Data residency, international-transfer mechanism, and subprocessors are reviewed.

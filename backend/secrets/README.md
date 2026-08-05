@@ -3,6 +3,10 @@
 Generate these files before starting the Garage-backed stack. This directory is
 ignored by Git except for this README.
 
+For a fresh VPS deployment, run `backend/deploy/ovh/provision-secrets.sh`. The
+script refuses to overwrite any existing secret so an accidental rerun cannot
+silently make retained originals unreadable.
+
 - `original_master_key`: base64 encoding of exactly 32 random bytes.
 - `garage_rpc_secret`: 32 random bytes encoded as 64 lowercase hex characters.
 - `garage_admin_token`: a long random token.
@@ -18,9 +22,17 @@ ignored by Git except for this README.
   and private key for the internal `garage-proxy` name.
 - `storage_ca_certificate.pem`: CA certificate used by the API and worker to
   verify the internal storage proxy.
+- `storage_ca_private_key.pem`: generated only to issue the internal proxy
+  certificate. It is not mounted into any container; move it to encrypted
+  offline storage after provisioning.
 
 Use restrictive file permissions (`chmod 600`). Production secrets must be
 provisioned by the host secret manager and must not be copied from development.
 The certificate must include `DNS:garage-proxy` in its subject alternative
 names. Use a private CA (or a self-signed development certificate) and never
 disable verification in production.
+
+The deployment master key is not an object backup, but an encrypted offline
+copy is still required to avoid turning any infrastructure-provider snapshot
+into permanently unreadable ciphertext. Rotating the master key requires a
+separate versioned rewrapping procedure; never overwrite it in place.

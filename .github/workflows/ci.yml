@@ -39,6 +39,14 @@ jobs:
       - name: Build backend image
         run: docker build -t medstory-backend:test .
 
+      - name: Verify hardened image contents and user
+        run: >-
+          docker run --rm medstory-backend:test sh -c
+          'test "$(id -u)" = 10001 &&
+          test ! -e /app/.env &&
+          test ! -e /app/.env.production &&
+          test ! -e /app/secrets'
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest

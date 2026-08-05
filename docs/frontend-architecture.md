@@ -70,7 +70,7 @@ frontend/lib/
 │   │   └── app_failure.dart       # stable failure codes for UI mapping
 │   └── widgets/                   # shared UI (buttons, empty/error states)
 ├── features/
-│   ├── auth/                      # login/register; password reset planned
+│   ├── auth/                      # login/register/verification/password reset
 │   │   ├── data/ (api, repo)
 │   │   ├── domain/ (models)
 │   │   └── presentation/ (screens, controllers, widgets)
@@ -90,8 +90,9 @@ frontend/lib/
 ## 5. State Management Details (Riverpod)
 
 - **Providers**
-  - `authControllerProvider` (`AsyncNotifier<AuthState>`) — session, token lifecycle. **Implemented
-    in Phase 0** with register/login/logout, secure token restore, and `/me` verification.
+  - `authControllerProvider` (`AsyncNotifier<AuthState>`) — session and token lifecycle. Implemented
+    with pending registration, email verification/resend, login/logout, password reset, secure token
+    restore, and `/me` verification. Registration does not store JWTs until email verification.
   - `timelineControllerProvider` — paginated event list with cursor + filters.
   - `documentUploadControllerProvider` — drives local-save + ingest state machine (§7).
   - `summaryControllerProvider` — current summary + regenerate action.
@@ -104,7 +105,8 @@ frontend/lib/
 ```
 /                      → Splash / auth gate
 /login, /register
-/forgot-password        → planned
+/verify-email           → six-digit verification + resend
+/forgot-password        → request and confirm password reset
 /onboarding            → first-run disclaimer + subject setup
 /home (shell)
   ├── /timeline        → default tab (chronological history)
@@ -115,6 +117,11 @@ frontend/lib/
 /events/:id            → event detail / edit / confirm
 /subjects              → manage/switch patient profiles
 ```
+
+Registration requires acceptance of the current privacy notice. AI processing consent is shown as
+a separate optional choice and is never preselected. Settings exposes the latest AI consent and the
+user/global AI and retained-storage usage counters. All of these flows are localized in English and
+Russian and keep the existing 48 dp minimum target and large-text behavior.
 
 ## 7. Key Flows
 

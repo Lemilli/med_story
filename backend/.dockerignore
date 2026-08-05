@@ -3,9 +3,12 @@
 venv
 __pycache__
 *.py[cod]
-.env
-.env.production
+.env*
+!.env.example
+!.env.production.example
+secrets/
 db.sqlite3
+*.sqlite3
 staticfiles
 media
 .pytest_cache
@@ -14,3 +17,5 @@ media
 .coverage
 htmlcov
 celerybeat-schedule
+test_assets/
+tests/

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/screens/auth_form_screen.dart';
+import '../features/auth/presentation/screens/email_verification_screen.dart';
+import '../features/auth/presentation/screens/password_reset_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 import '../features/capture/presentation/screens/capture_screen.dart';
 import '../features/capture/presentation/screens/quick_note_screen.dart';
@@ -28,7 +30,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authState = ref.read(authControllerProvider);
       final location = state.matchedLocation;
-      final isAuthRoute = location == '/login' || location == '/register';
+      final isAuthRoute =
+          location == '/login' ||
+          location == '/register' ||
+          location == '/verify-email' ||
+          location == '/forgot-password';
 
       if (authState.isLoading && !isAuthRoute) {
         return location == '/' ? null : '/';
@@ -57,6 +63,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/register',
         builder: (context, state) =>
             const AuthFormScreen(mode: AuthFormMode.register),
+      ),
+      GoRoute(
+        path: '/verify-email',
+        builder: (context, state) => EmailVerificationScreen(
+          email: state.uri.queryParameters['email'] ?? '',
+          maskedEmail: state.uri.queryParameters['masked'],
+        ),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const PasswordResetScreen(),
       ),
       GoRoute(path: '/home', redirect: (context, state) => '/timeline'),
       GoRoute(

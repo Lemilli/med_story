@@ -45,25 +45,59 @@ class AuthRepository {
     }
   }
 
-  Future<AuthState> register({
+  Future<RegistrationResult> register({
     required String email,
     required String password,
     required String fullName,
     required String locale,
+    required bool acceptPrivacyNotice,
+    required bool aiProcessingConsent,
   }) async {
-    final session = await api.register(
+    return api.register(
       email: email,
       password: password,
       fullName: fullName,
       locale: locale,
+      acceptPrivacyNotice: acceptPrivacyNotice,
+      aiProcessingConsent: aiProcessingConsent,
     );
+  }
+
+  Future<AuthState> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    final session = await api.verifyEmail(email: email, code: code);
     await tokenStorage.saveTokens(
       accessToken: session.tokens.accessToken,
       refreshToken: session.tokens.refreshToken,
     );
-    final user = await api.me();
+    final user = session.user.id.isEmpty ? await api.me() : session.user;
     return AuthState.authenticated(user);
   }
+
+  Future<void> resendVerification(String email) =>
+      api.resendVerification(email: email);
+
+  Future<void> requestPasswordReset(String email) =>
+      api.requestPasswordReset(email: email);
+
+  Future<void> confirmPasswordReset({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) => api.confirmPasswordReset(
+    email: email,
+    code: code,
+    newPassword: newPassword,
+  );
+
+  Future<ConsentStatus> consents() => api.consents();
+
+  Future<ConsentStatus> updateAiConsent(bool granted) =>
+      api.updateAiConsent(granted: granted);
+
+  Future<AccountUsage> usage() => api.usage();
 
   Future<AuthState> login({
     required String email,

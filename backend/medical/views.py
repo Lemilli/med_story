@@ -51,12 +51,14 @@ from medical.serializers import (
     VisitPreparationSerializer,
 )
 from medical.services import (
+    AIUnavailableError,
     build_summary_export_pdf,
     apply_event_revision,
     create_event_revision,
     enqueue_summary_regeneration,
     get_or_create_default_subject,
     log_audit_event,
+    reserve_ai_quota,
     summary_export_json,
 )
 from medical.tasks import (
@@ -76,6 +78,30 @@ AUDIO_MIME_BY_EXTENSION = {
     ".wav": "audio/wav",
     ".webm": "audio/webm",
 }
+
+
+def reserve_ai_for_request(request, *, operation, units=1):
+    try:
+        reserve_ai_quota(user=request.user, operation=operation, units=units)
+    except AIUnavailableError as exc:
+        status_code = {
+            "ai_consent_required": status.HTTP_403_FORBIDDEN,
+            "ai_disabled": status.HTTP_503_SERVICE_UNAVAILABLE,
+            "ai_quota_exceeded": status.HTTP_429_TOO_MANY_REQUESTS,
+        }.get(exc.code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        details = {"reset_at": exc.reset_at.isoformat()} if exc.reset_at else None
+        return api_error_response(
+            request,
+            code=exc.code,
+            message={
+                "ai_consent_required": "Enable AI processing consent to use this feature.",
+                "ai_disabled": "AI features are temporarily unavailable.",
+                "ai_quota_exceeded": "The AI usage limit has been reached.",
+            }.get(exc.code, "AI processing is unavailable."),
+            status_code=status_code,
+            details=details,
+        )
+    return None
 
 
 class DocumentCursorPagination(CursorPagination):
@@ -210,8 +236,12 @@ class EventRevisionListCreateView(MedicalEventQuerysetMixin, generics.GenericAPI
 
     @extend_schema(operation_id="event_revision_create", responses=EventRevisionSerializer)
     def post(self, request, *args, **kwargs):
+        event = self._event()
+        quota_error = reserve_ai_for_request(request, operation="event_revision")
+        if quota_error:
+            return quota_error
         try:
-            revision = create_event_revision(event=self._event())
+            revision = create_event_revision(event=event)
         except ValueError as exc:
             return api_error_response(
                 request,
@@ -476,6 +506,14 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
                 details={"mime_type": [self._unsupported_mime_type_message(document)]},
             )
 
+        quota_error = reserve_ai_for_request(
+            request,
+            operation="document_ingestion",
+            units=1 + len(uploads),
+        )
+        if quota_error:
+            return quota_error
+
         try:
             content_hash = self._persist_uploads(
                 document=document,
@@ -503,7 +541,7 @@ class DocumentIngestView(DocumentQuerysetMixin, generics.GenericAPIView):
         except OriginalQuotaExceeded:
             return self._error_response(
                 code="original_storage_quota_exceeded",
-                message="Your 2 GB original-file storage limit has been reached.",
+                message="Your 100 MB original-file storage limit has been reached.",
                 http_status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             )
         except OriginalStorageError:
@@ -688,6 +726,9 @@ class DocumentAudioUploadView(DocumentIngestView):
             )
 
         language = self._resolve_language(request)
+        quota_error = reserve_ai_for_request(request, operation="transcription")
+        if quota_error:
+            return quota_error
         document_data = {
             "title": request.data.get("title") or "Voice note",
             "doc_type": Document.DocumentType.AUDIO,
@@ -765,6 +806,13 @@ class DocumentRetryProcessingView(DocumentIngestView):
                 message="The original must be uploaded again before processing can be retried.",
                 http_status=status.HTTP_409_CONFLICT,
             )
+        quota_error = reserve_ai_for_request(
+            request,
+            operation="document_ingestion_retry",
+            units=1 + document.assets.count(),
+        )
+        if quota_error:
+            return quota_error
         with transaction.atomic():
             document.status = Document.Status.PROCESSING
             document.error_message = ""
@@ -897,6 +945,9 @@ class CaptureTranscriptionView(DocumentIngestView):
                 message="File scanning is temporarily unavailable. Try again later.",
                 http_status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
+        quota_error = reserve_ai_for_request(request, operation="transcription")
+        if quota_error:
+            return quota_error
         try:
             transcript = get_stt_provider().transcribe(
                 audio_bytes=payload, mime=mime_type, lang=self._resolve_language(request)
@@ -927,13 +978,24 @@ class NoteProcessView(generics.GenericAPIView):
         if subject is None:
             raise ValidationError({"subject_id": ["Subject not found."]})
         clean_text = text.strip()
+        if len(clean_text) > 20000:
+            return api_error_response(
+                request,
+                code="validation_error",
+                message="Notes must be 20,000 characters or fewer.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+                details={"text": ["Ensure this field has no more than 20,000 characters."]},
+            )
+        quota_error = reserve_ai_for_request(request, operation="typed_note_extraction")
+        if quota_error:
+            return quota_error
         document = Document.objects.create(
             user=request.user, subject=subject, title=clean_text.splitlines()[0][:255] or "Note",
             doc_type=Document.DocumentType.NOTE, mime_type="text/plain", size_bytes=len(clean_text.encode("utf-8")),
-            status=Document.Status.PROCESSING,
+            status=Document.Status.PROCESSING, extracted_text=clean_text,
         )
         job = ProcessingJob.objects.create(user=request.user, document=document, status=ProcessingJob.Status.QUEUED)
-        result = ingest_note_task.delay(str(document.id), str(job.id), clean_text, request.data.get("language"))
+        result = ingest_note_task.delay(str(document.id), str(job.id), request.data.get("language"))
         job.task_id = result.id or ""
         job.save(update_fields=("task_id", "updated_at"))
         return Response(DocumentSerializer(document, context={"request": request}).data, status=status.HTTP_202_ACCEPTED)
@@ -989,6 +1051,10 @@ class DocumentExplanationRegenerateView(DocumentQuerysetMixin, generics.GenericA
         language = request.data.get("language") if isinstance(request.data, dict) else None
         if language is not None and (not isinstance(language, str) or not language.strip()):
             raise ValidationError({"language": ["language must be a non-empty string."]})
+
+        quota_error = reserve_ai_for_request(request, operation="document_explanation")
+        if quota_error:
+            return quota_error
 
         job = ProcessingJob.objects.create(
             user=document.user,
@@ -1056,6 +1122,9 @@ class SummaryRegenerateView(SummaryQuerysetMixin, generics.GenericAPIView):
         language = request.data.get("language") if isinstance(request.data, dict) else None
         if language is not None and (not isinstance(language, str) or not language.strip()):
             raise ValidationError({"language": ["language must be a non-empty string."]})
+        quota_error = reserve_ai_for_request(request, operation="medical_summary")
+        if quota_error:
+            return quota_error
         job = enqueue_summary_regeneration(
             user=request.user,
             subject=subject,

@@ -325,6 +325,61 @@ class AppLocalizationsEn extends AppLocalizations {
       'MedStory helps organize and explain your records. It does not diagnose, recommend treatment, or replace care from a clinician.';
 
   @override
+  String get settingsAiSectionTitle => 'AI processing';
+
+  @override
+  String get settingsAiConsentTitle => 'Allow AI-assisted organization';
+
+  @override
+  String get settingsAiConsentDescription =>
+      'When enabled, MedStory can send the minimum necessary content to its configured AI provider to organize and explain it. Turn this off at any time to stop future AI processing. Manual timeline features remain available.';
+
+  @override
+  String get settingsAiConsentUpdatedMessage =>
+      'AI processing preference updated.';
+
+  @override
+  String get settingsAiConsentUpdateFailedMessage =>
+      'We could not update your AI processing preference. Try again.';
+
+  @override
+  String get settingsConsentLoadFailedMessage =>
+      'We could not load your AI processing preference.';
+
+  @override
+  String get settingsUsageSectionTitle => 'Demo limits';
+
+  @override
+  String get settingsUsageLoadFailedMessage =>
+      'We could not load current usage.';
+
+  @override
+  String get settingsAiUnitsLabel => 'AI uses remaining today';
+
+  @override
+  String settingsAiUnitsValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count uses',
+      one: '1 use',
+      zero: 'None remaining',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsStorageUsageLabel => 'Original file storage';
+
+  @override
+  String settingsStorageUsageValue(int used, int limit) {
+    return '$used MB of $limit MB used';
+  }
+
+  @override
+  String get settingsUsageUnavailable => 'Not available';
+
+  @override
   String get captureHeadline => 'Add to your story';
 
   @override
@@ -828,6 +883,117 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authRegisterFailedMessage =>
       'We could not create your account. Check your details and try again.';
+
+  @override
+  String get authDemoCapacityReachedMessage =>
+      'This demo is currently full. Please try again later.';
+
+  @override
+  String get authPrivacyConsentTitle => 'I accept the privacy notice';
+
+  @override
+  String get authPrivacyConsentDescription =>
+      'Required. This explains how the demo stores, processes, and deletes your medical information.';
+
+  @override
+  String get authPrivacyConsentValidation =>
+      'Accept the privacy notice to create an account.';
+
+  @override
+  String get authPrivacyDetailsShowAction => 'Read the privacy notice';
+
+  @override
+  String get authPrivacyDetailsHideAction => 'Hide the privacy notice';
+
+  @override
+  String get authPrivacyDetailsTitle => 'Privacy notice · 5 August 2026';
+
+  @override
+  String get authPrivacyDetailsMessage =>
+      'MedStory is a demonstration service, not medical advice. Your information is kept until you delete it or the demo infrastructure is lost; recovery is not guaranteed. Infrastructure-provider snapshots may retain deleted bytes temporarily. When you enable AI processing, the minimum necessary content is sent to the configured AI provider. You can revoke AI processing later and can delete your account and stored data in Settings.';
+
+  @override
+  String get authAiConsentTitle => 'Allow AI processing';
+
+  @override
+  String get authAiConsentDescription =>
+      'Optional and off by default. AI can organize and explain content, but does not diagnose or recommend treatment. You can still use manual features without it.';
+
+  @override
+  String get authForgotPasswordAction => 'Forgot password?';
+
+  @override
+  String get authVerifyTitle => 'Check your email';
+
+  @override
+  String authVerifySubtitle(String email) {
+    return 'Enter the six-digit code sent to $email. It expires in 15 minutes.';
+  }
+
+  @override
+  String get authVerificationCodeLabel => 'Verification code';
+
+  @override
+  String get authVerificationCodeHelper => 'Six digits';
+
+  @override
+  String get authVerificationCodeValidation => 'Enter the six-digit code.';
+
+  @override
+  String get authVerifyAction => 'Verify email';
+
+  @override
+  String get authResendCodeAction => 'Send a new code';
+
+  @override
+  String get authResendingCode => 'Sending code…';
+
+  @override
+  String get authCodeResentMessage =>
+      'A new code has been sent. Only the newest code will work.';
+
+  @override
+  String get authVerificationInvalidMessage =>
+      'That code is incorrect or has expired. Check the code or request a new one.';
+
+  @override
+  String get authTooManyAttemptsMessage =>
+      'Too many attempts. Wait a while before trying again.';
+
+  @override
+  String get authBackToLoginAction => 'Back to login';
+
+  @override
+  String get authResetPasswordTitle => 'Reset your password';
+
+  @override
+  String get authResetPasswordSubtitle =>
+      'Enter your account email. If an account exists, we’ll send a six-digit reset code.';
+
+  @override
+  String authResetCodeSubtitle(String email) {
+    return 'Enter the code sent to $email, then choose a new password.';
+  }
+
+  @override
+  String get authSendResetCodeAction => 'Send reset code';
+
+  @override
+  String get authNewPasswordLabel => 'New password';
+
+  @override
+  String get authResetPasswordAction => 'Set new password';
+
+  @override
+  String get authResetCompleteTitle => 'Password updated';
+
+  @override
+  String get authResetCompleteMessage =>
+      'You can now log in with your new password.';
+
+  @override
+  String get authResetFailedMessage =>
+      'We could not reset your password. Check the code and try again.';
 
   @override
   String get networkFailedMessage =>

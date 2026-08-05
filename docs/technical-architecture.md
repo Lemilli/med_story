@@ -85,7 +85,8 @@ MedStory is a **mobile client + API backend + asynchronous AI pipeline**.
 
 ### 3.2 API Backend (Django + DRF)
 The synchronous request/response surface. Responsibilities:
-- **Auth**: registration, login, JWT issue/refresh; password reset is planned.
+- **Auth**: inactive registration, email verification, login, JWT issue/refresh, password reset,
+  versioned consent records, and demonstration account-cap controls.
 - **Documents**: metadata, validated encrypted-original ingestion, authenticated content streaming,
   retry, deletion, and status polling.
 - **Medical Events**: CRUD for the structured medical history.
@@ -189,32 +190,29 @@ go_router, dio, freezed, flutter_secure_storage, Drift.
 |--------|--------|
 | Packaging | Docker images per service (api, worker, beat) |
 | Local dev | Multi-architecture docker-compose stack (api, worker, beat, postgres, redis, Garage wrapper, ClamAV, TLS proxy) |
-| Reverse proxy / TLS | Nginx (or managed LB) |
-| Prod orchestration | Cloud-agnostic containers (Compose → Kubernetes when needed) |
+| Reverse proxy / TLS | Caddy on the VPS; internal Nginx only for Garage TLS |
+| Demo orchestration | Hardened Docker Compose on one 8 GB EU VPS |
 | CI/CD | Build, test, lint, image build, deploy |
 
 ## 6. Deployment Topology
 
-```
-Internet ──TLS──▶ Load Balancer / Nginx ──▶ [ Django API containers (N) ]
-                                              │
-                                              ├──▶ PostgreSQL (managed or container + backups)
-                                              ├──▶ Redis (broker/cache; IDs only)
-                                              ├──▶ internal TLS proxy ──▶ Garage ciphertext volume
-                                              └──▶ [ Celery worker containers (M) ] ──▶ AI APIs
-                                                   [ Celery beat (1) for scheduled jobs ]
-```
+The low-cost public demonstration runs eight services on one OVHcloud VPS-2-class host (4 vCPU,
+8 GB RAM): Caddy on the host, plus API, one worker, beat, PostgreSQL, Redis, Garage, the internal
+Garage TLS proxy, and ClamAV in Docker Compose. Only ports 80/443 are public; the API binds host
+loopback and every data service stays on private Docker networks.
 
-- API and workers scale independently (workers scale with AI load).
-- A single Celery **beat** instance schedules periodic jobs (e.g. retry stuck documents).
-- V1 deliberately uses one encrypted EU/EEA disk and no object backup. Loss of that server/disk can
-  permanently destroy every original. PostgreSQL backup policy does not restore object ciphertext.
+This topology deliberately trades availability and recoverability for cost. It has no
+application-managed database or object backup and no recovery guarantee. An infrastructure
+provider snapshot may temporarily contain deleted bytes, but it is incidental and is not a
+MedStory restore mechanism. The system uses a 100 MiB retained-original quota per user, a 100
+verified-account cap, one constrained worker, and atomic AI daily/monthly quotas to bound resource
+and provider spend. See `backend/deploy/ovh/README.md` for the operational runbook.
 
 ### Environments
 - **dev** — docker-compose private storage stack and mock AI providers.
 - **staging** — production-like, real AI providers, synthetic data only.
-- **production** — dedicated EU/EEA host, encrypted volume, private Garage, ClamAV, and reviewed AI
-  subprocessors. Garage S3/admin/RPC ports are not internet-exposed.
+- **public demo** — dedicated EU host, private Garage, ClamAV, verified email, explicit consent,
+  and reviewed subprocessors. Garage S3/admin/RPC ports are not internet-exposed.
 
 ## 7. Cross-Cutting Concerns
 

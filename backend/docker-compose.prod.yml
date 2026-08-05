@@ -1,8 +1,34 @@
 services:
   api:
     build: .
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    command: >-
+      gunicorn config.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 2
+      --threads 2
+      --timeout 120
+      --graceful-timeout 30
+      --keep-alive 5
+      --max-requests 500
+      --max-requests-jitter 50
+      --worker-tmp-dir /dev/shm
+      --access-logfile -
+      --error-logfile -
     restart: unless-stopped
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 768m
+    cpus: 1.5
+    pids_limit: 128
+    logging: &service_logging
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
     env_file:
       - .env.production
     environment:
@@ -17,7 +43,8 @@ services:
       ORIGINAL_STORAGE_CA_BUNDLE: /run/secrets/storage_ca_certificate
       FILE_UPLOAD_TEMP_DIR: /var/run/medstory-uploads
     tmpfs:
-      - /var/run/medstory-uploads:size=268435456,mode=0700
+      - /var/run/medstory-uploads:size=268435456,mode=0700,uid=10001,gid=10001
+      - /tmp:size=67108864,mode=1777
     secrets:
       - original_master_key
       - garage_upload_access_key
@@ -29,6 +56,16 @@ services:
       - storage_ca_certificate
     ports:
       - "127.0.0.1:8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; response = urllib.request.urlopen('http://127.0.0.1:8000/readyz', timeout=5); raise SystemExit(0 if response.status == 200 else 1)"
+      interval: 30s
+      timeout: 7s
+      retries: 3
+      start_period: 60s
     depends_on:
       db:
         condition: service_healthy
@@ -44,8 +81,23 @@ services:
 
   worker:
     build: .
-    command: celery -A config worker --loglevel=info
+    command: >-
+      celery -A config worker
+      --loglevel=info
+      --concurrency=1
+      --prefetch-multiplier=1
+      --max-tasks-per-child=50
     restart: unless-stopped
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 1024m
+    cpus: 1.5
+    pids_limit: 128
+    logging: *service_logging
     env_file:
       - .env.production
     environment:
@@ -58,7 +110,8 @@ services:
       ORIGINAL_STORAGE_CA_BUNDLE: /run/secrets/storage_ca_certificate
       FILE_UPLOAD_TEMP_DIR: /var/run/medstory-uploads
     tmpfs:
-      - /var/run/medstory-uploads:size=268435456,mode=0700
+      - /var/run/medstory-uploads:size=268435456,mode=0700,uid=10001,gid=10001
+      - /tmp:size=67108864,mode=1777
     secrets:
       - original_master_key
       - garage_processing_access_key
@@ -81,10 +134,26 @@ services:
 
   beat:
     build: .
-    command: celery -A config beat --loglevel=info
+    command: >-
+      celery -A config beat
+      --loglevel=info
+      --schedule=/var/run/celery/celerybeat-schedule
     restart: unless-stopped
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 192m
+    cpus: 0.25
+    pids_limit: 64
+    logging: *service_logging
     env_file:
       - .env.production
+    tmpfs:
+      - /var/run/celery:size=16777216,mode=0700,uid=10001,gid=10001
+      - /tmp:size=33554432,mode=1777
     depends_on:
       db:
         condition: service_healthy
@@ -97,6 +166,13 @@ services:
       dockerfile: Dockerfile.garage
     image: medstory-garage:2.3.0
     restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 0.5
+    pids_limit: 128
+    logging: *service_logging
     volumes:
       - garage_data:/var/lib/garage/data
       - garage_meta:/var/lib/garage/meta
@@ -130,6 +206,21 @@ services:
   garage-proxy:
     image: nginx:1.29-alpine
     restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 64
+    logging: *service_logging
+    tmpfs:
+      - /var/cache/nginx:size=16777216,mode=0755
+      - /var/run:size=16777216,mode=0755
+      - /tmp:size=16777216,mode=1777
     volumes:
       - ./garage-proxy.conf:/etc/nginx/nginx.conf:ro
     secrets:
@@ -141,8 +232,13 @@ services:
       - storage_internal
 
   clamav:
-    image: clamav/clamav-debian:stable
+    image: clamav/clamav-debian:1.5_base
     restart: unless-stopped
+    init: true
+    mem_limit: 3g
+    cpus: 1.5
+    pids_limit: 256
+    logging: *service_logging
     volumes:
       - clamav_signatures:/var/lib/clamav
     networks:
@@ -152,6 +248,13 @@ services:
   db:
     image: postgres:16
     restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1024m
+    cpus: 1.0
+    pids_limit: 128
+    logging: *service_logging
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-medstory}
       POSTGRES_USER: ${POSTGRES_USER:-medstory}
@@ -167,6 +270,21 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 64
+    logging: *service_logging
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 192mb
+      - --maxmemory-policy
+      - noeviction
     volumes:
       - redis_data:/data
     healthcheck:

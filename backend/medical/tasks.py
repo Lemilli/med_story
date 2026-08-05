@@ -98,7 +98,7 @@ def ingest_document_task(document_id, job_id, language=None):
 
 
 @shared_task
-def ingest_note_task(document_id, job_id, text, language=None):
+def ingest_note_task(document_id, job_id, language=None):
     document = Document.objects.select_related("user", "subject").get(id=document_id, deleted_at__isnull=True)
     job = ProcessingJob.objects.filter(id=job_id, document=document).first()
     try:
@@ -108,7 +108,7 @@ def ingest_note_task(document_id, job_id, text, language=None):
             mime_type="text/plain",
             job=job,
             language=language,
-            extracted_text_override=text,
+            extracted_text_override=document.extracted_text,
         )
     except Exception:
         logger.exception("Note ingestion failed document_id=%s job_id=%s", document.id, job_id)

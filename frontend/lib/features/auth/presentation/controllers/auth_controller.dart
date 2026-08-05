@@ -17,22 +17,43 @@ class AuthController extends AsyncNotifier<AuthState> {
     return ref.watch(authRepositoryProvider).restoreSession();
   }
 
-  Future<void> register({
+  Future<RegistrationResult?> register({
     required String email,
     required String password,
     required String fullName,
     required String locale,
+    required bool acceptPrivacyNotice,
+    required bool aiProcessingConsent,
   }) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-      () => ref
+    try {
+      final result = await ref
           .read(authRepositoryProvider)
           .register(
             email: email,
             password: password,
             fullName: fullName,
             locale: locale,
-          ),
+            acceptPrivacyNotice: acceptPrivacyNotice,
+            aiProcessingConsent: aiProcessingConsent,
+          );
+      state = const AsyncValue.data(AuthState.unauthenticated());
+      return result;
+    } on Object catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      return null;
+    }
+  }
+
+  Future<void> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(
+      () => ref
+          .read(authRepositoryProvider)
+          .verifyEmail(email: email, code: code),
     );
   }
 

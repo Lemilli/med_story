@@ -116,12 +116,12 @@ class OpenAILLMProvider:
                 timeout=settings.AI_OPENAI_TIMEOUT_SECONDS,
             )
         except Exception as exc:
-            raise _provider_error("structured output request", exc) from exc
+            raise _provider_error("structured output request", exc) from None
 
         try:
             return json.loads(response.output_text)
         except json.JSONDecodeError as exc:
-            raise OpenAIProviderError("OpenAI returned invalid JSON.") from exc
+            raise OpenAIProviderError("AI provider returned an invalid response.") from None
 
 
 class OpenAIOCRProvider:
@@ -170,14 +170,14 @@ class OpenAIOCRProvider:
                 timeout=settings.AI_OPENAI_TIMEOUT_SECONDS,
             )
         except Exception as exc:
-            raise _provider_error("OCR request", exc) from exc
+            raise _provider_error("OCR request", exc) from None
 
         try:
             payload = json.loads(response.output_text)
             text = payload["text"].strip()
             language = _normalize_ocr_language(payload["language"])
         except (AttributeError, json.JSONDecodeError, KeyError, TypeError) as exc:
-            raise OpenAIProviderError("OpenAI returned invalid OCR JSON.") from exc
+            raise OpenAIProviderError("AI provider returned an invalid response.") from None
 
         return OCRResult(text=text, language=language)
 
@@ -217,7 +217,7 @@ class OpenAISTTProvider:
         try:
             response = self.client.audio.transcriptions.create(**kwargs)
         except Exception as exc:
-            raise _provider_error("STT request", exc) from exc
+            raise _provider_error("STT request", exc) from None
 
         text = response.get("text") if isinstance(response, dict) else getattr(response, "text", None)
         if not isinstance(text, str):
@@ -261,30 +261,19 @@ def _remove_unsupported_schema_keywords(value):
 
 
 def _provider_error(operation: str, exc: Exception) -> OpenAIProviderError:
-    message = _format_openai_error(operation, exc)
-    logger.exception(message)
-    return OpenAIProviderError(message)
+    status_code = _openai_status_code(exc)
+    logger.error(
+        "OpenAI request failed operation=%s status=%s error_type=%s",
+        operation,
+        status_code if status_code is not None else "unknown",
+        type(exc).__name__,
+    )
+    return OpenAIProviderError("AI provider request failed.")
 
 
-def _format_openai_error(operation: str, exc: Exception) -> str:
+def _openai_status_code(exc: Exception):
     status_code = getattr(exc, "status_code", None)
     response = getattr(exc, "response", None)
     if status_code is None and response is not None:
         status_code = getattr(response, "status_code", None)
-
-    body = getattr(exc, "body", None)
-    if body is None and response is not None:
-        try:
-            body = response.json()
-        except Exception:
-            body = getattr(response, "text", None)
-
-    details = str(exc)
-    if body:
-        try:
-            details = json.dumps(body, ensure_ascii=True)
-        except TypeError:
-            details = str(body)
-
-    status_fragment = f" status={status_code}" if status_code is not None else ""
-    return f"OpenAI {operation} failed{status_fragment}: {details}"
+    return status_code

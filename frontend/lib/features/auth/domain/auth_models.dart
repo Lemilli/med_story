@@ -42,6 +42,131 @@ class AuthSession {
   final AuthTokens tokens;
 }
 
+class RegistrationResult {
+  const RegistrationResult({
+    required this.verificationRequired,
+    required this.emailMasked,
+  });
+
+  final bool verificationRequired;
+  final String emailMasked;
+
+  factory RegistrationResult.fromJson(Map<String, dynamic> json) {
+    return RegistrationResult(
+      verificationRequired: json['verification_required'] as bool? ?? true,
+      emailMasked: json['email_masked'] as String? ?? '',
+    );
+  }
+}
+
+class ConsentStatus {
+  const ConsentStatus({
+    required this.privacyNoticeAccepted,
+    required this.privacyNoticeVersion,
+    required this.aiProcessingAllowed,
+  });
+
+  final bool privacyNoticeAccepted;
+  final String privacyNoticeVersion;
+  final bool aiProcessingAllowed;
+
+  factory ConsentStatus.fromJson(Map<String, dynamic> json) {
+    final privacy = json['privacy_notice'];
+    final ai = json['ai_processing'];
+    return ConsentStatus(
+      privacyNoticeAccepted:
+          _consentGranted(privacy) ||
+          (json['privacy_notice_accepted'] as bool? ?? false),
+      privacyNoticeVersion:
+          _consentVersion(privacy) ??
+          json['privacy_notice_version'] as String? ??
+          '',
+      aiProcessingAllowed:
+          _consentGranted(ai) ||
+          (json['ai_processing_consent'] as bool? ?? false),
+    );
+  }
+
+  factory ConsentStatus.fromRecords(Iterable<Map<String, dynamic>> records) {
+    Map<String, dynamic>? privacy;
+    Map<String, dynamic>? ai;
+    for (final record in records) {
+      switch (record['kind']) {
+        case 'privacy_notice':
+          privacy = record;
+        case 'ai_processing':
+          ai = record;
+      }
+    }
+    return ConsentStatus(
+      privacyNoticeAccepted: privacy?['granted'] as bool? ?? false,
+      privacyNoticeVersion: privacy?['notice_version'] as String? ?? '',
+      aiProcessingAllowed: ai?['granted'] as bool? ?? false,
+    );
+  }
+}
+
+class AccountUsage {
+  const AccountUsage({
+    required this.aiUnitsRemainingToday,
+    required this.storageBytesUsed,
+    required this.storageBytesLimit,
+  });
+
+  final int? aiUnitsRemainingToday;
+  final int storageBytesUsed;
+  final int storageBytesLimit;
+
+  factory AccountUsage.fromJson(Map<String, dynamic> json) {
+    final ai = json['ai'];
+    final userDaily = ai is Map ? ai['user_daily'] : null;
+    final storage = json['storage'];
+    final dailyUsed = _readInt(userDaily, const ['used']);
+    final dailyLimit = _readInt(userDaily, const ['limit']);
+    return AccountUsage(
+      aiUnitsRemainingToday:
+          _readInt(ai, const ['remaining_today', 'units_remaining_today']) ??
+          _readInt(json, const ['ai_units_remaining_today']) ??
+          (dailyUsed != null && dailyLimit != null
+              ? (dailyLimit - dailyUsed).clamp(0, dailyLimit)
+              : null),
+      storageBytesUsed:
+          _readInt(storage, const ['used_bytes', 'bytes_used']) ??
+          _readInt(json, const ['storage_bytes_used']) ??
+          0,
+      storageBytesLimit:
+          _readInt(storage, const ['limit_bytes', 'bytes_limit']) ??
+          _readInt(json, const ['storage_bytes_limit']) ??
+          0,
+    );
+  }
+}
+
+bool _consentGranted(Object? value) {
+  if (value is bool) return value;
+  if (value is Map) {
+    return value['granted'] as bool? ?? value['accepted'] as bool? ?? false;
+  }
+  return false;
+}
+
+String? _consentVersion(Object? value) {
+  if (value is Map) {
+    return value['version'] as String? ?? value['notice_version'] as String?;
+  }
+  return null;
+}
+
+int? _readInt(Object? value, List<String> keys) {
+  if (value is! Map) return null;
+  for (final key in keys) {
+    final candidate = value[key];
+    if (candidate is int) return candidate;
+    if (candidate is num) return candidate.toInt();
+  }
+  return null;
+}
+
 class AuthState {
   const AuthState._({this.user});
 

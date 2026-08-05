@@ -85,6 +85,16 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 _SettingsSection(
+                  title: l10n.settingsAiSectionTitle,
+                  child: _AiConsentPanel(state: settingsState),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _SettingsSection(
+                  title: l10n.settingsUsageSectionTitle,
+                  child: const _UsagePanel(),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _SettingsSection(
                   title: l10n.settingsLanguageSectionTitle,
                   child: _LanguagePanel(user: user, state: settingsState),
                 ),
@@ -107,6 +117,8 @@ class SettingsScreen extends ConsumerWidget {
       return switch (message) {
         SettingsActionMessage.localeUpdated =>
           l10n.settingsLocaleUpdatedMessage,
+        SettingsActionMessage.aiConsentUpdated =>
+          l10n.settingsAiConsentUpdatedMessage,
       };
     }
     final error = state.actionError;
@@ -118,6 +130,8 @@ class SettingsScreen extends ConsumerWidget {
         l10n.settingsLocaleUpdateFailedMessage,
       SettingsActionError.deleteAccountFailed =>
         l10n.settingsDeleteAccountFailedMessage,
+      SettingsActionError.aiConsentUpdateFailed =>
+        l10n.settingsAiConsentUpdateFailedMessage,
     };
   }
 }
@@ -273,6 +287,140 @@ class _PrivacyPanel extends StatelessWidget {
             icon: Icons.lock_outline_rounded,
             title: l10n.settingsPrivacyNoteTitle,
             description: l10n.settingsPrivacyNoteDescription,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiConsentPanel extends ConsumerWidget {
+  const _AiConsentPanel({required this.state});
+
+  final SettingsState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final consent = ref.watch(consentStatusProvider);
+    return _Panel(
+      padding: EdgeInsets.zero,
+      child: consent.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.all(AppSpacing.lg),
+          child: LinearProgressIndicator(),
+        ),
+        error: (_, _) => _SettingsRetry(
+          message: l10n.settingsConsentLoadFailedMessage,
+          onRetry: () => ref.invalidate(consentStatusProvider),
+        ),
+        data: (value) => SwitchListTile(
+          value: value.aiProcessingAllowed,
+          onChanged: state.isUpdatingAiConsent
+              ? null
+              : (granted) => ref
+                    .read(settingsControllerProvider.notifier)
+                    .updateAiConsent(granted),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
+          secondary: state.isUpdatingAiConsent
+              ? const SizedBox.square(
+                  dimension: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(
+                  Icons.auto_awesome_outlined,
+                  color: AppColors.deepClinicalBlue,
+                ),
+          title: Text(
+            l10n.settingsAiConsentTitle,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.patientInk,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Text(
+              l10n.settingsAiConsentDescription,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.secondaryInk,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UsagePanel extends ConsumerWidget {
+  const _UsagePanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final usage = ref.watch(accountUsageProvider);
+    return _Panel(
+      child: usage.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (_, _) => _SettingsRetry(
+          message: l10n.settingsUsageLoadFailedMessage,
+          onRetry: () => ref.invalidate(accountUsageProvider),
+        ),
+        data: (value) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _AccountRow(
+              label: l10n.settingsAiUnitsLabel,
+              value: value.aiUnitsRemainingToday == null
+                  ? l10n.settingsUsageUnavailable
+                  : l10n.settingsAiUnitsValue(value.aiUnitsRemainingToday!),
+            ),
+            const Divider(height: AppSpacing.xl),
+            _AccountRow(
+              label: l10n.settingsStorageUsageLabel,
+              value: value.storageBytesLimit <= 0
+                  ? l10n.settingsUsageUnavailable
+                  : l10n.settingsStorageUsageValue(
+                      _formatMegabytes(value.storageBytesUsed),
+                      _formatMegabytes(value.storageBytesLimit),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsRetry extends StatelessWidget {
+  const _SettingsRetry({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            message,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.secondaryInk,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          OutlinedButton(
+            onPressed: onRetry,
+            child: Text(context.l10n.documentRetryAction),
           ),
         ],
       ),
@@ -690,3 +838,5 @@ String _languageName(AppLocalizations l10n, String locale) {
     _ => l10n.settingsLanguageEnglish,
   };
 }
+
+int _formatMegabytes(int bytes) => (bytes / (1024 * 1024)).ceil();

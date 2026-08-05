@@ -325,6 +325,63 @@ class AppLocalizationsRu extends AppLocalizations {
       'MedStory помогает упорядочивать и объяснять записи. Он не ставит диагнозы, не рекомендует лечение и не заменяет врача.';
 
   @override
+  String get settingsAiSectionTitle => 'Обработка с помощью ИИ';
+
+  @override
+  String get settingsAiConsentTitle => 'Разрешить обработку с помощью ИИ';
+
+  @override
+  String get settingsAiConsentDescription =>
+      'Когда настройка включена, MedStory может передавать настроенному ИИ-провайдеру минимально необходимые данные, чтобы упорядочивать и объяснять их. Отключите настройку в любой момент, чтобы прекратить будущую обработку. Ручная хронология останется доступной.';
+
+  @override
+  String get settingsAiConsentUpdatedMessage =>
+      'Настройка обработки с помощью ИИ обновлена.';
+
+  @override
+  String get settingsAiConsentUpdateFailedMessage =>
+      'Не удалось обновить настройку обработки с помощью ИИ. Попробуйте снова.';
+
+  @override
+  String get settingsConsentLoadFailedMessage =>
+      'Не удалось загрузить настройку обработки с помощью ИИ.';
+
+  @override
+  String get settingsUsageSectionTitle => 'Лимиты демоверсии';
+
+  @override
+  String get settingsUsageLoadFailedMessage =>
+      'Не удалось загрузить текущие лимиты.';
+
+  @override
+  String get settingsAiUnitsLabel => 'Осталось использований ИИ сегодня';
+
+  @override
+  String settingsAiUnitsValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count использования',
+      many: '$count использований',
+      few: '$count использования',
+      one: '1 использование',
+      zero: 'Не осталось',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsStorageUsageLabel => 'Хранилище оригиналов';
+
+  @override
+  String settingsStorageUsageValue(int used, int limit) {
+    return 'Использовано $used МБ из $limit МБ';
+  }
+
+  @override
+  String get settingsUsageUnavailable => 'Недоступно';
+
+  @override
   String get captureHeadline => 'Добавить в историю';
 
   @override
@@ -828,6 +885,120 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get authRegisterFailedMessage =>
       'Не удалось создать аккаунт. Проверьте данные и попробуйте снова.';
+
+  @override
+  String get authDemoCapacityReachedMessage =>
+      'Сейчас в демоверсии нет свободных мест. Попробуйте позже.';
+
+  @override
+  String get authPrivacyConsentTitle =>
+      'Я принимаю уведомление о конфиденциальности';
+
+  @override
+  String get authPrivacyConsentDescription =>
+      'Обязательно. Здесь объясняется, как демоверсия хранит, обрабатывает и удаляет медицинскую информацию.';
+
+  @override
+  String get authPrivacyConsentValidation =>
+      'Примите уведомление о конфиденциальности, чтобы создать аккаунт.';
+
+  @override
+  String get authPrivacyDetailsShowAction =>
+      'Прочитать уведомление о конфиденциальности';
+
+  @override
+  String get authPrivacyDetailsHideAction => 'Скрыть уведомление';
+
+  @override
+  String get authPrivacyDetailsTitle =>
+      'Уведомление о конфиденциальности · 5 августа 2026 г.';
+
+  @override
+  String get authPrivacyDetailsMessage =>
+      'MedStory — демонстрационный сервис, а не медицинская консультация. Информация хранится, пока вы её не удалите или пока инфраструктура демоверсии не будет утрачена; восстановление не гарантируется. Снимки инфраструктурного провайдера могут временно сохранять удалённые данные. Если вы разрешите обработку с помощью ИИ, настроенному провайдеру будут передаваться минимально необходимые данные. Позже вы сможете отозвать разрешение и удалить аккаунт с сохранёнными данными в настройках.';
+
+  @override
+  String get authAiConsentTitle => 'Разрешить обработку с помощью ИИ';
+
+  @override
+  String get authAiConsentDescription =>
+      'Необязательно и по умолчанию выключено. ИИ может упорядочивать и объяснять данные, но не ставит диагнозы и не рекомендует лечение. Ручные функции доступны и без него.';
+
+  @override
+  String get authForgotPasswordAction => 'Забыли пароль?';
+
+  @override
+  String get authVerifyTitle => 'Проверьте почту';
+
+  @override
+  String authVerifySubtitle(String email) {
+    return 'Введите шестизначный код, отправленный на $email. Он действует 15 минут.';
+  }
+
+  @override
+  String get authVerificationCodeLabel => 'Код подтверждения';
+
+  @override
+  String get authVerificationCodeHelper => 'Шесть цифр';
+
+  @override
+  String get authVerificationCodeValidation => 'Введите шестизначный код.';
+
+  @override
+  String get authVerifyAction => 'Подтвердить email';
+
+  @override
+  String get authResendCodeAction => 'Отправить новый код';
+
+  @override
+  String get authResendingCode => 'Отправляем код…';
+
+  @override
+  String get authCodeResentMessage =>
+      'Новый код отправлен. Подойдёт только самый новый код.';
+
+  @override
+  String get authVerificationInvalidMessage =>
+      'Код неверен или истёк. Проверьте его или запросите новый.';
+
+  @override
+  String get authTooManyAttemptsMessage =>
+      'Слишком много попыток. Подождите и попробуйте позже.';
+
+  @override
+  String get authBackToLoginAction => 'Вернуться ко входу';
+
+  @override
+  String get authResetPasswordTitle => 'Сброс пароля';
+
+  @override
+  String get authResetPasswordSubtitle =>
+      'Введите email аккаунта. Если аккаунт существует, мы отправим шестизначный код сброса.';
+
+  @override
+  String authResetCodeSubtitle(String email) {
+    return 'Введите код, отправленный на $email, затем придумайте новый пароль.';
+  }
+
+  @override
+  String get authSendResetCodeAction => 'Отправить код сброса';
+
+  @override
+  String get authNewPasswordLabel => 'Новый пароль';
+
+  @override
+  String get authResetPasswordAction => 'Установить новый пароль';
+
+  @override
+  String get authResetCompleteTitle => 'Пароль обновлён';
+
+  @override
+  String get authResetCompleteMessage =>
+      'Теперь вы можете войти с новым паролем.';
+
+  @override
+  String get authResetFailedMessage =>
+      'Не удалось сбросить пароль. Проверьте код и попробуйте снова.';
 
   @override
   String get networkFailedMessage =>

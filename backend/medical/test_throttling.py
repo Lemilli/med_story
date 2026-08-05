@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from rest_framework import status
 from rest_framework.test import APITestCase
+from users.models import ConsentRecord
+from users.services import record_consent
 
 
 class ThrottlingTests(APITestCase):
@@ -40,6 +42,7 @@ class ThrottlingTests(APITestCase):
         user = get_user_model().objects.create_user(
             email="user@example.com", password="StrongPass123!", full_name="Jane Doe"
         )
+        record_consent(user=user, kind=ConsentRecord.Kind.AI_PROCESSING, granted=True)
         self.client.force_authenticate(user=user)
         queued_job = SimpleNamespace(id=uuid4())
 

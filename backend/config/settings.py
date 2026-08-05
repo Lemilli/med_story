@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import timedelta
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -9,17 +10,44 @@ env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, []),
+    CSRF_TRUSTED_ORIGINS=(list, []),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = env("SECRET_KEY", default="unsafe-dev-secret-key-change-me-32chars")
+_DEVELOPMENT_SECRET_KEY = "unsafe-dev-secret-key-change-me-32chars"
+
+SECRET_KEY = env("SECRET_KEY", default=_DEVELOPMENT_SECRET_KEY)
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
 THROTTLE_CACHE_URL = env("THROTTLE_CACHE_URL", default="")
 THROTTLE_TRUSTED_PROXY_COUNT = env.int("THROTTLE_TRUSTED_PROXY_COUNT", default=0)
+DATABASE_URL = env("DATABASE_URL", default="")
+
+if not DEBUG:
+    configuration_errors = []
+    if SECRET_KEY == _DEVELOPMENT_SECRET_KEY or len(SECRET_KEY) < 50 or SECRET_KEY.startswith("<"):
+        configuration_errors.append("SECRET_KEY must be a unique production secret of at least 50 characters")
+    if not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS or any(host.startswith("<") for host in ALLOWED_HOSTS):
+        configuration_errors.append("ALLOWED_HOSTS must contain explicit production host names")
+    if not DATABASE_URL:
+        configuration_errors.append("DATABASE_URL is required in production")
+    elif not DATABASE_URL.lower().startswith(("postgres://", "postgresql://")):
+        configuration_errors.append("DATABASE_URL must use PostgreSQL in production")
+    if not THROTTLE_CACHE_URL:
+        configuration_errors.append("THROTTLE_CACHE_URL is required in production")
+    elif not THROTTLE_CACHE_URL.lower().startswith(("redis://", "rediss://")):
+        configuration_errors.append("THROTTLE_CACHE_URL must use Redis in production")
+    if THROTTLE_TRUSTED_PROXY_COUNT != 1:
+        configuration_errors.append("THROTTLE_TRUSTED_PROXY_COUNT must be exactly 1 behind the production proxy")
+    if configuration_errors:
+        raise ImproperlyConfigured("Invalid production configuration: " + "; ".join(configuration_errors))
+    # Docker probes connect over the container loopback interface and never
+    # traverse the public reverse proxy.
+    ALLOWED_HOSTS = [*ALLOWED_HOSTS, "127.0.0.1"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -71,6 +99,24 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
 }
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_REDIRECT_EXEMPT = [r"^healthz$", r"^readyz$"]
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_HSTS_SECONDS = 0 if DEBUG else 3600
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+# Subdomain coverage and browser preload are intentionally deferred until the
+# initial one-hour HSTS rollout has been verified in production.
+SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
+
+ENABLE_ADMIN = env.bool("ENABLE_ADMIN", default=DEBUG)
+ENABLE_API_DOCS = env.bool("ENABLE_API_DOCS", default=DEBUG)
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -127,6 +173,8 @@ REST_FRAMEWORK = {
         "auth_register": "5/hour",
         "auth_login": "5/hour",
         "auth_session": "20/hour",
+        "auth_verify": "3/hour",
+        "auth_password_reset": "3/hour",
         "ai": "10/hour",
     },
     "NUM_PROXIES": THROTTLE_TRUSTED_PROXY_COUNT,
@@ -176,8 +224,16 @@ CELERY_BEAT_SCHEDULE = {
         "task": "medical.tasks.cleanup_transient_originals_task",
         "schedule": 3600.0,
     },
+    "cleanup-unverified-accounts": {
+        "task": "users.tasks.cleanup_unverified_accounts_task",
+        "schedule": 3600.0,
+    },
 }
 
+AI_ENABLED = env.bool("AI_ENABLED", default=True)
+AI_USER_DAILY_UNITS = env.int("AI_USER_DAILY_UNITS", default=10)
+AI_GLOBAL_DAILY_UNITS = env.int("AI_GLOBAL_DAILY_UNITS", default=20)
+AI_GLOBAL_MONTHLY_UNITS = env.int("AI_GLOBAL_MONTHLY_UNITS", default=150)
 AI_LLM_PROVIDER = env("AI_LLM_PROVIDER", default="mock")
 AI_OCR_PROVIDER = env("AI_OCR_PROVIDER", default="mock")
 AI_STT_PROVIDER = env("AI_STT_PROVIDER", default="mock")
@@ -275,7 +331,7 @@ ORIGINAL_MASTER_KEY = env("ORIGINAL_MASTER_KEY", default="")
 ORIGINAL_MASTER_KEY_VERSION = env.int("ORIGINAL_MASTER_KEY_VERSION", default=1)
 ORIGINAL_STORAGE_QUOTA_BYTES = env.int(
     "ORIGINAL_STORAGE_QUOTA_BYTES",
-    default=2 * 1024 * 1024 * 1024,
+    default=100 * 1024 * 1024,
 )
 ORIGINAL_STRICT_FILE_VALIDATION = env.bool(
     "ORIGINAL_STRICT_FILE_VALIDATION",
@@ -292,3 +348,26 @@ CLAMAV_TIMEOUT_SECONDS = env.int("CLAMAV_TIMEOUT_SECONDS", default=30)
 DATA_UPLOAD_MAX_MEMORY_SIZE = env.int("DATA_UPLOAD_MAX_MEMORY_SIZE", default=27 * 1024 * 1024)
 FILE_UPLOAD_MAX_MEMORY_SIZE = env.int("FILE_UPLOAD_MAX_MEMORY_SIZE", default=1024 * 1024)
 FILE_UPLOAD_TEMP_DIR = env("FILE_UPLOAD_TEMP_DIR", default=None)
+
+DEMO_MAX_VERIFIED_USERS = env.int("DEMO_MAX_VERIFIED_USERS", default=100)
+REGISTRATION_ENABLED = env.bool("REGISTRATION_ENABLED", default=True)
+PUBLIC_API_BASE_URL = env("PUBLIC_API_BASE_URL", default="")
+PRIVACY_NOTICE_VERSION = env("PRIVACY_NOTICE_VERSION", default="2026-08-05")
+EMAIL_CHALLENGE_TTL_SECONDS = env.int("EMAIL_CHALLENGE_TTL_SECONDS", default=900)
+EMAIL_CHALLENGE_MAX_ATTEMPTS = env.int("EMAIL_CHALLENGE_MAX_ATTEMPTS", default=5)
+
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-reply@localhost")
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND",
+    default=(
+        "django.core.mail.backends.console.EmailBackend"
+        if DEBUG
+        else "django.core.mail.backends.smtp.EmailBackend"
+    ),
+)
+EMAIL_HOST = env("EMAIL_HOST", default="")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)

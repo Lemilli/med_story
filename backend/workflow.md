@@ -61,95 +61,23 @@ AI_OPENAI_STT_MODEL=gpt-4o-mini-transcribe
 `AI_STT_PROVIDER` defaults to `mock` for deterministic local tests. The API and Celery worker both
 need the same AI settings because ingestion is queued from the API and processed by the worker.
 
-## Production Flow: VPS
+## Public Demonstration: OVHcloud VPS
 
-Production on a VPS uses `docker-compose.prod.yml`, not the local development Compose file.
+Use the hardened production Compose file and the complete
+[`deploy/ovh/README.md`](./deploy/ovh/README.md) runbook. It covers the selected low-cost server,
+domain/TLS/email setup, host firewall and SSH hardening, secret provisioning, deployment,
+verification, updates, rollback, cost controls, and the intentional no-recovery posture.
 
-The production Compose file runs:
-
-- API with Gunicorn
-- Celery worker
-- PostgreSQL with a persistent Docker volume
-- Redis with a persistent Docker volume
-- Garage 2.3 on a persistent encrypted host volume, reachable only through the private TLS proxy
-- ClamAV and Celery beat for fail-closed scans and deletion/staging cleanup
-
-On the VPS:
-
-1. Install Docker and Docker Compose.
-2. Clone or pull the project.
-3. Create `.env.production` in the `backend` folder:
+The short path after the VPS prerequisites are complete is:
 
 ```bash
-cp .env.production.example .env.production
+./deploy/ovh/provision-secrets.sh
+./deploy/ovh/prepare-env.sh api.example.com no-reply@example.com
+sudoedit .env.production
+./deploy/ovh/deploy.sh
 ```
 
-Then edit `.env.production` with real VPS values.
-
-Required production values:
-
-```bash
-DEBUG=False
-SECRET_KEY=<strong-secret>
-ALLOWED_HOSTS=<your-domain-or-server-ip>
-CORS_ALLOWED_ORIGINS=
-
-POSTGRES_DB=medstory
-POSTGRES_USER=medstory
-POSTGRES_PASSWORD=<strong-db-password>
-DATABASE_URL=postgres://medstory:<strong-db-password>@db:5432/medstory
-
-CELERY_BROKER_URL=redis://redis:6379/0
-CELERY_RESULT_BACKEND=redis://redis:6379/0
-
-AI_LLM_PROVIDER=openai
-AI_OCR_PROVIDER=openai
-AI_STT_PROVIDER=openai
-AI_OPENAI_API_KEY=<your-openai-api-key>
-AI_OPENAI_MODEL=<your-model>
-AI_OPENAI_SUMMARY_MODEL=<stronger-summary-model>
-AI_OPENAI_OCR_MODEL=<your-model>
-AI_OPENAI_STT_MODEL=gpt-4o-mini-transcribe
-AI_OPENAI_TIMEOUT_SECONDS=60
-
-ORIGINAL_STORAGE_BACKEND=s3
-ORIGINAL_STORAGE_ENDPOINT=https://garage-proxy
-ORIGINAL_STORAGE_VERIFY_TLS=True
-ORIGINAL_STRICT_FILE_VALIDATION=True
-ORIGINAL_MALWARE_SCANNER=clamav
-```
-
-Provision every file listed in `backend/secrets/README.md` with mode `0600`. The four application
-Garage keys are independent and least-privilege; do not reuse the bootstrap key in API or worker
-containers. The TLS certificate must be valid for `garage-proxy`.
-
-Build and start production services:
-
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-Run migrations:
-
-```bash
-docker compose -f docker-compose.prod.yml run --rm api python manage.py migrate
-```
-
-View logs:
-
-```bash
-docker compose -f docker-compose.prod.yml logs -f
-```
-
-Stop services:
-
-```bash
-docker compose -f docker-compose.prod.yml down
-```
-
-The API is bound to `127.0.0.1:8000` on the VPS. Put Nginx or Caddy in front of it for HTTPS and
-public traffic.
-
-Garage S3/RPC/admin ports have no host mapping. Do not add one. Place both Garage volumes on the
-encrypted production disk. V1 intentionally has no object backup; retain a sealed offline recovery
-copy of `original_master_key`, because losing it makes every original undecryptable.
+Do not run the development Compose file publicly. Do not expose PostgreSQL, Redis, Garage, ClamAV,
+or port 8000. The demonstration is a single-node environment with no application-managed backup or
+availability guarantee; accepting real health data additionally requires the documented legal and
+subprocessor approvals.

@@ -261,6 +261,56 @@ class ProcessingJob(models.Model):
         return f"{self.job_type}:{target_id}:{self.status}"
 
 
+class AIQuotaBucket(models.Model):
+    class Scope(models.TextChoices):
+        USER_DAY = "user_day", "User day"
+        GLOBAL_DAY = "global_day", "Global day"
+        GLOBAL_MONTH = "global_month", "Global month"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    scope = models.CharField(max_length=20, choices=Scope.choices)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ai_quota_buckets",
+        null=True,
+        blank=True,
+    )
+    period_start = models.DateField()
+    units_used = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("scope", "user", "period_start"),
+                condition=Q(user__isnull=False),
+                name="unique_user_ai_quota_bucket",
+            ),
+            models.UniqueConstraint(
+                fields=("scope", "period_start"),
+                condition=Q(user__isnull=True),
+                name="unique_global_ai_quota_bucket",
+            ),
+        ]
+
+
+class AIQuotaReservation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ai_quota_reservations",
+    )
+    operation = models.CharField(max_length=50)
+    units = models.PositiveSmallIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [models.Index(fields=("user", "-created_at"), name="ai_reservation_user_idx")]
+
+
 class DocumentExplanation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="explanations")

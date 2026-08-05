@@ -414,6 +414,7 @@ class MedicalSummarySerializer(serializers.ModelSerializer):
     def get_subject_id(self, obj):
         return str(obj.subject_id)
 
+    @extend_schema_field(serializers.DictField())
     def get_content(self, obj):
         return normalize_summary_content(obj.content)
 
