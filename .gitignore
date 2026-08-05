@@ -9,8 +9,5 @@
 !backend/.env.example
 !backend/.env.production.example
 
-# Tooling local overrides
-.impeccable/config.local.json
-
 # Test assets .txt, images, audio and etc.
 test_assets/

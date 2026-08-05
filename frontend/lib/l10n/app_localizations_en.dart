@@ -813,7 +813,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authRegisterSubtitle =>
-      'Start with a private place for your medical history.';
+      'A private place for your medical history.';
 
   @override
   String get authBoundarySemanticLabel =>
@@ -821,32 +821,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authBoundaryNote =>
-      'MedStory helps organize and explain information. It does not diagnose or recommend treatment.';
+      'MedStory organizes and explains your records. It does not diagnose or recommend treatment.';
+
+  @override
+  String get authAccountDetailsSemanticLabel => 'Account details';
 
   @override
   String get authFullNameLabel => 'Full name';
 
   @override
+  String get authOptionalLabel => 'Optional';
+
+  @override
+  String get authFullNameHint => 'Your name';
+
+  @override
   String get authFullNameHelper =>
-      'Optional, used only to personalize your account.';
+      'Optional · Used only to personalize your account.';
 
   @override
   String get authEmailLabel => 'Email';
 
   @override
+  String get authEmailHint => 'you@example.com';
+
+  @override
   String get authPasswordLabel => 'Password';
 
   @override
-  String get authPasswordHelper => 'Use at least 8 characters.';
+  String get authPasswordHint => 'Create a password';
+
+  @override
+  String get authPasswordHelper => 'At least 8 characters.';
+
+  @override
+  String get authShowPasswordAction => 'Show password';
+
+  @override
+  String get authHidePasswordAction => 'Hide password';
 
   @override
   String get authEmailValidation => 'Enter a valid email address.';
 
   @override
-  String get authPasswordValidation => 'Enter at least 8 characters.';
+  String get authPasswordValidation => 'Use at least 8 characters.';
 
   @override
   String get authCreateAccountAction => 'Create account';
+
+  @override
+  String get authCreatingAccountAction => 'Creating account…';
+
+  @override
+  String get authTryAgainAction => 'Try again';
 
   @override
   String get authLoginAction => 'Log in';
@@ -889,18 +916,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'This demo is currently full. Please try again later.';
 
   @override
+  String get authPrivacyAiTitle => 'Privacy & AI';
+
+  @override
+  String get authPrivacyAiIntro =>
+      'Choose how MedStory may handle your records.';
+
+  @override
+  String get authRequiredLabel => 'REQUIRED';
+
+  @override
   String get authPrivacyConsentTitle => 'I accept the privacy notice';
 
   @override
   String get authPrivacyConsentDescription =>
-      'Required. This explains how the demo stores, processes, and deletes your medical information.';
+      'Needed to create and protect your account.';
 
   @override
   String get authPrivacyConsentValidation =>
       'Accept the privacy notice to create an account.';
 
   @override
-  String get authPrivacyDetailsShowAction => 'Read the privacy notice';
+  String get authPrivacyDetailsShowAction => 'Read notice';
 
   @override
   String get authPrivacyDetailsHideAction => 'Hide the privacy notice';
@@ -910,14 +947,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authPrivacyDetailsMessage =>
-      'MedStory is a demonstration service, not medical advice. Your information is kept until you delete it or the demo infrastructure is lost; recovery is not guaranteed. Infrastructure-provider snapshots may retain deleted bytes temporarily. When you enable AI processing, the minimum necessary content is sent to the configured AI provider. You can revoke AI processing later and can delete your account and stored data in Settings.';
+      'Your medical records are private. MedStory uses the information you add to provide your account, keep it secure, and organize your personal health history.';
+
+  @override
+  String get authPrivacyDetailsSecondaryMessage =>
+      'You control what you add and can request access to or deletion of your information. AI permission is separate and is not required to use manual features.';
 
   @override
   String get authAiConsentTitle => 'Allow AI processing';
 
   @override
+  String get authAiConsentMeta => 'Optional · Off by default';
+
+  @override
   String get authAiConsentDescription =>
-      'Optional and off by default. AI can organize and explain content, but does not diagnose or recommend treatment. You can still use manual features without it.';
+      'AI can organize and explain records, but cannot diagnose. Manual features still work without it.';
+
+  @override
+  String get authAiDetailsShowAction => 'How it works';
+
+  @override
+  String get authAiDetailsMessage =>
+      'When enabled, MedStory may process the records you choose to help structure timelines and explain medical language. You can turn this off later.';
 
   @override
   String get authForgotPasswordAction => 'Forgot password?';

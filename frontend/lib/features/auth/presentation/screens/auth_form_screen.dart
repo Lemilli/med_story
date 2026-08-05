@@ -10,6 +10,13 @@ import '../controllers/auth_controller.dart';
 
 enum AuthFormMode { login, register }
 
+class _RegistrationColors {
+  const _RegistrationColors._();
+
+  static const danger = Color(0xFF9F3D00);
+  static const dangerSurface = Color(0xFFFFF2E4);
+}
+
 class AuthFormScreen extends ConsumerStatefulWidget {
   const AuthFormScreen({required this.mode, super.key});
 
@@ -24,27 +31,295 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _fullNameController = TextEditingController();
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _privacyFocusNode = FocusNode();
   bool _privacyAccepted = false;
   bool _aiConsent = false;
   bool _showPrivacyDetails = false;
+  bool _showAiDetails = false;
   bool _showPrivacyError = false;
+  bool _showPassword = false;
+  bool _submitted = false;
+  bool _dismissSubmissionError = false;
 
   bool get _isRegister => widget.mode == AuthFormMode.register;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(_clearSubmissionError);
+    _passwordController.addListener(_clearSubmissionError);
+    _fullNameController.addListener(_clearSubmissionError);
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _fullNameController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _privacyFocusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final authState = ref.watch(authControllerProvider);
-    final isLoading = authState.isLoading;
-    final errorMessage = _errorMessage(authState.error);
+    final errorMessage = _dismissSubmissionError
+        ? null
+        : _errorMessage(authState.error);
+
+    if (_isRegister) {
+      return _buildRegistration(
+        isLoading: authState.isLoading,
+        errorMessage: errorMessage,
+      );
+    }
+    return _buildLogin(
+      isLoading: authState.isLoading,
+      errorMessage: errorMessage,
+    );
+  }
+
+  Widget _buildRegistration({
+    required bool isLoading,
+    required String? errorMessage,
+  }) {
+    final l10n = context.l10n;
+
+    return Scaffold(
+      backgroundColor: AppColors.quietSurface,
+      resizeToAvoidBottomInset: false,
+      body: Theme(
+        data: _registrationTheme(context),
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: 480,
+              height: double.infinity,
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  color: AppColors.clinicalWhite,
+                  border: Border.symmetric(
+                    vertical: BorderSide(color: AppColors.clinicalLine),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SafeArea(
+                        bottom: false,
+                        child: SingleChildScrollView(
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                          child: Form(
+                            key: _formKey,
+                            autovalidateMode: _submitted
+                                ? AutovalidateMode.always
+                                : AutovalidateMode.disabled,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const _RegistrationHeader(),
+                                const SizedBox(height: AppSpacing.xl),
+                                Semantics(
+                                  container: true,
+                                  label: l10n.authAccountDetailsSemanticLabel,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _RegistrationField(
+                                        label: l10n.authFullNameLabel,
+                                        trailingLabel: l10n.authOptionalLabel,
+                                        helperText: l10n.authFullNameHelper,
+                                        child: TextFormField(
+                                          controller: _fullNameController,
+                                          textInputAction: TextInputAction.next,
+                                          textCapitalization:
+                                              TextCapitalization.words,
+                                          autofillHints: const [
+                                            AutofillHints.name,
+                                          ],
+                                          enabled: !isLoading,
+                                          decoration: InputDecoration(
+                                            hintText: l10n.authFullNameHint,
+                                          ),
+                                          onFieldSubmitted: (_) =>
+                                              _emailFocusNode.requestFocus(),
+                                        ),
+                                      ),
+                                      const SizedBox(height: AppSpacing.lg),
+                                      _RegistrationField(
+                                        label: l10n.authEmailLabel,
+                                        child: TextFormField(
+                                          controller: _emailController,
+                                          focusNode: _emailFocusNode,
+                                          keyboardType:
+                                              TextInputType.emailAddress,
+                                          textInputAction: TextInputAction.next,
+                                          textCapitalization:
+                                              TextCapitalization.none,
+                                          autocorrect: false,
+                                          enableSuggestions: false,
+                                          autofillHints: const [
+                                            AutofillHints.email,
+                                          ],
+                                          enabled: !isLoading,
+                                          decoration: InputDecoration(
+                                            hintText: l10n.authEmailHint,
+                                          ),
+                                          validator: _validateEmail,
+                                          onFieldSubmitted: (_) =>
+                                              _passwordFocusNode.requestFocus(),
+                                        ),
+                                      ),
+                                      const SizedBox(height: AppSpacing.lg),
+                                      _RegistrationField(
+                                        label: l10n.authPasswordLabel,
+                                        helperText: l10n.authPasswordHelper,
+                                        child: TextFormField(
+                                          controller: _passwordController,
+                                          focusNode: _passwordFocusNode,
+                                          obscureText: !_showPassword,
+                                          textInputAction: TextInputAction.done,
+                                          autocorrect: false,
+                                          enableSuggestions: false,
+                                          autofillHints: const [
+                                            AutofillHints.newPassword,
+                                          ],
+                                          enabled: !isLoading,
+                                          decoration: InputDecoration(
+                                            hintText: l10n.authPasswordHint,
+                                            suffixIcon: IconButton(
+                                              onPressed: isLoading
+                                                  ? null
+                                                  : () => setState(
+                                                      () => _showPassword =
+                                                          !_showPassword,
+                                                    ),
+                                              constraints: const BoxConstraints(
+                                                minWidth: 48,
+                                                minHeight: 48,
+                                              ),
+                                              tooltip: _showPassword
+                                                  ? l10n.authHidePasswordAction
+                                                  : l10n.authShowPasswordAction,
+                                              icon: Icon(
+                                                _showPassword
+                                                    ? Icons
+                                                          .visibility_off_outlined
+                                                    : Icons.visibility_outlined,
+                                              ),
+                                            ),
+                                          ),
+                                          validator: _validatePassword,
+                                          onFieldSubmitted: (_) => _submit(),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const _SectionRule(),
+                                Text(
+                                  l10n.authPrivacyAiTitle,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        color: AppColors.patientInk,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                                const SizedBox(height: AppSpacing.xs),
+                                Text(
+                                  l10n.authPrivacyAiIntro,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.secondaryInk,
+                                        height: 1.35,
+                                      ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                _ConsentGroup(
+                                  privacyAccepted: _privacyAccepted,
+                                  aiConsent: _aiConsent,
+                                  enabled: !isLoading,
+                                  showError: _showPrivacyError,
+                                  showPrivacyDetails: _showPrivacyDetails,
+                                  showAiDetails: _showAiDetails,
+                                  privacyFocusNode: _privacyFocusNode,
+                                  onPrivacyChanged: (value) {
+                                    setState(() {
+                                      _privacyAccepted = value;
+                                      if (value) _showPrivacyError = false;
+                                    });
+                                    _clearSubmissionError();
+                                  },
+                                  onAiChanged: (value) {
+                                    setState(() => _aiConsent = value);
+                                    _clearSubmissionError();
+                                  },
+                                  onTogglePrivacyDetails: () => setState(
+                                    () => _showPrivacyDetails =
+                                        !_showPrivacyDetails,
+                                  ),
+                                  onToggleAiDetails: () => setState(
+                                    () => _showAiDetails = !_showAiDetails,
+                                  ),
+                                ),
+                                if (_showPrivacyError) ...[
+                                  const SizedBox(height: AppSpacing.sm),
+                                  Semantics(
+                                    container: true,
+                                    liveRegion: true,
+                                    child: Text(
+                                      l10n.authPrivacyConsentValidation,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: _RegistrationColors.danger,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                                if (errorMessage != null) ...[
+                                  const SizedBox(height: AppSpacing.md),
+                                  _AuthErrorBanner(message: errorMessage),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _RegistrationActions(
+                      isLoading: isLoading,
+                      hasError: errorMessage != null,
+                      onSubmit: _submit,
+                      onLogin: _switchMode,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogin({required bool isLoading, required String? errorMessage}) {
+    final l10n = context.l10n;
 
     return Scaffold(
       body: SafeArea(
@@ -58,21 +333,8 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _AuthHeader(isRegister: _isRegister),
+                    const _AuthHeader(),
                     const SizedBox(height: AppSpacing.xxl),
-                    if (_isRegister) ...[
-                      TextFormField(
-                        controller: _fullNameController,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [AutofillHints.name],
-                        enabled: !isLoading,
-                        decoration: InputDecoration(
-                          labelText: l10n.authFullNameLabel,
-                          helperText: l10n.authFullNameHelper,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                    ],
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -82,70 +344,8 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                       decoration: InputDecoration(
                         labelText: l10n.authEmailLabel,
                       ),
-                      validator: (value) {
-                        final email = value?.trim() ?? '';
-                        if (email.isEmpty || !email.contains('@')) {
-                          return l10n.authEmailValidation;
-                        }
-                        return null;
-                      },
+                      validator: _validateEmail,
                     ),
-                    if (_isRegister) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      _ConsentOption(
-                        value: _privacyAccepted,
-                        enabled: !isLoading,
-                        title: l10n.authPrivacyConsentTitle,
-                        description: l10n.authPrivacyConsentDescription,
-                        onChanged: (value) => setState(() {
-                          _privacyAccepted = value;
-                          if (value) _showPrivacyError = false;
-                        }),
-                      ),
-                      if (_showPrivacyError)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            left: AppSpacing.md,
-                            top: AppSpacing.xs,
-                          ),
-                          child: Text(
-                            l10n.authPrivacyConsentValidation,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: AppColors.error),
-                          ),
-                        ),
-                      TextButton(
-                        onPressed: isLoading
-                            ? null
-                            : () => setState(
-                                () =>
-                                    _showPrivacyDetails = !_showPrivacyDetails,
-                              ),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            _showPrivacyDetails
-                                ? l10n.authPrivacyDetailsHideAction
-                                : l10n.authPrivacyDetailsShowAction,
-                          ),
-                        ),
-                      ),
-                      if (_showPrivacyDetails)
-                        _InlineNotice(
-                          title: l10n.authPrivacyDetailsTitle,
-                          message: l10n.authPrivacyDetailsMessage,
-                        ),
-                      const SizedBox(height: AppSpacing.sm),
-                      _ConsentOption(
-                        value: _aiConsent,
-                        enabled: !isLoading,
-                        title: l10n.authAiConsentTitle,
-                        description: l10n.authAiConsentDescription,
-                        onChanged: (value) => setState(() {
-                          _aiConsent = value;
-                        }),
-                      ),
-                    ],
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _passwordController,
@@ -155,17 +355,8 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                       enabled: !isLoading,
                       decoration: InputDecoration(
                         labelText: l10n.authPasswordLabel,
-                        helperText: _isRegister
-                            ? l10n.authPasswordHelper
-                            : null,
                       ),
-                      validator: (value) {
-                        final password = value ?? '';
-                        if (password.length < 8) {
-                          return l10n.authPasswordValidation;
-                        }
-                        return null;
-                      },
+                      validator: _validatePassword,
                       onFieldSubmitted: (_) => _submit(),
                     ),
                     const SizedBox(height: AppSpacing.lg),
@@ -183,27 +374,18 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : Text(
-                              _isRegister
-                                  ? l10n.authCreateAccountAction
-                                  : l10n.authLoginAction,
-                            ),
+                          : Text(l10n.authLoginAction),
                     ),
-                    if (!_isRegister)
-                      TextButton(
-                        onPressed: isLoading
-                            ? null
-                            : () => context.go('/forgot-password'),
-                        child: Text(l10n.authForgotPasswordAction),
-                      ),
+                    TextButton(
+                      onPressed: isLoading
+                          ? null
+                          : () => context.go('/forgot-password'),
+                      child: Text(l10n.authForgotPasswordAction),
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     TextButton(
                       onPressed: isLoading ? null : _switchMode,
-                      child: Text(
-                        _isRegister
-                            ? l10n.authAlreadyHaveAccountAction
-                            : l10n.authNeedAccountAction,
-                      ),
+                      child: Text(l10n.authNeedAccountAction),
                     ),
                   ],
                 ),
@@ -213,6 +395,75 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
         ),
       ),
     );
+  }
+
+  ThemeData _registrationTheme(BuildContext context) {
+    final base = Theme.of(context);
+    final fieldBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(13),
+      borderSide: const BorderSide(color: AppColors.clinicalLine, width: 1.5),
+    );
+
+    return base.copyWith(
+      colorScheme: base.colorScheme.copyWith(
+        primary: AppColors.deepClinicalBlue,
+        error: _RegistrationColors.danger,
+      ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.deepClinicalBlue,
+        selectionColor: Color(0x3363B3FF),
+        selectionHandleColor: AppColors.deepClinicalBlue,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.clinicalWhite,
+        hintStyle: const TextStyle(color: Color(0xFF8994A6)),
+        suffixIconColor: AppColors.secondaryInk,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
+        constraints: const BoxConstraints(minHeight: 50),
+        border: fieldBorder,
+        enabledBorder: fieldBorder,
+        disabledBorder: fieldBorder.copyWith(
+          borderSide: const BorderSide(color: AppColors.clinicalLine),
+        ),
+        focusedBorder: fieldBorder.copyWith(
+          borderSide: const BorderSide(
+            color: AppColors.deepClinicalBlue,
+            width: 1.5,
+          ),
+        ),
+        errorBorder: fieldBorder.copyWith(
+          borderSide: const BorderSide(
+            color: _RegistrationColors.danger,
+            width: 1.5,
+          ),
+        ),
+        focusedErrorBorder: fieldBorder.copyWith(
+          borderSide: const BorderSide(
+            color: _RegistrationColors.danger,
+            width: 1.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String? _validateEmail(String? value) {
+    final email = value?.trim() ?? '';
+    if (email.isEmpty || !email.contains('@')) {
+      return context.l10n.authEmailValidation;
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if ((value ?? '').length < 8) {
+      return context.l10n.authPasswordValidation;
+    }
+    return null;
   }
 
   String? _errorMessage(Object? error) {
@@ -247,15 +498,30 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
   }
 
   Future<void> _submit() async {
-    FocusScope.of(context).unfocus();
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
+    if (_isRegister) {
+      setState(() {
+        _submitted = true;
+        _showPrivacyError = !_privacyAccepted;
+        _dismissSubmissionError = false;
+      });
     }
-    if (_isRegister && !_privacyAccepted) {
-      setState(() => _showPrivacyError = true);
+
+    final emailInvalid = _validateEmail(_emailController.text) != null;
+    final passwordInvalid = _validatePassword(_passwordController.text) != null;
+    final formValid = _formKey.currentState?.validate() ?? false;
+    final privacyInvalid = _isRegister && !_privacyAccepted;
+    if (!formValid || privacyInvalid) {
+      if (emailInvalid) {
+        _emailFocusNode.requestFocus();
+      } else if (passwordInvalid) {
+        _passwordFocusNode.requestFocus();
+      } else if (privacyInvalid) {
+        _privacyFocusNode.requestFocus();
+      }
       return;
     }
 
+    FocusScope.of(context).unfocus();
     final locale = Localizations.localeOf(context).languageCode;
     final controller = ref.read(authControllerProvider.notifier);
     if (_isRegister) {
@@ -287,91 +553,308 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
     }
   }
 
+  void _clearSubmissionError() {
+    if (!mounted || _dismissSubmissionError) {
+      return;
+    }
+    if (ref.read(authControllerProvider).hasError) {
+      setState(() => _dismissSubmissionError = true);
+    }
+  }
+
   void _switchMode() {
     context.go(_isRegister ? '/login' : '/register');
   }
 }
 
-class _ConsentOption extends StatelessWidget {
-  const _ConsentOption({
-    required this.value,
-    required this.enabled,
-    required this.title,
-    required this.description,
-    required this.onChanged,
+class _RegistrationField extends StatelessWidget {
+  const _RegistrationField({
+    required this.label,
+    required this.child,
+    this.trailingLabel,
+    this.helperText,
   });
 
-  final bool value;
-  final bool enabled;
-  final String title;
-  final String description;
-  final ValueChanged<bool> onChanged;
+  final String label;
+  final String? trailingLabel;
+  final String? helperText;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      container: true,
-      child: CheckboxListTile(
-        value: value,
-        enabled: enabled,
-        onChanged: (next) => onChanged(next ?? false),
-        controlAffinity: ListTileControlAffinity.leading,
-        contentPadding: EdgeInsets.zero,
-        minVerticalPadding: AppSpacing.sm,
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: AppColors.patientInk,
-            fontWeight: FontWeight.w700,
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.patientInk,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (trailingLabel != null) ...[
+                const SizedBox(width: AppSpacing.md),
+                Padding(
+                  padding: const EdgeInsets.only(right: 2),
+                  child: Text(
+                    trailingLabel!,
+                    key: const ValueKey('registration-full-name-optional'),
+                    textAlign: TextAlign.end,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.secondaryInk,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.xs),
-          child: Text(
-            description,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.secondaryInk,
-              height: 1.35,
+        const SizedBox(height: AppSpacing.sm),
+        Semantics(container: true, label: label, child: child),
+        if (helperText != null) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
+              helperText!,
+              style: textTheme.bodySmall?.copyWith(
+                color: AppColors.secondaryInk,
+                height: 1.3,
+              ),
             ),
           ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ConsentGroup extends StatelessWidget {
+  const _ConsentGroup({
+    required this.privacyAccepted,
+    required this.aiConsent,
+    required this.enabled,
+    required this.showError,
+    required this.showPrivacyDetails,
+    required this.showAiDetails,
+    required this.privacyFocusNode,
+    required this.onPrivacyChanged,
+    required this.onAiChanged,
+    required this.onTogglePrivacyDetails,
+    required this.onToggleAiDetails,
+  });
+
+  final bool privacyAccepted;
+  final bool aiConsent;
+  final bool enabled;
+  final bool showError;
+  final bool showPrivacyDetails;
+  final bool showAiDetails;
+  final FocusNode privacyFocusNode;
+  final ValueChanged<bool> onPrivacyChanged;
+  final ValueChanged<bool> onAiChanged;
+  final VoidCallback onTogglePrivacyDetails;
+  final VoidCallback onToggleAiDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return Semantics(
+      container: true,
+      child: Container(
+        key: const ValueKey('registration-consent-group'),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: AppColors.clinicalWhite,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        foregroundDecoration: BoxDecoration(
+          border: Border.all(
+            color: showError
+                ? _RegistrationColors.danger
+                : AppColors.clinicalLine,
+            width: 1.5,
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          children: [
+            _ConsentChoice(
+              value: privacyAccepted,
+              enabled: enabled,
+              focusNode: privacyFocusNode,
+              title: l10n.authPrivacyConsentTitle,
+              meta: l10n.authPrivacyConsentDescription,
+              badge: l10n.authRequiredLabel,
+              showDetails: showPrivacyDetails,
+              detailsAction: l10n.authPrivacyDetailsShowAction,
+              detailsParagraphs: [
+                l10n.authPrivacyDetailsMessage,
+                l10n.authPrivacyDetailsSecondaryMessage,
+              ],
+              onChanged: onPrivacyChanged,
+              onToggleDetails: onTogglePrivacyDetails,
+            ),
+            const Divider(height: 1, color: AppColors.clinicalLine),
+            _ConsentChoice(
+              value: aiConsent,
+              enabled: enabled,
+              title: l10n.authAiConsentTitle,
+              meta: l10n.authAiConsentMeta,
+              explanation: l10n.authAiConsentDescription,
+              showDetails: showAiDetails,
+              detailsAction: l10n.authAiDetailsShowAction,
+              detailsParagraphs: [l10n.authAiDetailsMessage],
+              onChanged: onAiChanged,
+              onToggleDetails: onToggleAiDetails,
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _InlineNotice extends StatelessWidget {
-  const _InlineNotice({required this.title, required this.message});
+class _ConsentChoice extends StatelessWidget {
+  const _ConsentChoice({
+    required this.value,
+    required this.enabled,
+    required this.title,
+    required this.meta,
+    required this.showDetails,
+    required this.detailsAction,
+    required this.detailsParagraphs,
+    required this.onChanged,
+    required this.onToggleDetails,
+    this.focusNode,
+    this.badge,
+    this.explanation,
+  });
 
+  final bool value;
+  final bool enabled;
   final String title;
-  final String message;
+  final String meta;
+  final bool showDetails;
+  final String detailsAction;
+  final List<String> detailsParagraphs;
+  final ValueChanged<bool> onChanged;
+  final VoidCallback onToggleDetails;
+  final FocusNode? focusNode;
+  final String? badge;
+  final String? explanation;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.quietSurface,
-        border: Border.all(color: AppColors.clinicalLine),
-        borderRadius: BorderRadius.circular(14),
-      ),
+    final textTheme = Theme.of(context).textTheme;
+
+    return Material(
+      color: AppColors.clinicalWhite,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: AppColors.patientInk,
-                fontWeight: FontWeight.w800,
+            CheckboxListTile(
+              value: value,
+              enabled: enabled,
+              focusNode: focusNode,
+              activeColor: AppColors.deepClinicalBlue,
+              checkColor: AppColors.clinicalWhite,
+              checkboxShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+              side: const BorderSide(color: AppColors.secondaryInk, width: 1.5),
+              onChanged: (next) => onChanged(next ?? false),
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: const EdgeInsets.fromLTRB(6, 2, 14, 0),
+              minVerticalPadding: AppSpacing.sm,
+              title: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.xs,
+                children: [
+                  Text(
+                    title,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.patientInk,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
+                  ),
+                  if (badge != null)
+                    Text(
+                      badge!,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: _RegistrationColors.danger,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.45,
+                      ),
+                    ),
+                ],
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Text(
+                  meta,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.secondaryInk,
+                    height: 1.35,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              message,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.secondaryInk,
-                height: 1.4,
+            Padding(
+              padding: const EdgeInsets.only(left: 62, right: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (explanation != null) ...[
+                    Text(
+                      explanation!,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.secondaryInk,
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                  ],
+                  TextButton.icon(
+                    onPressed: enabled ? onToggleDetails : null,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.controlledCrimson,
+                      minimumSize: const Size(48, 48),
+                      padding: EdgeInsets.zero,
+                      tapTargetSize: MaterialTapTargetSize.padded,
+                      alignment: Alignment.centerLeft,
+                    ),
+                    iconAlignment: IconAlignment.end,
+                    icon: Icon(
+                      showDetails
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                    ),
+                    label: Text(
+                      detailsAction,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  if (showDetails)
+                    _DisclosureNotice(paragraphs: detailsParagraphs),
+                ],
               ),
             ),
           ],
@@ -381,10 +864,126 @@ class _InlineNotice extends StatelessWidget {
   }
 }
 
-class _AuthHeader extends StatelessWidget {
-  const _AuthHeader({required this.isRegister});
+class _DisclosureNotice extends StatelessWidget {
+  const _DisclosureNotice({required this.paragraphs});
 
-  final bool isRegister;
+  final List<String> paragraphs;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: AppColors.secondaryInk,
+      height: 1.48,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.quietSurface,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var index = 0; index < paragraphs.length; index++) ...[
+                if (index > 0) const SizedBox(height: AppSpacing.sm),
+                Text(paragraphs[index], style: style),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RegistrationActions extends StatelessWidget {
+  const _RegistrationActions({
+    required this.isLoading,
+    required this.hasError,
+    required this.onSubmit,
+    required this.onLogin,
+  });
+
+  final bool isLoading;
+  final bool hasError;
+  final VoidCallback onSubmit;
+  final VoidCallback onLogin;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return ColoredBox(
+      color: AppColors.quietSurface,
+      child: Center(
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              color: AppColors.clinicalWhite,
+              border: Border(top: BorderSide(color: AppColors.clinicalLine)),
+            ),
+            child: SafeArea(
+              top: false,
+              minimum: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FilledButton(
+                    onPressed: isLoading ? null : onSubmit,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isLoading) ...[
+                          const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(
+                              color: AppColors.clinicalWhite,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                        ],
+                        Flexible(
+                          child: Text(
+                            isLoading
+                                ? l10n.authCreatingAccountAction
+                                : hasError
+                                ? l10n.authTryAgainAction
+                                : l10n.authCreateAccountAction,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: isLoading ? null : onLogin,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.controlledCrimson,
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    child: Text(l10n.authAlreadyHaveAccountAction),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RegistrationHeader extends StatelessWidget {
+  const _RegistrationHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -395,7 +994,75 @@ class _AuthHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isRegister ? l10n.authRegisterTitle : l10n.authLoginTitle,
+          l10n.authRegisterTitle,
+          style: textTheme.headlineMedium?.copyWith(
+            color: AppColors.patientInk,
+            fontWeight: FontWeight.w800,
+            height: 1.12,
+            letterSpacing: -0.6,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          l10n.authRegisterSubtitle,
+          style: textTheme.bodyLarge?.copyWith(
+            color: AppColors.secondaryInk,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Semantics(
+          container: true,
+          label: l10n.authBoundarySemanticLabel,
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              color: AppColors.quietSurface,
+              border: Border(
+                left: BorderSide(color: AppColors.clinicalLine, width: 3),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+              child: Text(
+                l10n.authBoundaryNote,
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.secondaryInk,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionRule extends StatelessWidget {
+  const _SectionRule();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(top: 22, bottom: 18),
+      child: Divider(height: 1, color: AppColors.clinicalLine),
+    );
+  }
+}
+
+class _AuthHeader extends StatelessWidget {
+  const _AuthHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.authLoginTitle,
           style: textTheme.headlineMedium?.copyWith(
             color: AppColors.patientInk,
             fontWeight: FontWeight.w900,
@@ -404,7 +1071,7 @@ class _AuthHeader extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          isRegister ? l10n.authRegisterSubtitle : l10n.authLoginSubtitle,
+          l10n.authLoginSubtitle,
           style: textTheme.bodyLarge?.copyWith(
             color: AppColors.secondaryInk,
             height: 1.45,
@@ -415,31 +1082,20 @@ class _AuthHeader extends StatelessWidget {
           container: true,
           label: l10n.authBoundarySemanticLabel,
           child: DecoratedBox(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.quietSurface,
-              border: Border.all(color: AppColors.clinicalLine),
-              borderRadius: BorderRadius.circular(14),
+              border: Border(
+                left: BorderSide(color: AppColors.clinicalLine, width: 3),
+              ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.verified_user_outlined,
-                    color: AppColors.deepClinicalBlue,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Text(
-                      l10n.authBoundaryNote,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.secondaryInk,
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+              child: Text(
+                l10n.authBoundaryNote,
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.secondaryInk,
+                  height: 1.4,
+                ),
               ),
             ),
           ),
@@ -457,6 +1113,10 @@ class _AuthErrorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final errorColor = Theme.of(context).colorScheme.error;
+    final errorSurface = errorColor == _RegistrationColors.danger
+        ? _RegistrationColors.dangerSurface
+        : const Color(0xFFFFF6F1);
 
     return Semantics(
       container: true,
@@ -464,27 +1124,24 @@ class _AuthErrorBanner extends StatelessWidget {
       label: message,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.quietSurface,
-          border: Border.all(color: AppColors.controlledCrimson),
-          borderRadius: BorderRadius.circular(14),
+          color: errorSurface,
+          border: Border.all(color: const Color(0xFFD6A47A)),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                color: AppColors.controlledCrimson,
-                size: 22,
-              ),
+              Icon(Icons.error_outline_rounded, color: errorColor, size: 22),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   message,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.patientInk,
-                    height: 1.35,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF6B3626),
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
                   ),
                 ),
               ),

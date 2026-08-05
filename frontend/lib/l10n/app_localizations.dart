@@ -1457,7 +1457,7 @@ abstract class AppLocalizations {
   /// No description provided for @authRegisterSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Start with a private place for your medical history.'**
+  /// **'A private place for your medical history.'**
   String get authRegisterSubtitle;
 
   /// No description provided for @authBoundarySemanticLabel.
@@ -1469,8 +1469,14 @@ abstract class AppLocalizations {
   /// No description provided for @authBoundaryNote.
   ///
   /// In en, this message translates to:
-  /// **'MedStory helps organize and explain information. It does not diagnose or recommend treatment.'**
+  /// **'MedStory organizes and explains your records. It does not diagnose or recommend treatment.'**
   String get authBoundaryNote;
+
+  /// No description provided for @authAccountDetailsSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account details'**
+  String get authAccountDetailsSemanticLabel;
 
   /// No description provided for @authFullNameLabel.
   ///
@@ -1478,10 +1484,22 @@ abstract class AppLocalizations {
   /// **'Full name'**
   String get authFullNameLabel;
 
+  /// No description provided for @authOptionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get authOptionalLabel;
+
+  /// No description provided for @authFullNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get authFullNameHint;
+
   /// No description provided for @authFullNameHelper.
   ///
   /// In en, this message translates to:
-  /// **'Optional, used only to personalize your account.'**
+  /// **'Optional · Used only to personalize your account.'**
   String get authFullNameHelper;
 
   /// No description provided for @authEmailLabel.
@@ -1490,17 +1508,41 @@ abstract class AppLocalizations {
   /// **'Email'**
   String get authEmailLabel;
 
+  /// No description provided for @authEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'you@example.com'**
+  String get authEmailHint;
+
   /// No description provided for @authPasswordLabel.
   ///
   /// In en, this message translates to:
   /// **'Password'**
   String get authPasswordLabel;
 
+  /// No description provided for @authPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a password'**
+  String get authPasswordHint;
+
   /// No description provided for @authPasswordHelper.
   ///
   /// In en, this message translates to:
-  /// **'Use at least 8 characters.'**
+  /// **'At least 8 characters.'**
   String get authPasswordHelper;
+
+  /// No description provided for @authShowPasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get authShowPasswordAction;
+
+  /// No description provided for @authHidePasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get authHidePasswordAction;
 
   /// No description provided for @authEmailValidation.
   ///
@@ -1511,7 +1553,7 @@ abstract class AppLocalizations {
   /// No description provided for @authPasswordValidation.
   ///
   /// In en, this message translates to:
-  /// **'Enter at least 8 characters.'**
+  /// **'Use at least 8 characters.'**
   String get authPasswordValidation;
 
   /// No description provided for @authCreateAccountAction.
@@ -1519,6 +1561,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create account'**
   String get authCreateAccountAction;
+
+  /// No description provided for @authCreatingAccountAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating account…'**
+  String get authCreatingAccountAction;
+
+  /// No description provided for @authTryAgainAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get authTryAgainAction;
 
   /// No description provided for @authLoginAction.
   ///
@@ -1586,6 +1640,24 @@ abstract class AppLocalizations {
   /// **'This demo is currently full. Please try again later.'**
   String get authDemoCapacityReachedMessage;
 
+  /// No description provided for @authPrivacyAiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy & AI'**
+  String get authPrivacyAiTitle;
+
+  /// No description provided for @authPrivacyAiIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how MedStory may handle your records.'**
+  String get authPrivacyAiIntro;
+
+  /// No description provided for @authRequiredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'REQUIRED'**
+  String get authRequiredLabel;
+
   /// No description provided for @authPrivacyConsentTitle.
   ///
   /// In en, this message translates to:
@@ -1595,7 +1667,7 @@ abstract class AppLocalizations {
   /// No description provided for @authPrivacyConsentDescription.
   ///
   /// In en, this message translates to:
-  /// **'Required. This explains how the demo stores, processes, and deletes your medical information.'**
+  /// **'Needed to create and protect your account.'**
   String get authPrivacyConsentDescription;
 
   /// No description provided for @authPrivacyConsentValidation.
@@ -1607,7 +1679,7 @@ abstract class AppLocalizations {
   /// No description provided for @authPrivacyDetailsShowAction.
   ///
   /// In en, this message translates to:
-  /// **'Read the privacy notice'**
+  /// **'Read notice'**
   String get authPrivacyDetailsShowAction;
 
   /// No description provided for @authPrivacyDetailsHideAction.
@@ -1625,8 +1697,14 @@ abstract class AppLocalizations {
   /// No description provided for @authPrivacyDetailsMessage.
   ///
   /// In en, this message translates to:
-  /// **'MedStory is a demonstration service, not medical advice. Your information is kept until you delete it or the demo infrastructure is lost; recovery is not guaranteed. Infrastructure-provider snapshots may retain deleted bytes temporarily. When you enable AI processing, the minimum necessary content is sent to the configured AI provider. You can revoke AI processing later and can delete your account and stored data in Settings.'**
+  /// **'Your medical records are private. MedStory uses the information you add to provide your account, keep it secure, and organize your personal health history.'**
   String get authPrivacyDetailsMessage;
+
+  /// No description provided for @authPrivacyDetailsSecondaryMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You control what you add and can request access to or deletion of your information. AI permission is separate and is not required to use manual features.'**
+  String get authPrivacyDetailsSecondaryMessage;
 
   /// No description provided for @authAiConsentTitle.
   ///
@@ -1634,11 +1712,29 @@ abstract class AppLocalizations {
   /// **'Allow AI processing'**
   String get authAiConsentTitle;
 
+  /// No description provided for @authAiConsentMeta.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional · Off by default'**
+  String get authAiConsentMeta;
+
   /// No description provided for @authAiConsentDescription.
   ///
   /// In en, this message translates to:
-  /// **'Optional and off by default. AI can organize and explain content, but does not diagnose or recommend treatment. You can still use manual features without it.'**
+  /// **'AI can organize and explain records, but cannot diagnose. Manual features still work without it.'**
   String get authAiConsentDescription;
+
+  /// No description provided for @authAiDetailsShowAction.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get authAiDetailsShowAction;
+
+  /// No description provided for @authAiDetailsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, MedStory may process the records you choose to help structure timelines and explain medical language. You can turn this off later.'**
+  String get authAiDetailsMessage;
 
   /// No description provided for @authForgotPasswordAction.
   ///

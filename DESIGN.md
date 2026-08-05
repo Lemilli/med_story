@@ -1,4 +1,3 @@
-<!-- SEED: re-run $impeccable document once there's code to capture the actual tokens and components. -->
 ---
 name: MedStory
 description: A calm, trustworthy medical memory app for organizing long-term health history.

@@ -815,7 +815,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get authRegisterSubtitle =>
-      'Начните с личного места для вашей медицинской истории.';
+      'Личное пространство для вашей медицинской истории.';
 
   @override
   String get authBoundarySemanticLabel =>
@@ -823,32 +823,59 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get authBoundaryNote =>
-      'MedStory помогает упорядочивать и объяснять информацию. Он не ставит диагнозы и не рекомендует лечение.';
+      'MedStory упорядочивает и объясняет ваши записи. Он не ставит диагнозы и не рекомендует лечение.';
+
+  @override
+  String get authAccountDetailsSemanticLabel => 'Данные аккаунта';
 
   @override
   String get authFullNameLabel => 'Полное имя';
 
   @override
+  String get authOptionalLabel => 'Необязательно';
+
+  @override
+  String get authFullNameHint => 'Ваше имя';
+
+  @override
   String get authFullNameHelper =>
-      'Необязательно, используется только для персонализации аккаунта.';
+      'Необязательно · Используется только для персонализации аккаунта.';
 
   @override
   String get authEmailLabel => 'Email';
 
   @override
+  String get authEmailHint => 'you@example.com';
+
+  @override
   String get authPasswordLabel => 'Пароль';
 
   @override
-  String get authPasswordHelper => 'Используйте минимум 8 символов.';
+  String get authPasswordHint => 'Придумайте пароль';
+
+  @override
+  String get authPasswordHelper => 'Минимум 8 символов.';
+
+  @override
+  String get authShowPasswordAction => 'Показать пароль';
+
+  @override
+  String get authHidePasswordAction => 'Скрыть пароль';
 
   @override
   String get authEmailValidation => 'Введите корректный email.';
 
   @override
-  String get authPasswordValidation => 'Введите минимум 8 символов.';
+  String get authPasswordValidation => 'Используйте минимум 8 символов.';
 
   @override
   String get authCreateAccountAction => 'Создать аккаунт';
+
+  @override
+  String get authCreatingAccountAction => 'Создаём аккаунт…';
+
+  @override
+  String get authTryAgainAction => 'Попробовать снова';
 
   @override
   String get authLoginAction => 'Войти';
@@ -891,20 +918,29 @@ class AppLocalizationsRu extends AppLocalizations {
       'Сейчас в демоверсии нет свободных мест. Попробуйте позже.';
 
   @override
+  String get authPrivacyAiTitle => 'Конфиденциальность и ИИ';
+
+  @override
+  String get authPrivacyAiIntro =>
+      'Выберите, как MedStory может обрабатывать ваши записи.';
+
+  @override
+  String get authRequiredLabel => 'ОБЯЗАТЕЛЬНО';
+
+  @override
   String get authPrivacyConsentTitle =>
       'Я принимаю уведомление о конфиденциальности';
 
   @override
   String get authPrivacyConsentDescription =>
-      'Обязательно. Здесь объясняется, как демоверсия хранит, обрабатывает и удаляет медицинскую информацию.';
+      'Необходимо для создания и защиты аккаунта.';
 
   @override
   String get authPrivacyConsentValidation =>
       'Примите уведомление о конфиденциальности, чтобы создать аккаунт.';
 
   @override
-  String get authPrivacyDetailsShowAction =>
-      'Прочитать уведомление о конфиденциальности';
+  String get authPrivacyDetailsShowAction => 'Прочитать уведомление';
 
   @override
   String get authPrivacyDetailsHideAction => 'Скрыть уведомление';
@@ -915,14 +951,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get authPrivacyDetailsMessage =>
-      'MedStory — демонстрационный сервис, а не медицинская консультация. Информация хранится, пока вы её не удалите или пока инфраструктура демоверсии не будет утрачена; восстановление не гарантируется. Снимки инфраструктурного провайдера могут временно сохранять удалённые данные. Если вы разрешите обработку с помощью ИИ, настроенному провайдеру будут передаваться минимально необходимые данные. Позже вы сможете отозвать разрешение и удалить аккаунт с сохранёнными данными в настройках.';
+      'Ваши медицинские записи конфиденциальны. MedStory использует добавленную вами информацию, чтобы предоставить и защитить ваш аккаунт и упорядочить вашу личную медицинскую историю.';
+
+  @override
+  String get authPrivacyDetailsSecondaryMessage =>
+      'Вы решаете, что добавлять, и можете запросить доступ к своей информации или её удаление. Разрешение на ИИ даётся отдельно и не требуется для ручных функций.';
 
   @override
   String get authAiConsentTitle => 'Разрешить обработку с помощью ИИ';
 
   @override
+  String get authAiConsentMeta => 'Необязательно · По умолчанию выключено';
+
+  @override
   String get authAiConsentDescription =>
-      'Необязательно и по умолчанию выключено. ИИ может упорядочивать и объяснять данные, но не ставит диагнозы и не рекомендует лечение. Ручные функции доступны и без него.';
+      'ИИ может упорядочивать и объяснять записи, но не может ставить диагнозы. Ручные функции работают и без него.';
+
+  @override
+  String get authAiDetailsShowAction => 'Как это работает';
+
+  @override
+  String get authAiDetailsMessage =>
+      'Если включить эту настройку, MedStory сможет обрабатывать выбранные вами записи, чтобы выстраивать хронологию и объяснять медицинские термины. Позже это можно отключить.';
 
   @override
   String get authForgotPasswordAction => 'Забыли пароль?';
