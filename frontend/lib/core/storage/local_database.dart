@@ -73,6 +73,7 @@ class CachedMedicalSummaries extends Table {
 
 class UploadQueueItems extends Table {
   TextColumn get id => text()();
+  TextColumn get ownerUserId => text()();
   TextColumn get displayName => text()();
   TextColumn get fingerprint => text()();
   TextColumn get localPath => text()();
@@ -110,7 +111,7 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration {
@@ -126,6 +127,12 @@ class LocalDatabase extends _$LocalDatabase {
             await migrator.deleteTable(table.actualTableName);
           }
           await migrator.createAll();
+        } else if (from < 9) {
+          // Queue rows created before v9 cannot be safely attributed to an
+          // account. Drop only this transient metadata table; other caches
+          // remain intact.
+          await migrator.deleteTable(uploadQueueItems.actualTableName);
+          await migrator.createTable(uploadQueueItems);
         }
       },
     );

@@ -55,6 +55,22 @@ void main() {
     verify(() => tokenStorage.clearTokens()).called(1);
     verify(() => localDatabase.clearAll()).called(1);
   });
+
+  test('logout clears tokens and all local account data', () async {
+    when(
+      () => tokenStorage.readRefreshToken(),
+    ).thenAnswer((_) async => 'refresh-token');
+    when(
+      () => api.logout(refreshToken: 'refresh-token'),
+    ).thenAnswer((_) async {});
+    when(() => tokenStorage.clearTokens()).thenAnswer((_) async {});
+    when(() => localDatabase.clearAll()).thenAnswer((_) async {});
+
+    await repository.logout();
+
+    verify(() => tokenStorage.clearTokens()).called(1);
+    verify(() => localDatabase.clearAll()).called(1);
+  });
 }
 
 AppUser _user({required String locale}) {

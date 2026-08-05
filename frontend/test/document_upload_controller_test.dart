@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
@@ -6,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:med_story/core/error/app_failure.dart';
 import 'package:med_story/core/storage/local_database.dart';
+import 'package:med_story/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:med_story/features/documents/data/document_repository.dart';
 import 'package:med_story/features/documents/domain/medical_document.dart';
 import 'package:med_story/features/documents/presentation/controllers/document_controllers.dart';
@@ -14,6 +16,17 @@ import 'package:mocktail/mocktail.dart';
 class _MockDocumentRepository extends Mock implements DocumentRepository {}
 
 class _MockDocumentFileStore extends Mock implements DocumentLocalFileStore {}
+
+final _testActiveUserIdProvider = NotifierProvider<_TestActiveUserId, String>(
+  _TestActiveUserId.new,
+);
+
+class _TestActiveUserId extends Notifier<String> {
+  @override
+  String build() => 'user-1';
+
+  void switchTo(String userId) => state = userId;
+}
 
 void main() {
   late _MockDocumentRepository repository;
@@ -58,6 +71,7 @@ void main() {
           any(),
           any(),
           onUploadProgress: any(named: 'onUploadProgress'),
+          shouldContinue: any(named: 'shouldContinue'),
         ),
       ).thenAnswer(
         (_) async => DocumentIngestionResult(
@@ -67,7 +81,10 @@ void main() {
         ),
       );
       when(
-        () => repository.pollDocumentUntilTerminal(id: 'document-1'),
+        () => repository.pollDocumentUntilTerminal(
+          id: 'document-1',
+          shouldContinue: any(named: 'shouldContinue'),
+        ),
       ).thenAnswer((_) async => _document(status: DocumentStatus.processed));
 
       await container.read(documentUploadControllerProvider.future);
@@ -106,6 +123,7 @@ void main() {
         any(),
         any(),
         onUploadProgress: any(named: 'onUploadProgress'),
+        shouldContinue: any(named: 'shouldContinue'),
       ),
     ).thenAnswer(
       (_) async => DocumentIngestionResult(
@@ -115,7 +133,10 @@ void main() {
       ),
     );
     when(
-      () => repository.pollDocumentUntilTerminal(id: 'document-1'),
+      () => repository.pollDocumentUntilTerminal(
+        id: 'document-1',
+        shouldContinue: any(named: 'shouldContinue'),
+      ),
     ).thenThrow(const AppFailure('document_processing_failed'));
 
     await container.read(documentUploadControllerProvider.future);
@@ -158,6 +179,7 @@ void main() {
           any(),
           any(),
           onUploadProgress: any(named: 'onUploadProgress'),
+          shouldContinue: any(named: 'shouldContinue'),
         ),
       ).thenAnswer(
         (_) async => DocumentIngestionResult(
@@ -167,7 +189,10 @@ void main() {
         ),
       );
       when(
-        () => repository.pollDocumentUntilTerminal(id: 'document-1'),
+        () => repository.pollDocumentUntilTerminal(
+          id: 'document-1',
+          shouldContinue: any(named: 'shouldContinue'),
+        ),
       ).thenThrow(const AppFailure('medical_events_not_found'));
 
       await container.read(documentUploadControllerProvider.future);
@@ -197,6 +222,7 @@ void main() {
           any(),
           any(),
           onUploadProgress: any(named: 'onUploadProgress'),
+          shouldContinue: any(named: 'shouldContinue'),
         ),
       ).thenThrow(
         const AppFailure(
@@ -230,6 +256,7 @@ void main() {
         .insert(
           UploadQueueItemsCompanion.insert(
             id: 'failed-item',
+            ownerUserId: 'user-1',
             displayName: 'lab.pdf',
             fingerprint: 'lab.pdf::3',
             localPath: '/missing/lab.pdf',
@@ -251,7 +278,10 @@ void main() {
       ),
     );
     when(
-      () => repository.pollDocumentUntilTerminal(id: 'document-1'),
+      () => repository.pollDocumentUntilTerminal(
+        id: 'document-1',
+        shouldContinue: any(named: 'shouldContinue'),
+      ),
     ).thenAnswer((_) async => _document(status: DocumentStatus.processed));
 
     await container.read(documentUploadControllerProvider.future);
@@ -274,6 +304,7 @@ void main() {
         any(),
         any(),
         onUploadProgress: any(named: 'onUploadProgress'),
+        shouldContinue: any(named: 'shouldContinue'),
       ),
     );
   });
@@ -289,6 +320,7 @@ void main() {
         .insert(
           UploadQueueItemsCompanion.insert(
             id: 'existing',
+            ownerUserId: 'user-1',
             displayName: 'lab.pdf',
             fingerprint: 'lab.pdf::3',
             localPath: '/local/lab.pdf',
@@ -314,6 +346,122 @@ void main() {
       UploadEnqueueResult.duplicate,
     );
   });
+
+  test('loads queue items only for the active account', () async {
+    final container = _container(repository, database);
+    addTearDown(container.dispose);
+    final now = DateTime.now();
+    await _insertQueueItem(
+      database,
+      id: 'user-1-item',
+      ownerUserId: 'user-1',
+      now: now,
+    );
+    await _insertQueueItem(
+      database,
+      id: 'user-2-item',
+      ownerUserId: 'user-2',
+      now: now,
+    );
+
+    expect(
+      (await container.read(documentUploadControllerProvider.future)).single.id,
+      'user-1-item',
+    );
+
+    container.read(_testActiveUserIdProvider.notifier).switchTo('user-2');
+
+    expect(
+      (await container.read(documentUploadControllerProvider.future)).single.id,
+      'user-2-item',
+    );
+  });
+
+  test('does not treat another account upload as a duplicate', () async {
+    final container = _container(repository, database);
+    addTearDown(container.dispose);
+    final source = await _sourceFile(tempDirectory);
+    final pendingUpload = Completer<DocumentIngestionResult>();
+    await _insertQueueItem(
+      database,
+      id: 'user-2-upload',
+      ownerUserId: 'user-2',
+      now: DateTime.now(),
+      status: UploadQueueStage.uploading,
+    );
+    when(
+      () => repository.createAndUploadStored(
+        any(),
+        any(),
+        onUploadProgress: any(named: 'onUploadProgress'),
+        shouldContinue: any(named: 'shouldContinue'),
+      ),
+    ).thenAnswer((_) => pendingUpload.future);
+
+    await container.read(documentUploadControllerProvider.future);
+
+    expect(
+      await container
+          .read(documentUploadControllerProvider.notifier)
+          .enqueue(_draft(source.path)),
+      UploadEnqueueResult.enqueued,
+    );
+    expect(
+      container
+          .read(documentUploadControllerProvider)
+          .requireValue
+          .map((item) => item.ownerUserId),
+      everyElement('user-1'),
+    );
+  });
+
+  test(
+    'late upload completion cannot restore state after account switch',
+    () async {
+      final container = _container(repository, database);
+      addTearDown(container.dispose);
+      final source = await _sourceFile(tempDirectory);
+      final pendingUpload = Completer<DocumentIngestionResult>();
+      when(
+        () => repository.createAndUploadStored(
+          any(),
+          any(),
+          onUploadProgress: any(named: 'onUploadProgress'),
+          shouldContinue: any(named: 'shouldContinue'),
+        ),
+      ).thenAnswer((_) => pendingUpload.future);
+
+      await container.read(documentUploadControllerProvider.future);
+      await container
+          .read(documentUploadControllerProvider.notifier)
+          .enqueue(_draft(source.path));
+      await Future<void>.delayed(Duration.zero);
+
+      container.read(_testActiveUserIdProvider.notifier).switchTo('user-2');
+      await container.read(documentUploadControllerProvider.future);
+      await database.clearAll();
+      pendingUpload.complete(
+        DocumentIngestionResult(
+          documentId: 'old-document',
+          status: DocumentStatus.processing,
+          localFiles: [_storedFile()],
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(
+        container.read(documentUploadControllerProvider).requireValue,
+        isEmpty,
+      );
+      expect(await database.select(database.uploadQueueItems).get(), isEmpty);
+      verifyNever(
+        () => repository.pollDocumentUntilTerminal(
+          id: any(named: 'id'),
+          shouldContinue: any(named: 'shouldContinue'),
+        ),
+      );
+    },
+  );
 }
 
 ProviderContainer _container(
@@ -321,10 +469,41 @@ ProviderContainer _container(
   LocalDatabase database,
 ) => ProviderContainer(
   overrides: [
+    activeUserIdProvider.overrideWith(
+      (ref) => ref.watch(_testActiveUserIdProvider),
+    ),
     documentRepositoryProvider.overrideWithValue(repository),
     localDatabaseProvider.overrideWithValue(database),
   ],
 );
+
+Future<void> _insertQueueItem(
+  LocalDatabase database, {
+  required String id,
+  required String ownerUserId,
+  required DateTime now,
+  UploadQueueStage status = UploadQueueStage.failed,
+}) {
+  return database
+      .into(database.uploadQueueItems)
+      .insert(
+        UploadQueueItemsCompanion.insert(
+          id: id,
+          ownerUserId: ownerUserId,
+          displayName: 'lab.pdf',
+          fingerprint: 'lab.pdf::3',
+          localPath: '/local/lab.pdf',
+          storedFileName: 'lab.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 3,
+          docType: DocumentType.labResult.name,
+          title: 'Lab results',
+          status: status.name,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+}
 
 Future<File> _sourceFile(Directory directory) async {
   final file = File('${directory.path}/lab.pdf');

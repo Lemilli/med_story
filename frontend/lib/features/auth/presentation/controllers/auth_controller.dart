@@ -7,6 +7,10 @@ final authControllerProvider = AsyncNotifierProvider<AuthController, AuthState>(
   AuthController.new,
 );
 
+final activeUserIdProvider = Provider<String?>((ref) {
+  return ref.watch(authControllerProvider).asData?.value.user?.id;
+});
+
 class AuthController extends AsyncNotifier<AuthState> {
   @override
   Future<AuthState> build() {

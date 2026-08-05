@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:drift/drift.dart' show OrderingTerm, Value;
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/error/app_failure.dart';
 import '../../../../core/storage/local_database.dart' as db;
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../timeline/presentation/controllers/timeline_controller.dart';
 import '../../data/document_repository.dart';
 import '../../domain/medical_document.dart';
@@ -25,14 +26,33 @@ final documentUploadControllerProvider =
 /// still be retried; temporary captures are removed once the server has the
 /// authoritative original.
 class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
+  String? _ownerUserId;
+  int _sessionGeneration = 0;
+  bool _isDisposed = false;
+
   @override
   Future<List<QueuedUpload>> build() async {
+    final ownerUserId = ref.watch(activeUserIdProvider);
+    final generation = ++_sessionGeneration;
+    _ownerUserId = ownerUserId;
+    _isDisposed = false;
+    ref.onDispose(() {
+      _isDisposed = true;
+      _ownerUserId = null;
+      _sessionGeneration++;
+    });
+    if (ownerUserId == null || ownerUserId.isEmpty) {
+      return const [];
+    }
+
     final database = ref.read(db.localDatabaseProvider);
     await (database.update(database.uploadQueueItems)..where(
-          (item) => item.status.isIn([
-            UploadQueueStage.uploading.name,
-            UploadQueueStage.processing.name,
-          ]),
+          (item) =>
+              item.ownerUserId.equals(ownerUserId) &
+              item.status.isIn([
+                UploadQueueStage.uploading.name,
+                UploadQueueStage.processing.name,
+              ]),
         ))
         .write(
           db.UploadQueueItemsCompanion(
@@ -40,11 +60,15 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
             errorMessage: Value('upload_interrupted'),
           ),
         );
+    if (!_isCurrentSession(ownerUserId, generation)) {
+      return const [];
+    }
     // This intentionally makes app termination visible as a retryable failure.
-    return _loadVisibleItems();
+    return _loadVisibleItems(ownerUserId);
   }
 
   Future<UploadEnqueueResult> enqueue(DocumentUploadDraft draft) async {
+    final session = _requireSession();
     final database = ref.read(db.localDatabaseProvider);
     final sourceSizes = await Future.wait(
       draft.sources.map((source) => _sourceSize(source.path)),
@@ -52,6 +76,7 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
     final fingerprint = _fingerprint(draft.sources, sourceSizes);
     final duplicate =
         await (database.select(database.uploadQueueItems)
+              ..where((item) => item.ownerUserId.equals(session.ownerUserId))
               ..where((item) => item.fingerprint.equals(fingerprint))
               ..where(
                 (item) => item.status.isIn([
@@ -61,6 +86,7 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
               )
               ..limit(1))
             .getSingleOrNull();
+    _ensureCurrentSession(session);
     if (duplicate != null) {
       return UploadEnqueueResult.duplicate;
     }
@@ -69,9 +95,11 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
         .read(documentRepositoryProvider)
         .localFileStore
         .saveAll(draft.sources);
+    _ensureCurrentSession(session);
     final now = DateTime.now();
     final item = QueuedUpload(
       id: now.microsecondsSinceEpoch.toString(),
+      ownerUserId: session.ownerUserId,
       displayName: draft.sources.length == 1
           ? draft.source.fileName
           : '${draft.sources.length} pages',
@@ -83,75 +111,95 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
       updatedAt: now,
     );
     await database.into(database.uploadQueueItems).insert(_companion(item));
+    _ensureCurrentSession(session);
     state = AsyncValue.data([...state.value ?? const [], item]);
-    unawaited(_run(item));
+    unawaited(_run(item, session));
     return UploadEnqueueResult.enqueued;
   }
 
   Future<void> retry(String id) async {
-    final item = await _findItem(id);
+    final session = _requireSession();
+    final item = await _findItem(id, session.ownerUserId);
+    _ensureCurrentSession(session);
     if (item == null) return;
     final uploading = item.copyWith(
       stage: UploadQueueStage.uploading,
       errorMessage: null,
       updatedAt: DateTime.now(),
     );
-    await _save(uploading);
-    unawaited(_run(uploading));
+    await _save(uploading, session);
+    unawaited(_run(uploading, session));
   }
 
   Future<void> dismiss(String id) async {
+    final session = _requireSession();
     final database = ref.read(db.localDatabaseProvider);
-    final item = await _findItem(id);
+    final item = await _findItem(id, session.ownerUserId);
+    _ensureCurrentSession(session);
     if (item == null) return;
     if (item.stage == UploadQueueStage.failed && item.documentId != null) {
       await ref
           .read(documentRepositoryProvider)
           .deleteDocument(item.documentId!);
+      _ensureCurrentSession(session);
     }
     await ref
         .read(documentRepositoryProvider)
         .deleteOwnedSources(item.localFiles);
+    _ensureCurrentSession(session);
     if (item.stage == UploadQueueStage.failed) {
-      await (database.delete(
-        database.uploadQueueItems,
-      )..where((queueItem) => queueItem.id.equals(id))).go();
+      await (database.delete(database.uploadQueueItems)..where(
+            (queueItem) =>
+                queueItem.id.equals(id) &
+                queueItem.ownerUserId.equals(session.ownerUserId),
+          ))
+          .go();
     } else {
-      await (database.update(
-        database.uploadQueueItems,
-      )..where((queueItem) => queueItem.id.equals(id))).write(
-        db.UploadQueueItemsCompanion(
-          isDismissed: const Value(true),
-          updatedAt: Value(DateTime.now()),
-        ),
-      );
+      await (database.update(database.uploadQueueItems)..where(
+            (queueItem) =>
+                queueItem.id.equals(id) &
+                queueItem.ownerUserId.equals(session.ownerUserId),
+          ))
+          .write(
+            db.UploadQueueItemsCompanion(
+              isDismissed: const Value(true),
+              updatedAt: Value(DateTime.now()),
+            ),
+          );
     }
-    state = AsyncValue.data(await _loadVisibleItems());
+    _ensureCurrentSession(session);
+    state = AsyncValue.data(await _loadVisibleItems(session.ownerUserId));
   }
 
-  Future<void> _run(QueuedUpload item) async {
+  Future<void> _run(QueuedUpload item, _UploadSession session) async {
     var current = item;
     try {
+      _ensureCurrentSession(session);
       final repository = ref.read(documentRepositoryProvider);
       final existingDocumentId = item.documentId;
       late final String documentId;
       if (existingDocumentId != null &&
           item.draft.docType != DocumentType.audio) {
         final retry = await repository.retryProcessing(existingDocumentId);
+        _ensureCurrentSession(session);
         documentId = retry.id;
       } else {
         if (existingDocumentId != null) {
           await repository.deleteDocument(existingDocumentId);
+          _ensureCurrentSession(session);
         }
         final result = await repository.createAndUploadStored(
           item.draft,
           item.localFiles,
           onUploadProgress: (sent, total) {
             if (total > 0) {
-              _setUploadProgress(item.id, sent / total);
+              _setUploadProgress(item.id, sent / total, session);
             }
           },
+          shouldContinue: () =>
+              _isCurrentSession(session.ownerUserId, session.generation),
         );
+        _ensureCurrentSession(session);
         documentId = result.documentId;
       }
       current = current.copyWith(
@@ -159,15 +207,20 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
         documentId: documentId,
         updatedAt: DateTime.now(),
       );
-      await _save(current);
+      await _save(current, session);
       if (item.draft.docType != DocumentType.audio) {
         await repository.deleteOwnedSources(item.localFiles);
+        _ensureCurrentSession(session);
       }
       final document = await repository.pollDocumentUntilTerminal(
         id: documentId,
+        shouldContinue: () =>
+            _isCurrentSession(session.ownerUserId, session.generation),
       );
+      _ensureCurrentSession(session);
       if (item.draft.docType == DocumentType.audio) {
         await repository.deleteOwnedSources(item.localFiles);
+        _ensureCurrentSession(session);
       }
       await _save(
         current.copyWith(
@@ -175,9 +228,18 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
           documentId: document.id,
           updatedAt: DateTime.now(),
         ),
+        session,
       );
+      _ensureCurrentSession(session);
       ref.invalidate(timelineControllerProvider);
+    } on DocumentUploadCancelled {
+      return;
+    } on _UploadSessionCancelled {
+      return;
     } on Object catch (error) {
+      if (!_isCurrentSession(session.ownerUserId, session.generation)) {
+        return;
+      }
       final duplicateDocumentId = error is AppFailure ? error.documentId : null;
       await _save(
         current.copyWith(
@@ -186,19 +248,23 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
           errorMessage: error.toString(),
           updatedAt: DateTime.now(),
         ),
+        session,
       );
     }
   }
 
-  Future<void> _save(QueuedUpload item) async {
+  Future<void> _save(QueuedUpload item, _UploadSession session) async {
+    _ensureCurrentSession(session);
     final database = ref.read(db.localDatabaseProvider);
     await database
         .into(database.uploadQueueItems)
         .insertOnConflictUpdate(_companion(item));
-    state = AsyncValue.data(await _loadVisibleItems());
+    _ensureCurrentSession(session);
+    state = AsyncValue.data(await _loadVisibleItems(session.ownerUserId));
   }
 
-  void _setUploadProgress(String id, double value) {
+  void _setUploadProgress(String id, double value, _UploadSession session) {
+    if (!_isCurrentSession(session.ownerUserId, session.generation)) return;
     final current = state.value;
     if (current == null) return;
     state = AsyncValue.data([
@@ -209,19 +275,24 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
     ]);
   }
 
-  Future<QueuedUpload?> _findItem(String id) async {
+  Future<QueuedUpload?> _findItem(String id, String ownerUserId) async {
     final database = ref.read(db.localDatabaseProvider);
-    final row = await (database.select(
-      database.uploadQueueItems,
-    )..where((item) => item.id.equals(id))).getSingleOrNull();
+    final row =
+        await (database.select(database.uploadQueueItems)..where(
+              (item) =>
+                  item.id.equals(id) & item.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
     return row == null ? null : _fromRow(row);
   }
 
-  Future<List<QueuedUpload>> _loadVisibleItems() async {
+  Future<List<QueuedUpload>> _loadVisibleItems(String ownerUserId) async {
     final database = ref.read(db.localDatabaseProvider);
-    final rows = await (database.select(
-      database.uploadQueueItems,
-    )..orderBy([(item) => OrderingTerm(expression: item.createdAt)])).get();
+    final rows =
+        await (database.select(database.uploadQueueItems)
+              ..where((item) => item.ownerUserId.equals(ownerUserId))
+              ..orderBy([(item) => OrderingTerm(expression: item.createdAt)]))
+            .get();
     return rows
         .where(
           (item) =>
@@ -235,6 +306,7 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
   db.UploadQueueItemsCompanion _companion(QueuedUpload item) {
     return db.UploadQueueItemsCompanion.insert(
       id: item.id,
+      ownerUserId: item.ownerUserId,
       displayName: item.displayName,
       fingerprint: item.fingerprint,
       localPath: item.localFiles.first.path,
@@ -296,6 +368,7 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
         : decodedAssets;
     return QueuedUpload(
       id: row.id,
+      ownerUserId: row.ownerUserId,
       displayName: row.displayName,
       fingerprint: row.fingerprint,
       localFiles: localFiles,
@@ -329,6 +402,37 @@ class DocumentUploadController extends AsyncNotifier<List<QueuedUpload>> {
     for (var index = 0; index < files.length; index++)
       '${files[index].fileName.trim().toLowerCase()}::${sizes[index]}',
   ].join('|');
+
+  _UploadSession _requireSession() {
+    final ownerUserId = _ownerUserId;
+    if (ownerUserId == null || ownerUserId.isEmpty || _isDisposed) {
+      throw const AppFailure('authentication_required');
+    }
+    return _UploadSession(ownerUserId, _sessionGeneration);
+  }
+
+  bool _isCurrentSession(String ownerUserId, int generation) {
+    return !_isDisposed &&
+        _ownerUserId == ownerUserId &&
+        _sessionGeneration == generation;
+  }
+
+  void _ensureCurrentSession(_UploadSession session) {
+    if (!_isCurrentSession(session.ownerUserId, session.generation)) {
+      throw const _UploadSessionCancelled();
+    }
+  }
+}
+
+class _UploadSession {
+  const _UploadSession(this.ownerUserId, this.generation);
+
+  final String ownerUserId;
+  final int generation;
+}
+
+class _UploadSessionCancelled implements Exception {
+  const _UploadSessionCancelled();
 }
 
 enum UploadEnqueueResult { enqueued, duplicate }
@@ -338,6 +442,7 @@ enum UploadQueueStage { uploading, processing, completed, failed }
 class QueuedUpload {
   const QueuedUpload({
     required this.id,
+    required this.ownerUserId,
     required this.displayName,
     required this.fingerprint,
     required this.localFiles,
@@ -352,6 +457,7 @@ class QueuedUpload {
   });
 
   final String id;
+  final String ownerUserId;
   final String displayName;
   final String fingerprint;
   final List<StoredDocumentFile> localFiles;
@@ -374,6 +480,7 @@ class QueuedUpload {
     DateTime? updatedAt,
   }) => QueuedUpload(
     id: id,
+    ownerUserId: ownerUserId,
     displayName: displayName,
     fingerprint: fingerprint,
     localFiles: localFiles,

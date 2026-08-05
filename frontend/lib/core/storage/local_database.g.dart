@@ -2278,6 +2278,17 @@ class $UploadQueueItemsTable extends UploadQueueItems
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _displayNameMeta = const VerificationMeta(
     'displayName',
   );
@@ -2469,6 +2480,7 @@ class $UploadQueueItemsTable extends UploadQueueItems
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    ownerUserId,
     displayName,
     fingerprint,
     localPath,
@@ -2503,6 +2515,17 @@ class $UploadQueueItemsTable extends UploadQueueItems
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
     }
     if (data.containsKey('display_name')) {
       context.handle(
@@ -2656,6 +2679,10 @@ class $UploadQueueItemsTable extends UploadQueueItems
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
       displayName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}display_name'],
@@ -2735,6 +2762,7 @@ class $UploadQueueItemsTable extends UploadQueueItems
 
 class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
   final String id;
+  final String ownerUserId;
   final String displayName;
   final String fingerprint;
   final String localPath;
@@ -2754,6 +2782,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
   final String assetsJson;
   const UploadQueueItem({
     required this.id,
+    required this.ownerUserId,
     required this.displayName,
     required this.fingerprint,
     required this.localPath,
@@ -2776,6 +2805,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
+    map['owner_user_id'] = Variable<String>(ownerUserId);
     map['display_name'] = Variable<String>(displayName);
     map['fingerprint'] = Variable<String>(fingerprint);
     map['local_path'] = Variable<String>(localPath);
@@ -2807,6 +2837,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
   UploadQueueItemsCompanion toCompanion(bool nullToAbsent) {
     return UploadQueueItemsCompanion(
       id: Value(id),
+      ownerUserId: Value(ownerUserId),
       displayName: Value(displayName),
       fingerprint: Value(fingerprint),
       localPath: Value(localPath),
@@ -2842,6 +2873,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return UploadQueueItem(
       id: serializer.fromJson<String>(json['id']),
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
       displayName: serializer.fromJson<String>(json['displayName']),
       fingerprint: serializer.fromJson<String>(json['fingerprint']),
       localPath: serializer.fromJson<String>(json['localPath']),
@@ -2866,6 +2898,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
       'displayName': serializer.toJson<String>(displayName),
       'fingerprint': serializer.toJson<String>(fingerprint),
       'localPath': serializer.toJson<String>(localPath),
@@ -2888,6 +2921,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
 
   UploadQueueItem copyWith({
     String? id,
+    String? ownerUserId,
     String? displayName,
     String? fingerprint,
     String? localPath,
@@ -2907,6 +2941,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
     String? assetsJson,
   }) => UploadQueueItem(
     id: id ?? this.id,
+    ownerUserId: ownerUserId ?? this.ownerUserId,
     displayName: displayName ?? this.displayName,
     fingerprint: fingerprint ?? this.fingerprint,
     localPath: localPath ?? this.localPath,
@@ -2928,6 +2963,9 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
   UploadQueueItem copyWithCompanion(UploadQueueItemsCompanion data) {
     return UploadQueueItem(
       id: data.id.present ? data.id.value : this.id,
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
       displayName: data.displayName.present
           ? data.displayName.value
           : this.displayName,
@@ -2966,6 +3004,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
   String toString() {
     return (StringBuffer('UploadQueueItem(')
           ..write('id: $id, ')
+          ..write('ownerUserId: $ownerUserId, ')
           ..write('displayName: $displayName, ')
           ..write('fingerprint: $fingerprint, ')
           ..write('localPath: $localPath, ')
@@ -2990,6 +3029,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
   @override
   int get hashCode => Object.hash(
     id,
+    ownerUserId,
     displayName,
     fingerprint,
     localPath,
@@ -3013,6 +3053,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
       identical(this, other) ||
       (other is UploadQueueItem &&
           other.id == this.id &&
+          other.ownerUserId == this.ownerUserId &&
           other.displayName == this.displayName &&
           other.fingerprint == this.fingerprint &&
           other.localPath == this.localPath &&
@@ -3034,6 +3075,7 @@ class UploadQueueItem extends DataClass implements Insertable<UploadQueueItem> {
 
 class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
   final Value<String> id;
+  final Value<String> ownerUserId;
   final Value<String> displayName;
   final Value<String> fingerprint;
   final Value<String> localPath;
@@ -3054,6 +3096,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
   final Value<int> rowid;
   const UploadQueueItemsCompanion({
     this.id = const Value.absent(),
+    this.ownerUserId = const Value.absent(),
     this.displayName = const Value.absent(),
     this.fingerprint = const Value.absent(),
     this.localPath = const Value.absent(),
@@ -3075,6 +3118,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
   });
   UploadQueueItemsCompanion.insert({
     required String id,
+    required String ownerUserId,
     required String displayName,
     required String fingerprint,
     required String localPath,
@@ -3094,6 +3138,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
     this.assetsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
+       ownerUserId = Value(ownerUserId),
        displayName = Value(displayName),
        fingerprint = Value(fingerprint),
        localPath = Value(localPath),
@@ -3107,6 +3152,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
        updatedAt = Value(updatedAt);
   static Insertable<UploadQueueItem> custom({
     Expression<String>? id,
+    Expression<String>? ownerUserId,
     Expression<String>? displayName,
     Expression<String>? fingerprint,
     Expression<String>? localPath,
@@ -3128,6 +3174,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
       if (displayName != null) 'display_name': displayName,
       if (fingerprint != null) 'fingerprint': fingerprint,
       if (localPath != null) 'local_path': localPath,
@@ -3151,6 +3198,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
 
   UploadQueueItemsCompanion copyWith({
     Value<String>? id,
+    Value<String>? ownerUserId,
     Value<String>? displayName,
     Value<String>? fingerprint,
     Value<String>? localPath,
@@ -3172,6 +3220,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
   }) {
     return UploadQueueItemsCompanion(
       id: id ?? this.id,
+      ownerUserId: ownerUserId ?? this.ownerUserId,
       displayName: displayName ?? this.displayName,
       fingerprint: fingerprint ?? this.fingerprint,
       localPath: localPath ?? this.localPath,
@@ -3198,6 +3247,9 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
     }
     if (displayName.present) {
       map['display_name'] = Variable<String>(displayName.value);
@@ -3260,6 +3312,7 @@ class UploadQueueItemsCompanion extends UpdateCompanion<UploadQueueItem> {
   String toString() {
     return (StringBuffer('UploadQueueItemsCompanion(')
           ..write('id: $id, ')
+          ..write('ownerUserId: $ownerUserId, ')
           ..write('displayName: $displayName, ')
           ..write('fingerprint: $fingerprint, ')
           ..write('localPath: $localPath, ')
@@ -4386,6 +4439,7 @@ typedef $$CachedMedicalSummariesTableProcessedTableManager =
 typedef $$UploadQueueItemsTableCreateCompanionBuilder =
     UploadQueueItemsCompanion Function({
       required String id,
+      required String ownerUserId,
       required String displayName,
       required String fingerprint,
       required String localPath,
@@ -4408,6 +4462,7 @@ typedef $$UploadQueueItemsTableCreateCompanionBuilder =
 typedef $$UploadQueueItemsTableUpdateCompanionBuilder =
     UploadQueueItemsCompanion Function({
       Value<String> id,
+      Value<String> ownerUserId,
       Value<String> displayName,
       Value<String> fingerprint,
       Value<String> localPath,
@@ -4439,6 +4494,11 @@ class $$UploadQueueItemsTableFilterComposer
   });
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4542,6 +4602,11 @@ class $$UploadQueueItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get displayName => $composableBuilder(
     column: $table.displayName,
     builder: (column) => ColumnOrderings(column),
@@ -4639,6 +4704,11 @@ class $$UploadQueueItemsTableAnnotationComposer
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get displayName => $composableBuilder(
     column: $table.displayName,
@@ -4744,6 +4814,7 @@ class $$UploadQueueItemsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
+                Value<String> ownerUserId = const Value.absent(),
                 Value<String> displayName = const Value.absent(),
                 Value<String> fingerprint = const Value.absent(),
                 Value<String> localPath = const Value.absent(),
@@ -4764,6 +4835,7 @@ class $$UploadQueueItemsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => UploadQueueItemsCompanion(
                 id: id,
+                ownerUserId: ownerUserId,
                 displayName: displayName,
                 fingerprint: fingerprint,
                 localPath: localPath,
@@ -4786,6 +4858,7 @@ class $$UploadQueueItemsTableTableManager
           createCompanionCallback:
               ({
                 required String id,
+                required String ownerUserId,
                 required String displayName,
                 required String fingerprint,
                 required String localPath,
@@ -4806,6 +4879,7 @@ class $$UploadQueueItemsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => UploadQueueItemsCompanion.insert(
                 id: id,
+                ownerUserId: ownerUserId,
                 displayName: displayName,
                 fingerprint: fingerprint,
                 localPath: localPath,

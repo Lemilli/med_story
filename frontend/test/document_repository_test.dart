@@ -103,58 +103,61 @@ void main() {
     },
   );
 
-  test('document drafts retain the saved local URI hint when created', () async {
-    final api = _MockDocumentApi();
-    final repository = DocumentRepository(
-      api: api,
-      localFileStore: const _FakeDocumentLocalFileStore(
-        StoredDocumentFile(
-          path: '/local/report.jpg',
-          fileName: 'report.jpg',
-          mimeType: 'image/jpeg',
-          sizeBytes: 1024,
-          localUriHint: 'app://documents/report.jpg',
-        ),
-      ),
-    );
-
-    when(() => api.createDocument(any())).thenAnswer(
-      (_) async => const DocumentStatusUpdate(
-        id: 'document-1',
-        status: DocumentStatus.pendingIngest,
-      ),
-    );
-    when(
-      () => api.ingestDocument(
-        documentId: any(named: 'documentId'),
-        files: any(named: 'files'),
-      ),
-    ).thenAnswer(
-      (_) async => const DocumentStatusUpdate(
-        id: 'document-1',
-        status: DocumentStatus.processing,
-      ),
-    );
-
-    await repository.createAndUpload(
-      const DocumentUploadDraft(
-        title: 'Medical photo',
-        docType: DocumentType.medicalRecord,
-        sources: [
-          DocumentSourceFile(
-            path: '/tmp/report.jpg',
+  test(
+    'document drafts retain the saved local URI hint when created',
+    () async {
+      final api = _MockDocumentApi();
+      final repository = DocumentRepository(
+        api: api,
+        localFileStore: const _FakeDocumentLocalFileStore(
+          StoredDocumentFile(
+            path: '/local/report.jpg',
             fileName: 'report.jpg',
             mimeType: 'image/jpeg',
+            sizeBytes: 1024,
+            localUriHint: 'app://documents/report.jpg',
           ),
-        ],
-      ),
-    );
+        ),
+      );
 
-    final request =
-        verify(() => api.createDocument(captureAny())).captured.single
-            as DocumentCreateRequest;
-    expect(request.localUriHint, 'app://documents/report.jpg');
-  });
+      when(() => api.createDocument(any())).thenAnswer(
+        (_) async => const DocumentStatusUpdate(
+          id: 'document-1',
+          status: DocumentStatus.pendingIngest,
+        ),
+      );
+      when(
+        () => api.ingestDocument(
+          documentId: any(named: 'documentId'),
+          files: any(named: 'files'),
+        ),
+      ).thenAnswer(
+        (_) async => const DocumentStatusUpdate(
+          id: 'document-1',
+          status: DocumentStatus.processing,
+        ),
+      );
+
+      await repository.createAndUpload(
+        const DocumentUploadDraft(
+          title: 'Medical photo',
+          docType: DocumentType.medicalRecord,
+          sources: [
+            DocumentSourceFile(
+              path: '/tmp/report.jpg',
+              fileName: 'report.jpg',
+              mimeType: 'image/jpeg',
+            ),
+          ],
+        ),
+      );
+
+      final request =
+          verify(() => api.createDocument(captureAny())).captured.single
+              as DocumentCreateRequest;
+      expect(request.localUriHint, 'app://documents/report.jpg');
+    },
+  );
 
   test('processing polling stops after its configured request limit', () async {
     final api = _MockDocumentApi();
@@ -170,9 +173,9 @@ void main() {
         ),
       ),
     );
-    when(() => api.getDocument('document-1')).thenAnswer(
-      (_) async => _processingDocument(),
-    );
+    when(
+      () => api.getDocument('document-1'),
+    ).thenAnswer((_) async => _processingDocument());
 
     await expectLater(
       repository.pollDocumentUntilTerminal(
@@ -180,13 +183,97 @@ void main() {
         interval: Duration.zero,
         maxPollAttempts: 3,
       ),
-      throwsA(isA<AppFailure>().having(
-        (failure) => failure.message,
-        'message',
-        'document_processing_timeout',
-      )),
+      throwsA(
+        isA<AppFailure>().having(
+          (failure) => failure.message,
+          'message',
+          'document_processing_timeout',
+        ),
+      ),
     );
     verify(() => api.getDocument('document-1')).called(3);
+  });
+
+  test(
+    'session cancellation stops ingestion after document creation',
+    () async {
+      final api = _MockDocumentApi();
+      final storedFile = const StoredDocumentFile(
+        path: '/local/report.jpg',
+        fileName: 'report.jpg',
+        mimeType: 'image/jpeg',
+        sizeBytes: 1024,
+        localUriHint: '',
+      );
+      final repository = DocumentRepository(
+        api: api,
+        localFileStore: _FakeDocumentLocalFileStore(storedFile),
+      );
+      var isActive = true;
+      when(() => api.createDocument(any())).thenAnswer((_) async {
+        isActive = false;
+        return const DocumentStatusUpdate(
+          id: 'document-1',
+          status: DocumentStatus.pendingIngest,
+        );
+      });
+
+      await expectLater(
+        repository.createAndUploadStored(
+          const DocumentUploadDraft(
+            title: 'Medical photo',
+            docType: DocumentType.medicalRecord,
+            sources: [
+              DocumentSourceFile(
+                path: '/local/report.jpg',
+                fileName: 'report.jpg',
+                mimeType: 'image/jpeg',
+              ),
+            ],
+          ),
+          [storedFile],
+          shouldContinue: () => isActive,
+        ),
+        throwsA(isA<DocumentUploadCancelled>()),
+      );
+      verifyNever(
+        () => api.ingestDocument(
+          documentId: any(named: 'documentId'),
+          files: any(named: 'files'),
+        ),
+      );
+    },
+  );
+
+  test('session cancellation stops processing polls immediately', () async {
+    final api = _MockDocumentApi();
+    final repository = DocumentRepository(
+      api: api,
+      localFileStore: const _FakeDocumentLocalFileStore(
+        StoredDocumentFile(
+          path: '/local/report.jpg',
+          fileName: 'report.jpg',
+          mimeType: 'image/jpeg',
+          sizeBytes: 1024,
+          localUriHint: '',
+        ),
+      ),
+    );
+    var isActive = true;
+    when(() => api.getDocument('document-1')).thenAnswer((_) async {
+      isActive = false;
+      return _processingDocument();
+    });
+
+    await expectLater(
+      repository.pollDocumentUntilTerminal(
+        id: 'document-1',
+        interval: Duration.zero,
+        shouldContinue: () => isActive,
+      ),
+      throwsA(isA<DocumentUploadCancelled>()),
+    );
+    verify(() => api.getDocument('document-1')).called(1);
   });
 }
 

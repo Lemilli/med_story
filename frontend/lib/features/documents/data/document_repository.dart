@@ -48,7 +48,9 @@ class DocumentRepository {
     DocumentUploadDraft draft,
     List<StoredDocumentFile> localFiles, {
     void Function(int sent, int total)? onUploadProgress,
+    bool Function()? shouldContinue,
   }) async {
+    _ensureUploadContinues(shouldContinue);
     if (draft.docType == DocumentType.audio) {
       final localFile = localFiles.single;
       final uploaded = await api.uploadAudio(
@@ -81,6 +83,7 @@ class DocumentRepository {
         language: draft.language,
       ),
     );
+    _ensureUploadContinues(shouldContinue);
     final ingest = await api.ingestDocument(
       documentId: created.id,
       files: [
@@ -178,11 +181,14 @@ class DocumentRepository {
     Duration interval = const Duration(seconds: 2),
     Duration timeout = const Duration(minutes: 1),
     int maxPollAttempts = 30,
+    bool Function()? shouldContinue,
   }) async {
     assert(maxPollAttempts > 0);
     final deadline = DateTime.now().add(timeout);
     for (var attempt = 0; attempt < maxPollAttempts; attempt++) {
+      _ensureUploadContinues(shouldContinue);
       final document = await api.getDocument(id);
+      _ensureUploadContinues(shouldContinue);
       if (document.status.isTerminal) {
         if (document.status == DocumentStatus.failed) {
           throw AppFailure(
@@ -201,12 +207,23 @@ class DocumentRepository {
       }
       if (attempt < maxPollAttempts - 1) {
         await Future<void>.delayed(interval);
+        _ensureUploadContinues(shouldContinue);
       }
     }
     // A request-count cap protects the app if the device clock is adjusted
     // while polling. Further processing is always an explicit user retry.
     throw const AppFailure('document_processing_timeout');
   }
+}
+
+void _ensureUploadContinues(bool Function()? shouldContinue) {
+  if (shouldContinue != null && !shouldContinue()) {
+    throw const DocumentUploadCancelled();
+  }
+}
+
+class DocumentUploadCancelled implements Exception {
+  const DocumentUploadCancelled();
 }
 
 abstract interface class DocumentLocalFileStore {

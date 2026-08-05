@@ -173,6 +173,9 @@ automatically.
 - Upload, processing retry, original viewing, download, and share require connectivity. The upload
   queue retains source paths only until the server acknowledges storage.
 - Cache is per-`subject`; cleared on logout and on account deletion.
+- Durable upload-queue metadata is keyed to the authenticated user. Auth-session
+  changes detach active upload/polling work immediately, and logout or account
+  deletion clears the queue together with the rest of the local cache.
 
 ## 9. Theming, Accessibility & Localization
 
@@ -192,6 +195,8 @@ automatically.
 - `auth_interceptor` transparently refreshes the access token on `401` and retries once.
 - Drift stores medical metadata but never original binaries. Sensitive temporary viewer/capture
   files are cleaned after use where possible and on startup/logout/account deletion.
+- Upload queue reads and mutations are scoped to the active user ID as a defense in depth against
+  stale in-memory work surviving an account change.
 - Certificate pinning and biometric app-lock are planned post-MVP (see roadmap).
 
 ## 11. Testing Strategy

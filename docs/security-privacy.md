@@ -149,6 +149,8 @@ required) → 5. Remediate → 6. Post-mortem + control improvements.
 
 - JWTs only in `flutter_secure_storage`; never in logs or plaintext prefs.
 - Local cache (Drift) lives in the app sandbox; cleared on logout/deletion.
+- Persistent upload metadata is account-scoped, and authentication changes cancel local
+  continuation of upload/polling workflows so one account cannot inherit another account's queue.
 - Planned post-MVP: biometric app-lock, certificate pinning, jailbreak/root awareness.
 
 ## 12. Environments & Access Control
