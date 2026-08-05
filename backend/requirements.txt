@@ -139,7 +139,7 @@ python-dateutil==2.9.0.post0
     #   celery
 pyyaml==6.0.3
     # via drf-spectacular
-redis==5.0.8
+redis==8.1.0
     # via -r requirements.in
 referencing==0.37.0
     # via
