@@ -35,7 +35,6 @@ from medical.models import (
     VisitPreparation,
 )
 from medical.summary_content import normalize_summary_content
-from users.services import has_ai_consent
 
 
 STRUCTURING_SYSTEM_PROMPT = (
@@ -178,8 +177,6 @@ def _quota_periods(now):
 def reserve_ai_quota(*, user, operation, units=1):
     if not getattr(settings, "AI_ENABLED", True):
         raise AIUnavailableError("ai_disabled")
-    if not has_ai_consent(user):
-        raise AIUnavailableError("ai_consent_required")
     if units < 1:
         raise ValueError("AI quota units must be positive.")
 

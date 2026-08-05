@@ -101,7 +101,7 @@ control. This document defines the controls to achieve that.
 
 | Principle | Implementation |
 |-----------|----------------|
-| Lawful basis & consent | Explicit consent at signup; clear privacy policy; consent for AI processing of health data |
+| Lawful basis & notice acceptance | Required acceptance of the combined privacy and mandatory AI-processing notice at signup |
 | Data minimization | Only collect what serves the feature; redact for AI where possible |
 | Purpose limitation | Health data used only to organize/explain the user's own history |
 | Right to erasure | Wrapped keys are destroyed first; opaque object-deletion jobs survive account removal |
@@ -188,8 +188,9 @@ Backup provides one daily full-VPS restore point on a 24-hour rotation, so up to
 hours of changes may be lost and no older point is available. It is not treated as a recovery
 guarantee until the QEMU guest agent is active and a full synthetic restore has recovered both a
 PostgreSQL marker and an application-encrypted Garage object. Backup copies may retain deleted bytes
-until rotation. Users must see and accept the current versioned notice before registration, while
-AI processing remains a separate optional consent.
+until rotation. Users must see and accept the current versioned notice before registration. The
+notice explains that minimum-necessary AI processing is intrinsic to the service and cannot be
+disabled as a user preference.
 
 ## 13. Compliance Posture & Roadmap
 

@@ -254,6 +254,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsPrivacySectionTitle => 'Конфиденциальность';
 
   @override
+  String get settingsDataSectionTitle => 'Конфиденциальность и данные';
+
+  @override
+  String get settingsPreferencesSectionTitle => 'Предпочтения';
+
+  @override
   String get settingsLanguageSectionTitle => 'Язык';
 
   @override
@@ -261,6 +267,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsPrivacyNoteTitle => 'Как хранятся оригиналы';
+
+  @override
+  String get settingsPrivacySummary => 'Хранение и обработка ваших данных';
 
   @override
   String get settingsPrivacyNoteDescription =>
@@ -325,29 +334,16 @@ class AppLocalizationsRu extends AppLocalizations {
       'MedStory помогает упорядочивать и объяснять записи. Он не ставит диагнозы, не рекомендует лечение и не заменяет врача.';
 
   @override
-  String get settingsAiSectionTitle => 'Обработка с помощью ИИ';
+  String get settingsUsageSectionTitle => 'Лимиты';
 
   @override
-  String get settingsAiConsentTitle => 'Разрешить обработку с помощью ИИ';
+  String get settingsLimitsTitle => 'Лимиты';
 
   @override
-  String get settingsAiConsentDescription =>
-      'Когда настройка включена, MedStory может передавать настроенному ИИ-провайдеру минимально необходимые данные, чтобы упорядочивать и объяснять их. Отключите настройку в любой момент, чтобы прекратить будущую обработку. Ручная хронология останется доступной.';
+  String get settingsLimitsSummary => 'Использование ИИ и хранилища';
 
   @override
-  String get settingsAiConsentUpdatedMessage =>
-      'Настройка обработки с помощью ИИ обновлена.';
-
-  @override
-  String get settingsAiConsentUpdateFailedMessage =>
-      'Не удалось обновить настройку обработки с помощью ИИ. Попробуйте снова.';
-
-  @override
-  String get settingsConsentLoadFailedMessage =>
-      'Не удалось загрузить настройку обработки с помощью ИИ.';
-
-  @override
-  String get settingsUsageSectionTitle => 'Лимиты демоверсии';
+  String get settingsLimitsLoading => 'Проверяем текущее использование';
 
   @override
   String get settingsUsageLoadFailedMessage =>
@@ -922,7 +918,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get authPrivacyAiIntro =>
-      'Выберите, как MedStory может обрабатывать ваши записи.';
+      'Ознакомьтесь с тем, как MedStory защищает ваши записи и использует ИИ как основную часть сервиса.';
 
   @override
   String get authRequiredLabel => 'ОБЯЗАТЕЛЬНО';
@@ -947,32 +943,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get authPrivacyDetailsTitle =>
-      'Уведомление о конфиденциальности · 5 августа 2026 г.';
+      'Уведомление о конфиденциальности · 6 августа 2026 г.';
 
   @override
   String get authPrivacyDetailsMessage =>
-      'Ваши медицинские записи конфиденциальны. MedStory использует добавленную вами информацию, чтобы предоставить и защитить ваш аккаунт и упорядочить вашу личную медицинскую историю.';
+      'Ваши медицинские записи конфиденциальны. Упорядочивание и пояснение с помощью ИИ — основные функции MedStory. Сервис передаёт настроенному ИИ-провайдеру только данные, необходимые для этих функций, и не использует ИИ для постановки диагнозов или рекомендаций по лечению.';
 
   @override
   String get authPrivacyDetailsSecondaryMessage =>
-      'Вы решаете, что добавлять, и можете запросить доступ к своей информации или её удаление. Разрешение на ИИ даётся отдельно и не требуется для ручных функций.';
-
-  @override
-  String get authAiConsentTitle => 'Разрешить обработку с помощью ИИ';
-
-  @override
-  String get authAiConsentMeta => 'Необязательно · По умолчанию выключено';
-
-  @override
-  String get authAiConsentDescription =>
-      'ИИ может упорядочивать и объяснять записи, но не может ставить диагнозы. Ручные функции работают и без него.';
-
-  @override
-  String get authAiDetailsShowAction => 'Как это работает';
-
-  @override
-  String get authAiDetailsMessage =>
-      'Если включить эту настройку, MedStory сможет обрабатывать выбранные вами записи, чтобы выстраивать хронологию и объяснять медицинские термины. Позже это можно отключить.';
+      'Вы решаете, что добавлять, и можете запросить доступ к своей информации или её удаление. Принятие этого уведомления обязательно для использования MedStory, поскольку обработку с помощью ИИ нельзя отключить.';
 
   @override
   String get authForgotPasswordAction => 'Забыли пароль?';

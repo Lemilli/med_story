@@ -1,6 +1,6 @@
 from django.urls import path
 from users.views import (
-    AIConsentView, AuditedTokenObtainPairView, ConsentListView, CurrentLegalNoticeView,
+    AuditedTokenObtainPairView, ConsentListView, CurrentLegalNoticeView,
     LogoutView, MeView, PasswordResetConfirmView, PasswordResetRequestView, RegisterView,
     ResendVerificationView, ThrottledTokenRefreshView, UsageView, VerifyEmailView,
 )
@@ -16,7 +16,6 @@ urlpatterns = [
     path("auth/logout", LogoutView.as_view(), name="auth-logout"),
     path("me", MeView.as_view(), name="me"),
     path("me/consents", ConsentListView.as_view(), name="me-consents"),
-    path("me/consents/ai-processing", AIConsentView.as_view(), name="me-ai-consent"),
     path("me/usage", UsageView.as_view(), name="me-usage"),
     path("legal/notices/current", CurrentLegalNoticeView.as_view(), name="legal-notices-current"),
 ]

@@ -53,7 +53,6 @@ void main() {
           fullName: 'Alex',
           locale: 'en',
           acceptPrivacyNotice: true,
-          aiProcessingConsent: false,
         ),
       ).thenAnswer((_) async => registration);
 
@@ -63,7 +62,6 @@ void main() {
         fullName: 'Alex',
         locale: 'en',
         acceptPrivacyNotice: true,
-        aiProcessingConsent: false,
       );
 
       expect(result.emailMasked, 'a***@example.com');
@@ -111,31 +109,7 @@ void main() {
     ).called(1);
   });
 
-  test('AI consent is updated through the dedicated endpoint', () async {
-    const updated = ConsentStatus(
-      privacyNoticeAccepted: true,
-      privacyNoticeVersion: '2026-08-05',
-      aiProcessingAllowed: true,
-    );
-    when(
-      () => api.updateAiConsent(granted: true),
-    ).thenAnswer((_) async => updated);
-
-    final result = await repository.updateAiConsent(true);
-
-    expect(result.aiProcessingAllowed, isTrue);
-    verify(() => api.updateAiConsent(granted: true)).called(1);
-  });
-
-  test('parses consent records and nested demo usage', () {
-    final consents = ConsentStatus.fromRecords(const [
-      {
-        'kind': 'privacy_notice',
-        'notice_version': '2026-08-05',
-        'granted': true,
-      },
-      {'kind': 'ai_processing', 'notice_version': '', 'granted': false},
-    ]);
+  test('parses nested demo usage', () {
     final usage = AccountUsage.fromJson(const {
       'ai': {
         'user_daily': {'used': 3, 'limit': 10},
@@ -143,8 +117,6 @@ void main() {
       'storage': {'used_bytes': 1048576, 'limit_bytes': 104857600},
     });
 
-    expect(consents.privacyNoticeAccepted, isTrue);
-    expect(consents.aiProcessingAllowed, isFalse);
     expect(usage.aiUnitsRemainingToday, 7);
     expect(usage.storageBytesUsed, 1048576);
   });

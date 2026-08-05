@@ -22,13 +22,9 @@ class SettingsScreen extends ConsumerWidget {
 
     ref.listen(settingsControllerProvider, (previous, next) {
       final message = _snackMessage(l10n, next);
-      if (message == null) {
-        return;
-      }
+      if (message == null) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) {
-          return;
-        }
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
         );
@@ -56,12 +52,11 @@ class SettingsScreen extends ConsumerWidget {
         child: authState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, _) => _SettingsMessage(message: l10n.networkFailedMessage),
-          data: (state) {
-            final user = state.user;
+          data: (auth) {
+            final user = auth.user;
             if (user == null) {
               return _SettingsMessage(message: l10n.authCheckingSession);
             }
-
             return ListView(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.xl,
@@ -70,38 +65,29 @@ class SettingsScreen extends ConsumerWidget {
                 AppSpacing.xxxl,
               ),
               children: [
-                _SettingsHeader(user: user),
-                const SizedBox(height: AppSpacing.xl),
-                _OrganizerNotice(),
-                const SizedBox(height: AppSpacing.xl),
-                _SettingsSection(
+                _ProfileHeader(user: user),
+                const SizedBox(height: AppSpacing.xxl),
+                _SettingsGroup(
+                  title: l10n.settingsDataSectionTitle,
+                  children: const [_PrivacyDisclosure()],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _SettingsGroup(
+                  title: l10n.settingsPreferencesSectionTitle,
+                  children: [
+                    const _LimitsDisclosure(),
+                    const _GroupDivider(),
+                    _LanguageDisclosure(user: user, state: settingsState),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _SettingsGroup(
                   title: l10n.settingsAccountSectionTitle,
-                  child: _AccountPanel(user: user),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                _SettingsSection(
-                  title: l10n.settingsPrivacySectionTitle,
-                  child: const _PrivacyPanel(),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                _SettingsSection(
-                  title: l10n.settingsAiSectionTitle,
-                  child: _AiConsentPanel(state: settingsState),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                _SettingsSection(
-                  title: l10n.settingsUsageSectionTitle,
-                  child: const _UsagePanel(),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                _SettingsSection(
-                  title: l10n.settingsLanguageSectionTitle,
-                  child: _LanguagePanel(user: user, state: settingsState),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                _SettingsSection(
-                  title: l10n.settingsActionsSectionTitle,
-                  child: _AccountActionsPanel(state: settingsState),
+                  children: [
+                    _LogoutRow(),
+                    const _GroupDivider(),
+                    _DeleteAccountRow(state: settingsState),
+                  ],
                 ),
               ],
             );
@@ -117,27 +103,20 @@ class SettingsScreen extends ConsumerWidget {
       return switch (message) {
         SettingsActionMessage.localeUpdated =>
           l10n.settingsLocaleUpdatedMessage,
-        SettingsActionMessage.aiConsentUpdated =>
-          l10n.settingsAiConsentUpdatedMessage,
       };
     }
-    final error = state.actionError;
-    if (error == null) {
-      return null;
-    }
-    return switch (error) {
+    return switch (state.actionError) {
+      null => null,
       SettingsActionError.localeUpdateFailed =>
         l10n.settingsLocaleUpdateFailedMessage,
       SettingsActionError.deleteAccountFailed =>
         l10n.settingsDeleteAccountFailedMessage,
-      SettingsActionError.aiConsentUpdateFailed =>
-        l10n.settingsAiConsentUpdateFailedMessage,
     };
   }
 }
 
-class _SettingsHeader extends StatelessWidget {
-  const _SettingsHeader({required this.user});
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader({required this.user});
 
   final AppUser user;
 
@@ -147,241 +126,178 @@ class _SettingsHeader extends StatelessWidget {
     final displayName = user.fullName.isEmpty
         ? l10n.authUnnamedUser
         : user.fullName;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.settingsTitle,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: AppColors.patientInk,
-            fontWeight: FontWeight.w900,
-            height: 1.08,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          displayName,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: AppColors.secondaryInk,
-            height: 1.35,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OrganizerNotice extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
+    final initial = displayName.trim().isEmpty
+        ? '?'
+        : displayName.trim().characters.first.toUpperCase();
 
     return Semantics(
-      container: true,
-      label: l10n.authBoundarySemanticLabel,
-      child: _Panel(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(
-              Icons.verified_user_outlined,
-              color: AppColors.deepClinicalBlue,
+      header: true,
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: AppColors.selectedSurface,
+            foregroundColor: AppColors.controlledCrimson,
+            child: Text(
+              initial,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.settingsOrganizerNoticeTitle,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.patientInk,
-                      fontWeight: FontWeight.w800,
-                    ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.settingsTitle,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: AppColors.patientInk,
+                    fontWeight: FontWeight.w900,
+                    height: 1.08,
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    l10n.settingsOrganizerNoticeDescription,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.secondaryInk,
-                      height: 1.35,
-                    ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  displayName,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.patientInk,
+                    fontWeight: FontWeight.w800,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  user.email,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.secondaryInk,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _SettingsSection extends StatelessWidget {
-  const _SettingsSection({required this.title, required this.child});
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({required this.title, required this.children});
 
   final String title;
-  final Widget child;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: AppColors.patientInk,
-            fontWeight: FontWeight.w900,
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.xs,
+            bottom: AppSpacing.sm,
           ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        child,
-      ],
-    );
-  }
-}
-
-class _AccountPanel extends StatelessWidget {
-  const _AccountPanel({required this.user});
-
-  final AppUser user;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final displayName = user.fullName.isEmpty
-        ? l10n.authUnnamedUser
-        : user.fullName;
-
-    return _Panel(
-      child: Column(
-        children: [
-          _AccountRow(label: l10n.authFullNameLabel, value: displayName),
-          const Divider(height: AppSpacing.xl),
-          _AccountRow(label: l10n.authEmailLabel, value: user.email),
-          const Divider(height: AppSpacing.xl),
-          _AccountRow(
-            label: l10n.authLocaleLabel,
-            value: _languageName(l10n, user.locale),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PrivacyPanel extends StatelessWidget {
-  const _PrivacyPanel();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
-    return _Panel(
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          _InfoTile(
-            icon: Icons.lock_outline_rounded,
-            title: l10n.settingsPrivacyNoteTitle,
-            description: l10n.settingsPrivacyNoteDescription,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AiConsentPanel extends ConsumerWidget {
-  const _AiConsentPanel({required this.state});
-
-  final SettingsState state;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final consent = ref.watch(consentStatusProvider);
-    return _Panel(
-      padding: EdgeInsets.zero,
-      child: consent.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: LinearProgressIndicator(),
-        ),
-        error: (_, _) => _SettingsRetry(
-          message: l10n.settingsConsentLoadFailedMessage,
-          onRetry: () => ref.invalidate(consentStatusProvider),
-        ),
-        data: (value) => SwitchListTile(
-          value: value.aiProcessingAllowed,
-          onChanged: state.isUpdatingAiConsent
-              ? null
-              : (granted) => ref
-                    .read(settingsControllerProvider.notifier)
-                    .updateAiConsent(granted),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.sm,
-          ),
-          secondary: state.isUpdatingAiConsent
-              ? const SizedBox.square(
-                  dimension: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(
-                  Icons.auto_awesome_outlined,
-                  color: AppColors.deepClinicalBlue,
-                ),
-          title: Text(
-            l10n.settingsAiConsentTitle,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.patientInk,
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: AppColors.secondaryInk,
               fontWeight: FontWeight.w800,
             ),
           ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
-            child: Text(
-              l10n.settingsAiConsentDescription,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.secondaryInk,
-                height: 1.35,
-              ),
-            ),
+        ),
+        Material(
+          color: AppColors.quietSurface,
+          shape: RoundedRectangleBorder(
+            side: const BorderSide(color: AppColors.clinicalLine),
+            borderRadius: BorderRadius.circular(16),
           ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+}
+
+class _GroupDivider extends StatelessWidget {
+  const _GroupDivider();
+
+  @override
+  Widget build(BuildContext context) => const Divider(height: 1, indent: 64);
+}
+
+class _PrivacyDisclosure extends StatefulWidget {
+  const _PrivacyDisclosure();
+
+  @override
+  State<_PrivacyDisclosure> createState() => _PrivacyDisclosureState();
+}
+
+class _PrivacyDisclosureState extends State<_PrivacyDisclosure> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return _DisclosureRow(
+      icon: Icons.lock_outline_rounded,
+      title: l10n.settingsPrivacyNoteTitle,
+      summary: l10n.settingsPrivacySummary,
+      expanded: _expanded,
+      onTap: () => setState(() => _expanded = !_expanded),
+      expandedChild: Text(
+        l10n.settingsPrivacyNoteDescription,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: AppColors.secondaryInk,
+          height: 1.4,
         ),
       ),
     );
   }
 }
 
-class _UsagePanel extends ConsumerWidget {
-  const _UsagePanel();
+class _LimitsDisclosure extends ConsumerStatefulWidget {
+  const _LimitsDisclosure();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_LimitsDisclosure> createState() => _LimitsDisclosureState();
+}
+
+class _LimitsDisclosureState extends ConsumerState<_LimitsDisclosure> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     final usage = ref.watch(accountUsageProvider);
-    return _Panel(
-      child: usage.when(
+    final summary = usage.when(
+      loading: () => l10n.settingsLimitsLoading,
+      error: (_, _) => l10n.settingsUsageUnavailable,
+      data: (_) => l10n.settingsLimitsSummary,
+    );
+    return _DisclosureRow(
+      icon: Icons.speed_outlined,
+      title: l10n.settingsLimitsTitle,
+      summary: summary,
+      expanded: _expanded,
+      onTap: () => setState(() => _expanded = !_expanded),
+      expandedChild: usage.when(
         loading: () => const LinearProgressIndicator(),
         error: (_, _) => _SettingsRetry(
           message: l10n.settingsUsageLoadFailedMessage,
           onRetry: () => ref.invalidate(accountUsageProvider),
         ),
         data: (value) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _AccountRow(
+            _MetricRow(
               label: l10n.settingsAiUnitsLabel,
               value: value.aiUnitsRemainingToday == null
                   ? l10n.settingsUsageUnavailable
                   : l10n.settingsAiUnitsValue(value.aiUnitsRemainingToday!),
             ),
-            const Divider(height: AppSpacing.xl),
-            _AccountRow(
+            const SizedBox(height: AppSpacing.md),
+            _MetricRow(
               label: l10n.settingsStorageUsageLabel,
               value: value.storageBytesLimit <= 0
                   ? l10n.settingsUsageUnavailable
@@ -397,30 +313,42 @@ class _UsagePanel extends ConsumerWidget {
   }
 }
 
-class _SettingsRetry extends StatelessWidget {
-  const _SettingsRetry({required this.message, required this.onRetry});
+class _LanguageDisclosure extends StatefulWidget {
+  const _LanguageDisclosure({required this.user, required this.state});
 
-  final String message;
-  final VoidCallback onRetry;
+  final AppUser user;
+  final SettingsState state;
+
+  @override
+  State<_LanguageDisclosure> createState() => _LanguageDisclosureState();
+}
+
+class _LanguageDisclosureState extends State<_LanguageDisclosure> {
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    final l10n = context.l10n;
+    return _DisclosureRow(
+      icon: Icons.language_rounded,
+      title: l10n.settingsLanguageSectionTitle,
+      summary: _languageName(l10n, widget.user.locale),
+      expanded: _expanded,
+      onTap: () => setState(() => _expanded = !_expanded),
+      expandedChild: Column(
         children: [
-          Text(
-            message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.secondaryInk,
-              height: 1.35,
-            ),
+          _LanguageOption(
+            label: l10n.settingsLanguageEnglish,
+            value: 'en',
+            groupValue: widget.user.locale,
+            isBusy: widget.state.isUpdatingLocale,
           ),
-          const SizedBox(height: AppSpacing.sm),
-          OutlinedButton(
-            onPressed: onRetry,
-            child: Text(context.l10n.documentRetryAction),
+          const SizedBox(height: AppSpacing.xs),
+          _LanguageOption(
+            label: l10n.settingsLanguageRussian,
+            value: 'ru',
+            groupValue: widget.user.locale,
+            isBusy: widget.state.isUpdatingLocale,
           ),
         ],
       ),
@@ -428,37 +356,149 @@ class _SettingsRetry extends StatelessWidget {
   }
 }
 
-class _LanguagePanel extends ConsumerWidget {
-  const _LanguagePanel({required this.user, required this.state});
+class _DisclosureRow extends StatelessWidget {
+  const _DisclosureRow({
+    required this.icon,
+    required this.title,
+    required this.summary,
+    required this.expanded,
+    required this.onTap,
+    required this.expandedChild,
+  });
 
-  final AppUser user;
-  final SettingsState state;
+  final IconData icon;
+  final String title;
+  final String summary;
+  final bool expanded;
+  final VoidCallback onTap;
+  final Widget expandedChild;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-
-    return _Panel(
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          _LanguageOption(
-            label: l10n.settingsLanguageEnglish,
-            value: 'en',
-            groupValue: user.locale,
-            isBusy: state.isUpdatingLocale,
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Semantics(
+          button: true,
+          expanded: expanded,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              child: Row(
+                children: [
+                  Icon(icon, color: AppColors.deepClinicalBlue),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: AppColors.patientInk,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          summary,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: AppColors.secondaryInk),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Icon(
+                    expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.secondaryInk,
+                  ),
+                ],
+              ),
+            ),
           ),
-          const Divider(height: 1),
-          _LanguageOption(
-            label: l10n.settingsLanguageRussian,
-            value: 'ru',
-            groupValue: user.locale,
-            isBusy: state.isUpdatingLocale,
+        ),
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
+            child: expandedChild,
           ),
-        ],
-      ),
+          crossFadeState: expanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 180),
+        ),
+      ],
     );
   }
+}
+
+class _MetricRow extends StatelessWidget {
+  const _MetricRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(
+        child: Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.secondaryInk),
+        ),
+      ),
+      const SizedBox(width: AppSpacing.md),
+      Text(
+        value,
+        textAlign: TextAlign.end,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: AppColors.patientInk,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ],
+  );
+}
+
+class _SettingsRetry extends StatelessWidget {
+  const _SettingsRetry({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(
+        message,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: AppColors.secondaryInk),
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      OutlinedButton(
+        onPressed: onRetry,
+        child: Text(context.l10n.documentRetryAction),
+      ),
+    ],
+  );
 }
 
 class _LanguageOption extends ConsumerWidget {
@@ -477,215 +517,153 @@ class _LanguageOption extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = groupValue == value;
-
-    return ListTile(
-      minVerticalPadding: AppSpacing.md,
-      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      enabled: !isBusy || selected,
-      onTap: isBusy || selected
-          ? null
-          : () => ref
-                .read(settingsControllerProvider.notifier)
-                .updateLocale(value),
-      leading: isBusy && selected
-          ? const SizedBox.square(
-              dimension: 22,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Icon(
-              selected
-                  ? Icons.check_circle_rounded
-                  : Icons.radio_button_unchecked_rounded,
-              color: selected
-                  ? AppColors.deepClinicalBlue
-                  : AppColors.secondaryInk,
-            ),
-      title: Text(
-        label,
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          color: AppColors.patientInk,
-          fontWeight: FontWeight.w700,
+    return Semantics(
+      selected: selected,
+      child: ListTile(
+        minVerticalPadding: AppSpacing.xs,
+        contentPadding: EdgeInsets.zero,
+        enabled: !isBusy || selected,
+        onTap: isBusy || selected
+            ? null
+            : () => ref
+                  .read(settingsControllerProvider.notifier)
+                  .updateLocale(value),
+        leading: isBusy && selected
+            ? const SizedBox.square(
+                dimension: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(
+                selected
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: selected
+                    ? AppColors.deepClinicalBlue
+                    : AppColors.secondaryInk,
+              ),
+        title: Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
     );
   }
 }
 
-class _AccountActionsPanel extends ConsumerWidget {
-  const _AccountActionsPanel({required this.state});
+class _LogoutRow extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    return _ActionRow(
+      icon: Icons.logout_rounded,
+      title: l10n.authLogoutAction,
+      description: l10n.settingsLogoutDescription,
+      onTap: () => ref.read(authControllerProvider.notifier).logout(),
+    );
+  }
+}
+
+class _DeleteAccountRow extends ConsumerWidget {
+  const _DeleteAccountRow({required this.state});
 
   final SettingsState state;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-
-    return _Panel(
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          _ActionTile(
-            icon: Icons.logout_rounded,
-            title: l10n.authLogoutAction,
-            description: l10n.settingsLogoutDescription,
-            actionLabel: l10n.authLogoutAction,
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
-          ),
-          const Divider(height: 1),
-          _ActionTile(
-            icon: Icons.delete_outline_rounded,
-            title: l10n.settingsDeleteAccountTitle,
-            description: l10n.settingsDeleteAccountDescription,
-            actionLabel: l10n.settingsDeleteAccountAction,
-            isDestructive: true,
-            isLoading: state.isDeletingAccount,
-            onPressed: state.isDeletingAccount
-                ? null
-                : () async {
-                    final controller = ref.read(
-                      settingsControllerProvider.notifier,
-                    );
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => const _DeleteAccountDialog(),
-                    );
-                    if (confirmed != true) {
-                      return;
-                    }
-                    await controller.deleteAccount();
-                  },
-          ),
-        ],
-      ),
+    return _ActionRow(
+      icon: Icons.delete_outline_rounded,
+      title: l10n.settingsDeleteAccountTitle,
+      description: l10n.settingsDeleteAccountDescription,
+      destructive: true,
+      isLoading: state.isDeletingAccount,
+      onTap: state.isDeletingAccount
+          ? null
+          : () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => const _DeleteAccountDialog(),
+              );
+              if (confirmed == true) {
+                await ref
+                    .read(settingsControllerProvider.notifier)
+                    .deleteAccount();
+              }
+            },
     );
   }
 }
 
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({
     required this.icon,
     required this.title,
     required this.description,
-    required this.actionLabel,
-    required this.onPressed,
+    required this.onTap,
+    this.destructive = false,
     this.isLoading = false,
-    this.isDestructive = false,
   });
 
   final IconData icon;
   final String title;
   final String description;
-  final String actionLabel;
-  final VoidCallback? onPressed;
+  final VoidCallback? onTap;
+  final bool destructive;
   final bool isLoading;
-  final bool isDestructive;
 
   @override
   Widget build(BuildContext context) {
-    final accent = isDestructive
+    final color = destructive
         ? AppColors.controlledCrimson
         : AppColors.deepClinicalBlue;
-
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: accent),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.patientInk,
-                        fontWeight: FontWeight.w800,
-                      ),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            isLoading
+                ? SizedBox.square(
+                    dimension: 24,
+                    child: CircularProgressIndicator(
+                      color: color,
+                      strokeWidth: 2,
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      description,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.secondaryInk,
-                        height: 1.35,
-                      ),
+                  )
+                : Icon(icon, color: color),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w800,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.secondaryInk,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          OutlinedButton.icon(
-            onPressed: onPressed,
-            icon: isLoading
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(icon),
-            label: Text(actionLabel),
-            style: isDestructive
-                ? OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.controlledCrimson,
-                    side: const BorderSide(color: AppColors.controlledCrimson),
-                  )
-                : null,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  final IconData icon;
-  final String title;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.patientInk),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.patientInk,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  description,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.secondaryInk,
-                    height: 1.35,
-                  ),
-                ),
-              ],
             ),
-          ),
-        ],
+            const SizedBox(width: AppSpacing.sm),
+            Icon(Icons.chevron_right_rounded, color: color),
+          ],
+        ),
       ),
     );
   }
@@ -712,7 +690,6 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
     final l10n = context.l10n;
     final canDelete =
         _controller.text.trim() == l10n.settingsDeleteAccountConfirmValue;
-
     return AppAlertDialog(
       title: l10n.settingsDeleteAccountDialogTitle,
       content: Column(
@@ -758,85 +735,27 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
   }
 }
 
-class _AccountRow extends StatelessWidget {
-  const _AccountRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: AppColors.secondaryInk,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: AppColors.patientInk,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Panel extends StatelessWidget {
-  const _Panel({
-    required this.child,
-    this.padding = const EdgeInsets.all(AppSpacing.lg),
-  });
-
-  final Widget child;
-  final EdgeInsetsGeometry padding;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.quietSurface,
-      shape: RoundedRectangleBorder(
-        side: const BorderSide(color: AppColors.clinicalLine),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(padding: padding, child: child),
-    );
-  }
-}
-
 class _SettingsMessage extends StatelessWidget {
   const _SettingsMessage({required this.message});
 
   final String message;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Text(
-          message,
-          style: Theme.of(context).textTheme.bodyLarge,
-          textAlign: TextAlign.center,
-        ),
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodyLarge,
+        textAlign: TextAlign.center,
       ),
-    );
-  }
+    ),
+  );
 }
 
-String _languageName(AppLocalizations l10n, String locale) {
-  return switch (locale) {
-    'ru' => l10n.settingsLanguageRussian,
-    _ => l10n.settingsLanguageEnglish,
-  };
-}
+String _languageName(AppLocalizations l10n, String locale) => switch (locale) {
+  'ru' => l10n.settingsLanguageRussian,
+  _ => l10n.settingsLanguageEnglish,
+};
 
 int _formatMegabytes(int bytes) => (bytes / (1024 * 1024)).ceil();

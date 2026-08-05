@@ -12,9 +12,9 @@ and production configuration immediately before submission.
 - Account required: yes. Account deletion is available in Settings and deletes server records.
 - Encryption: TLS in transit; sensitive originals are encrypted at rest; authentication tokens use
   platform secure storage.
-- AI: optional, user-controlled, and off until separately enabled. Content is sent to OpenAI only
-  for user-requested OCR, transcription, organization, summaries, and explanations.
-- Processors: OVHcloud (hosting), Resend (security email), and OpenAI (optional AI).
+- AI: a core part of the service and not separately disableable. The minimum content needed for
+  user-requested OCR, transcription, organization, summaries, and explanations is sent to OpenAI.
+- Processors: OVHcloud (hosting), Resend (security email), and OpenAI (core AI processing).
 
 ## Google Play
 
@@ -70,7 +70,8 @@ The final public policy must identify:
 - the individual or entity operating MedStory and a monitored privacy contact;
 - every category above, its purpose, source, retention, and deletion path;
 - OVHcloud, Resend, and OpenAI by name and their limited purposes;
-- optional AI consent, OpenAI's no-training-by-default posture, `store=false`, and possible
+- mandatory AI processing disclosed at signup, OpenAI's no-training-by-default posture,
+  `store=false`, and possible
   abuse-monitoring retention of up to 30 days without claiming ZDR;
 - Resend's security-email role and 30-day email-data retention;
 - account deletion/export/correction rights and how to submit a privacy request;
@@ -79,4 +80,3 @@ The final public policy must identify:
 
 Do not submit a placeholder policy. Store review can be performed without a lawyer, but the store
 forms and public policy must truthfully match the live build and server configuration.
-

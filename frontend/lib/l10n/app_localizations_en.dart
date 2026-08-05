@@ -255,6 +255,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPrivacySectionTitle => 'Privacy';
 
   @override
+  String get settingsDataSectionTitle => 'Privacy & data';
+
+  @override
+  String get settingsPreferencesSectionTitle => 'Preferences';
+
+  @override
   String get settingsLanguageSectionTitle => 'Language';
 
   @override
@@ -262,6 +268,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPrivacyNoteTitle => 'How originals are stored';
+
+  @override
+  String get settingsPrivacySummary => 'Private storage and processing details';
 
   @override
   String get settingsPrivacyNoteDescription =>
@@ -325,29 +334,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'MedStory helps organize and explain your records. It does not diagnose, recommend treatment, or replace care from a clinician.';
 
   @override
-  String get settingsAiSectionTitle => 'AI processing';
+  String get settingsUsageSectionTitle => 'Limits';
 
   @override
-  String get settingsAiConsentTitle => 'Allow AI-assisted organization';
+  String get settingsLimitsTitle => 'Limits';
 
   @override
-  String get settingsAiConsentDescription =>
-      'When enabled, MedStory can send the minimum necessary content to its configured AI provider to organize and explain it. Turn this off at any time to stop future AI processing. Manual timeline features remain available.';
+  String get settingsLimitsSummary => 'AI and storage usage';
 
   @override
-  String get settingsAiConsentUpdatedMessage =>
-      'AI processing preference updated.';
-
-  @override
-  String get settingsAiConsentUpdateFailedMessage =>
-      'We could not update your AI processing preference. Try again.';
-
-  @override
-  String get settingsConsentLoadFailedMessage =>
-      'We could not load your AI processing preference.';
-
-  @override
-  String get settingsUsageSectionTitle => 'Demo limits';
+  String get settingsLimitsLoading => 'Checking current usage';
 
   @override
   String get settingsUsageLoadFailedMessage =>
@@ -920,7 +916,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authPrivacyAiIntro =>
-      'Choose how MedStory may handle your records.';
+      'Review how MedStory protects your records and uses AI as a core part of the service.';
 
   @override
   String get authRequiredLabel => 'REQUIRED';
@@ -943,32 +939,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authPrivacyDetailsHideAction => 'Hide the privacy notice';
 
   @override
-  String get authPrivacyDetailsTitle => 'Privacy notice · 5 August 2026';
+  String get authPrivacyDetailsTitle => 'Privacy notice · 6 August 2026';
 
   @override
   String get authPrivacyDetailsMessage =>
-      'Your medical records are private. MedStory uses the information you add to provide your account, keep it secure, and organize your personal health history.';
+      'Your medical records are private. AI-assisted organization and explanation are core MedStory features. MedStory sends only the content needed for those features to its configured AI provider and does not use AI to diagnose or recommend treatment.';
 
   @override
   String get authPrivacyDetailsSecondaryMessage =>
-      'You control what you add and can request access to or deletion of your information. AI permission is separate and is not required to use manual features.';
-
-  @override
-  String get authAiConsentTitle => 'Allow AI processing';
-
-  @override
-  String get authAiConsentMeta => 'Optional · Off by default';
-
-  @override
-  String get authAiConsentDescription =>
-      'AI can organize and explain records, but cannot diagnose. Manual features still work without it.';
-
-  @override
-  String get authAiDetailsShowAction => 'How it works';
-
-  @override
-  String get authAiDetailsMessage =>
-      'When enabled, MedStory may process the records you choose to help structure timelines and explain medical language. You can turn this off later.';
+      'You control what you add and can request access to or deletion of your information. Accepting this notice is required to use MedStory because AI processing cannot be disabled.';
 
   @override
   String get authForgotPasswordAction => 'Forgot password?';

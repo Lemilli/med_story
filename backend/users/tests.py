@@ -1,3 +1,4 @@
+import importlib
 import re
 from datetime import date, timedelta
 from unittest.mock import patch
@@ -39,9 +40,8 @@ class AuthTests(APITestCase):
                 "password": "StrongPass123!",
                 "full_name": "Jane Doe",
                 "locale": "en",
-                "privacy_notice_version": "2026-08-05",
+                "privacy_notice_version": "2026-08-06",
                 "privacy_accepted": True,
-                "ai_processing_accepted": False,
             },
             format="json",
         )
@@ -51,7 +51,8 @@ class AuthTests(APITestCase):
         self.assertTrue(response.data["verification_required"])
         user = get_user_model().objects.get(email="user@example.com")
         self.assertFalse(user.is_active)
-        self.assertEqual(user.consent_records.count(), 2)
+        self.assertEqual(user.consent_records.count(), 1)
+        self.assertEqual(user.consent_records.get().kind, ConsentRecord.Kind.PRIVACY_NOTICE)
         self.assertNotRegex(EmailChallenge.objects.get(user=user).code_digest, r"^\d{6}$")
         self.assertEqual(len(mail.outbox), 1)
         self.assertTrue(
@@ -69,9 +70,8 @@ class AuthTests(APITestCase):
             {
                 "email": "verify@example.com",
                 "password": "StrongPass123!",
-                "privacy_notice_version": "2026-08-05",
+                "privacy_notice_version": "2026-08-06",
                 "privacy_accepted": True,
-                "ai_processing_accepted": True,
             },
             format="json",
         )
@@ -87,13 +87,13 @@ class AuthTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("access", response.data)
         self.assertTrue(get_user_model().objects.get(email="verify@example.com").is_active)
-        self.assertTrue(ConsentRecord.objects.filter(user__email="verify@example.com", kind="ai_processing", granted=True).exists())
+        self.assertFalse(ConsentRecord.objects.filter(user__email="verify@example.com", kind="ai_processing").exists())
 
     def test_resend_invalidates_previous_verification_code(self):
         with patch("users.services.secrets.randbelow", side_effect=[111111, 222222]):
             self.client.post(
                 "/api/v1/auth/register",
-                {"email": "resend@example.com", "password": "StrongPass123!", "privacy_notice_version": "2026-08-05", "privacy_accepted": True},
+                {"email": "resend@example.com", "password": "StrongPass123!", "privacy_notice_version": "2026-08-06", "privacy_accepted": True},
                 format="json",
             )
             old_code = re.search(r"\b(\d{6})\b", mail.outbox[-1].body).group(1)
@@ -106,7 +106,7 @@ class AuthTests(APITestCase):
     def test_challenge_locks_after_five_attempts(self):
         self.client.post(
             "/api/v1/auth/register",
-            {"email": "attempts@example.com", "password": "StrongPass123!", "privacy_notice_version": "2026-08-05", "privacy_accepted": True},
+            {"email": "attempts@example.com", "password": "StrongPass123!", "privacy_notice_version": "2026-08-06", "privacy_accepted": True},
             format="json",
         )
         valid_code = re.search(r"\b(\d{6})\b", mail.outbox[-1].body).group(1)
@@ -140,14 +140,57 @@ class AuthTests(APITestCase):
         self.assertEqual(confirmed.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(replay.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_ai_consent_updates_are_append_only(self):
+    def test_ai_consent_endpoint_is_not_exposed(self):
         user = get_user_model().objects.create_user(email="consent@example.com", password="StrongPass123!")
         self.client.force_authenticate(user=user)
-        first = self.client.put("/api/v1/me/consents/ai-processing", {"granted": True}, format="json")
-        second = self.client.put("/api/v1/me/consents/ai-processing", {"granted": False}, format="json")
-        self.assertEqual(first.status_code, status.HTTP_200_OK)
-        self.assertEqual(second.status_code, status.HTTP_200_OK)
-        self.assertEqual(user.consent_records.filter(kind="ai_processing").count(), 2)
+        response = self.client.put("/api/v1/me/consents/ai-processing", {"granted": False}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_consent_list_exposes_only_privacy_notice_acceptance(self):
+        user = get_user_model().objects.create_user(email="privacy@example.com", password="StrongPass123!")
+        ConsentRecord.objects.create(user=user, kind="privacy_notice", notice_version="2026-08-06", granted=True)
+        ConsentRecord.objects.create(user=user, kind="ai_processing", notice_version="2026-08-05", granted=False)
+        self.client.force_authenticate(user=user)
+
+        response = self.client.get("/api/v1/me/consents")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["kind"], "privacy_notice")
+
+    def test_current_notice_combines_mandatory_ai_disclosure(self):
+        response = self.client.get("/api/v1/legal/notices/current?locale=en")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["version"], "2026-08-06")
+        self.assertIn("core features use AI", response.data["privacy_notice"])
+        self.assertNotIn("ai_processing", response.data)
+
+    def test_registration_rejects_removed_ai_consent_field(self):
+        response = self.client.post(
+            "/api/v1/auth/register",
+            {
+                "email": "legacy@example.com",
+                "password": "StrongPass123!",
+                "privacy_notice_version": "2026-08-06",
+                "privacy_accepted": True,
+                "ai_processing_accepted": True,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("ai_processing_accepted", response.data["error"]["details"])
+
+    def test_ai_consent_data_migration_deletes_only_ai_records(self):
+        user = get_user_model().objects.create_user(email="migration@example.com", password="StrongPass123!")
+        ConsentRecord.objects.create(user=user, kind="privacy_notice", notice_version="2026-08-06", granted=True)
+        ConsentRecord.objects.create(user=user, kind="ai_processing", notice_version="2026-08-05", granted=False)
+        migration = importlib.import_module("users.migrations.0003_remove_ai_processing_consent")
+
+        migration.delete_ai_processing_consents(importlib.import_module("django.apps").apps, None)
+
+        self.assertFalse(ConsentRecord.objects.filter(user=user, kind="ai_processing").exists())
+        self.assertTrue(ConsentRecord.objects.filter(user=user, kind="privacy_notice").exists())
 
     def test_me_requires_authentication(self):
         response = self.client.get("/api/v1/me")

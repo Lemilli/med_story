@@ -22,13 +22,12 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     privacy_notice_version = serializers.CharField(write_only=True)
     privacy_accepted = serializers.BooleanField(write_only=True)
-    ai_processing_accepted = serializers.BooleanField(write_only=True, required=False, default=False)
 
     class Meta:
         model = User
         fields = (
             "email", "password", "full_name", "locale", "privacy_notice_version",
-            "privacy_accepted", "ai_processing_accepted",
+            "privacy_accepted",
         )
         extra_kwargs = {
             "full_name": {"required": False, "allow_blank": True},
@@ -38,7 +37,6 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         privacy_version = validated_data.pop("privacy_notice_version")
         privacy_accepted = validated_data.pop("privacy_accepted")
-        ai_accepted = validated_data.pop("ai_processing_accepted", False)
         password = validated_data.pop("password")
         user = User.objects.create_user(password=password, is_active=False, **validated_data)
         get_or_create_default_subject(user)
@@ -48,14 +46,13 @@ class RegisterSerializer(serializers.ModelSerializer):
             granted=privacy_accepted,
             notice_version=privacy_version,
         )
-        record_consent(
-            user=user,
-            kind=ConsentRecord.Kind.AI_PROCESSING,
-            granted=ai_accepted,
-        )
         return user
 
     def validate(self, attrs):
+        if "ai_processing_accepted" in self.initial_data:
+            raise serializers.ValidationError({
+                "ai_processing_accepted": "AI processing is a core part of MedStory and is covered by the privacy notice."
+            })
         if attrs.get("privacy_notice_version") != PRIVACY_NOTICE_VERSION:
             raise serializers.ValidationError({"privacy_notice_version": "The current privacy notice must be accepted."})
         if attrs.get("privacy_accepted") is not True:
@@ -76,16 +73,6 @@ class PasswordResetConfirmSerializer(EmailCodeSerializer):
     new_password = serializers.CharField(write_only=True, validators=[validate_password])
 
 
-class AIConsentSerializer(serializers.Serializer):
-    granted = serializers.BooleanField()
-    notice_version = serializers.CharField(default=PRIVACY_NOTICE_VERSION)
-
-    def validate_notice_version(self, value):
-        if value != PRIVACY_NOTICE_VERSION:
-            raise serializers.ValidationError("The current AI processing notice must be used.")
-        return value
-
-
 class ConsentRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConsentRecord
@@ -97,7 +84,6 @@ class CurrentLegalNoticeSerializer(serializers.Serializer):
     version = serializers.CharField()
     locale = serializers.ChoiceField(choices=("en", "ru"))
     privacy_notice = serializers.CharField()
-    ai_processing = serializers.CharField()
 
 
 class UsageSerializer(serializers.Serializer):

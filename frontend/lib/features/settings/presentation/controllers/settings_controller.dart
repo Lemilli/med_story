@@ -4,10 +4,6 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../../auth/domain/auth_models.dart';
 
-final consentStatusProvider = FutureProvider.autoDispose<ConsentStatus>((ref) {
-  return ref.watch(authRepositoryProvider).consents();
-});
-
 final accountUsageProvider = FutureProvider.autoDispose<AccountUsage>((ref) {
   return ref.watch(authRepositoryProvider).usage();
 });
@@ -64,28 +60,6 @@ class SettingsController extends Notifier<SettingsState> {
     }
   }
 
-  Future<void> updateAiConsent(bool granted) async {
-    if (state.isUpdatingAiConsent) return;
-    state = state.copyWith(
-      isUpdatingAiConsent: true,
-      actionMessage: null,
-      actionError: null,
-    );
-    try {
-      await ref.read(authRepositoryProvider).updateAiConsent(granted);
-      ref.invalidate(consentStatusProvider);
-      state = state.copyWith(
-        isUpdatingAiConsent: false,
-        actionMessage: SettingsActionMessage.aiConsentUpdated,
-      );
-    } on Object {
-      state = state.copyWith(
-        isUpdatingAiConsent: false,
-        actionError: SettingsActionError.aiConsentUpdateFailed,
-      );
-    }
-  }
-
   void consumeActionMessages() {
     state = state.copyWith(actionMessage: null, actionError: null);
   }
@@ -95,38 +69,30 @@ class SettingsState {
   const SettingsState({
     this.isUpdatingLocale = false,
     this.isDeletingAccount = false,
-    this.isUpdatingAiConsent = false,
     this.actionMessage,
     this.actionError,
   });
 
   final bool isUpdatingLocale;
   final bool isDeletingAccount;
-  final bool isUpdatingAiConsent;
   final SettingsActionMessage? actionMessage;
   final SettingsActionError? actionError;
 
   SettingsState copyWith({
     bool? isUpdatingLocale,
     bool? isDeletingAccount,
-    bool? isUpdatingAiConsent,
     SettingsActionMessage? actionMessage,
     SettingsActionError? actionError,
   }) {
     return SettingsState(
       isUpdatingLocale: isUpdatingLocale ?? this.isUpdatingLocale,
       isDeletingAccount: isDeletingAccount ?? this.isDeletingAccount,
-      isUpdatingAiConsent: isUpdatingAiConsent ?? this.isUpdatingAiConsent,
       actionMessage: actionMessage,
       actionError: actionError,
     );
   }
 }
 
-enum SettingsActionMessage { localeUpdated, aiConsentUpdated }
+enum SettingsActionMessage { localeUpdated }
 
-enum SettingsActionError {
-  localeUpdateFailed,
-  deleteAccountFailed,
-  aiConsentUpdateFailed,
-}
+enum SettingsActionError { localeUpdateFailed, deleteAccountFailed }

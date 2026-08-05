@@ -29,12 +29,12 @@ are implemented. The demonstration accepts at most 100 verified accounts by defa
 
 ### POST /auth/register
 Create an inactive account and email a six-digit verification code. Privacy-notice acceptance is
-required; AI processing consent is separate and optional.
+required. The notice discloses that AI-assisted organization and explanation are core service
+functions and that the minimum necessary content is sent to the configured AI provider.
 ```jsonc
 // Request
 { "email": "user@example.com", "password": "••••••••", "full_name": "Jane Doe", "locale": "en",
-  "privacy_notice_version": "2026-08-05", "privacy_accepted": true,
-  "ai_processing_accepted": false }
+  "privacy_notice_version": "2026-08-06", "privacy_accepted": true }
 // 202 Response
 { "user": { "id": "uuid", "email": "user@example.com", "full_name": "Jane Doe",
     "locale": "en", "email_verified": false, "date_joined": "..." },
@@ -89,19 +89,16 @@ Immediately hard-deletes the account and backend records. Optional body:
 `{ "refresh": "jwt..." }` for best-effort refresh-token blacklist. → `204`.
 
 ### GET /me/consents
-Returns the latest privacy-notice and AI-processing consent records.
-
-### PUT /me/consents/ai-processing
-`{ "granted": true }` records a new consent decision for the current notice version. AI routes
-return `403 ai_consent_required` unless the latest current-version decision is granted.
+Returns the latest privacy-notice acceptance record. AI processing is intrinsic to MedStory and has
+no separate user preference or consent endpoint.
 
 ### GET /me/usage
 Returns the user's daily AI usage, global daily/monthly demo usage, reset timestamps, and retained
 original storage usage/limit. This contains counters only, never health content.
 
 ### GET /legal/notices/current
-Public endpoint returning the current English or Russian privacy and AI-processing notices. Pass
-`?locale=en|ru`.
+Public endpoint returning `version`, `locale`, and the current combined `privacy_notice` in English
+or Russian. Pass `?locale=en|ru`.
 
 ### GET /subjects
 List subjects (patient profiles). The default self-subject is always present.
@@ -393,7 +390,7 @@ envelope.
 Throttled responses include a `Retry-After` header and
 `error.details.retry_after_seconds`.
 
-AI budget failures use `403 ai_consent_required`, `503 ai_disabled`, or `429 ai_quota_exceeded`.
+AI availability failures use `503 ai_disabled` or `429 ai_quota_exceeded`.
 Reservations are made atomically before work is queued and are not refunded if downstream work
 fails. A document costs one unit plus one unit per asset; transcription, note extraction,
 explanation, event revision, and summary generation cost one unit each. Default demo limits are 10
@@ -415,8 +412,7 @@ private object storage, and malware scanner without exposing dependency details.
 | POST | /auth/password/reset/request | Start password reset |
 | POST | /auth/password/reset/confirm | Complete password reset |
 | GET/PATCH/DELETE | /me | Profile / account deletion |
-| GET | /me/consents | Latest consent decisions |
-| PUT | /me/consents/ai-processing | Change AI-processing consent |
+| GET | /me/consents | Latest privacy-notice acceptance |
 | GET | /me/usage | AI and retained-storage usage |
 | GET | /legal/notices/current | Current public notices |
 | GET/POST | /subjects | List/create patient profiles |

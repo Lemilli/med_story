@@ -115,7 +115,7 @@ remain for deterministic local tests.
   fail without creating timeline events.
 
 ### Phase 6 — Privacy, Hardening & Launch Prep
-**Status:** Server-retained private originals, verified-email/privacy/consent flows, cost controls,
+**Status:** Server-retained private originals, verified-email/privacy-notice flows, cost controls,
 production hardening, OVH deployment automation, API throttling, CI dependency/secret scanning,
 and founder-led processor/DPA review implemented; account-specific production evidence and the
 remaining launch checks are still required.
@@ -123,7 +123,8 @@ remaining launch checks are still required.
 - Backend: private single-node Garage behind internal TLS, ClamAV fail-closed scanning, framed
   envelope encryption with key commitment, same-user keyed dedupe, 100 MiB demo quota,
   cryptographic erasure, durable opaque deletion jobs, `DELETE /me`, verified email/password reset,
-  append-only consent history, audit logging, and isolation/lifecycle tests.
+  append-only privacy-notice acceptance history, mandatory core AI processing, audit logging, and
+  isolation/lifecycle tests.
 - Cost controls: 100 verified-account cap, registration/AI kill switches, one constrained worker,
   and atomic 10/user/day, 20/global/day, 150/global/month AI-unit limits. **Implemented.**
 - CI: blocking dependency and full-history secret scans plus weekly Dependabot updates.

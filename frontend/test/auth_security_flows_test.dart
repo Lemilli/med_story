@@ -26,7 +26,7 @@ void main() {
     ).thenAnswer((_) async => const AuthState.unauthenticated());
   });
 
-  testWidgets('registration requires privacy consent and leaves AI off', (
+  testWidgets('registration requires one privacy acceptance for core AI', (
     tester,
   ) async {
     await _pump(
@@ -46,9 +46,8 @@ void main() {
       CheckboxListTile,
       l10n.authPrivacyConsentTitle,
     );
-    final ai = find.widgetWithText(CheckboxListTile, l10n.authAiConsentTitle);
     expect(tester.widget<CheckboxListTile>(privacy).value, isFalse);
-    expect(tester.widget<CheckboxListTile>(ai).value, isFalse);
+    expect(find.byType(CheckboxListTile), findsOneWidget);
 
     final registrationTheme = Theme.of(tester.element(fields.at(0)));
     expect(
@@ -74,13 +73,6 @@ void main() {
     expect(
       existingAccountAction.style?.foregroundColor?.resolve(<WidgetState>{}),
       AppColors.controlledCrimson,
-    );
-    final logo = tester.widget<Image>(
-      find.byKey(const ValueKey('registration-app-logo')),
-    );
-    expect(
-      (logo.image as AssetImage).assetName,
-      'assets/branding/medstory-app-icon.png',
     );
     final optional = find.byKey(
       const ValueKey('registration-full-name-optional'),
@@ -119,7 +111,6 @@ void main() {
         fullName: any(named: 'fullName'),
         locale: any(named: 'locale'),
         acceptPrivacyNotice: any(named: 'acceptPrivacyNotice'),
-        aiProcessingConsent: any(named: 'aiProcessingConsent'),
       ),
     );
   });
@@ -157,11 +148,6 @@ void main() {
     expect(find.text(l10n.authPrivacyDetailsMessage), findsOneWidget);
     expect(find.text(l10n.authPrivacyDetailsSecondaryMessage), findsOneWidget);
 
-    final aiDisclosure = find.text(l10n.authAiDetailsShowAction);
-    await tester.ensureVisible(aiDisclosure);
-    await tester.tap(aiDisclosure);
-    await tester.pumpAndSettle();
-    expect(find.text(l10n.authAiDetailsMessage), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -176,7 +162,6 @@ void main() {
           fullName: 'Alex',
           locale: 'en',
           acceptPrivacyNotice: true,
-          aiProcessingConsent: false,
         ),
       ).thenAnswer((_) => registration.future);
 
@@ -217,7 +202,6 @@ void main() {
           fullName: 'Alex',
           locale: 'en',
           acceptPrivacyNotice: true,
-          aiProcessingConsent: false,
         ),
       ).called(1);
 

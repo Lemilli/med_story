@@ -45,10 +45,6 @@ from medical.services import (
     reserve_ai_quota,
 )
 from medical.tasks import ingest_document_task
-from users.models import ConsentRecord
-from users.services import record_consent
-
-
 TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
 
 
@@ -65,8 +61,6 @@ class MedicalApiTests(APITestCase):
             password="StrongPass123!",
             full_name="Other User",
         )
-        for user in (self.user, self.other_user):
-            record_consent(user=user, kind=ConsentRecord.Kind.AI_PROCESSING, granted=True)
         self.client.force_authenticate(user=self.user)
 
     def tearDown(self):
@@ -1974,17 +1968,17 @@ class MedicalApiTests(APITestCase):
             2,
         )
 
-    def test_ai_endpoint_requires_active_consent(self):
+    def test_ai_endpoint_does_not_require_a_separate_consent_record(self):
         user = get_user_model().objects.create_user(email="no-ai@example.com", password="StrongPass123!")
         subject = Subject.objects.create(user=user, display_name="No AI", is_default=True)
         self.client.force_authenticate(user=user)
-        response = self.client.post(
-            "/api/v1/capture/notes",
-            {"text": "A health note", "subject_id": str(subject.id)},
-            format="json",
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data["error"]["code"], "ai_consent_required")
+        with patch("medical.views.ingest_note_task.delay", return_value=SimpleNamespace(id="task-1")):
+            response = self.client.post(
+                "/api/v1/capture/notes",
+                {"text": "A health note", "subject_id": str(subject.id)},
+                format="json",
+            )
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
     @override_settings(AI_ENABLED=False)
     def test_ai_kill_switch_blocks_calls(self):

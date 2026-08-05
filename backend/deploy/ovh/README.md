@@ -626,7 +626,7 @@ Do not open the service to real users until every item is checked:
 - [ ] QEMU guest agent device and service are active.
 - [ ] A full Standard Automated Backup restore drill has recovered the synthetic PostgreSQL and
   encrypted Garage markers, and its private evidence has been reviewed.
-- [ ] The public privacy notice and consent screens match the real provider behavior.
+- [ ] The public privacy notice and required acceptance screen match the real provider behavior.
 - [ ] The one-daily-point, approximately 24-hour data-loss, and no-guaranteed-recovery notice has
   been approved.
 - [ ] The encrypted offline `original_master_key` copy has been verified.

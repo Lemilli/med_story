@@ -24,20 +24,6 @@ void main() {
     ).thenAnswer((_) async => _user(locale: 'ru'));
     when(() => authRepository.deleteAccount()).thenAnswer((_) async {});
     when(() => authRepository.logout()).thenAnswer((_) async {});
-    when(() => authRepository.consents()).thenAnswer(
-      (_) async => const ConsentStatus(
-        privacyNoticeAccepted: true,
-        privacyNoticeVersion: '2026-08-05',
-        aiProcessingAllowed: false,
-      ),
-    );
-    when(() => authRepository.updateAiConsent(true)).thenAnswer(
-      (_) async => const ConsentStatus(
-        privacyNoticeAccepted: true,
-        privacyNoticeVersion: '2026-08-05',
-        aiProcessingAllowed: true,
-      ),
-    );
     when(() => authRepository.usage()).thenAnswer(
       (_) async => const AccountUsage(
         aiUnitsRemainingToday: 8,
@@ -47,7 +33,9 @@ void main() {
     );
   });
 
-  testWidgets('renders privacy, language, and account actions', (tester) async {
+  testWidgets('progressively reveals privacy, limits, and language settings', (
+    tester,
+  ) async {
     await _pumpScreen(tester, authRepository);
     await tester.pumpAndSettle();
 
@@ -55,34 +43,24 @@ void main() {
       tester.element(find.byType(SettingsScreen)),
     )!;
 
-    expect(find.text(l10n.settingsPrivacySectionTitle), findsOneWidget);
-    await _scrollToText(tester, l10n.settingsAiConsentTitle);
-    expect(find.text(l10n.settingsAiConsentTitle), findsOneWidget);
-    await _scrollToText(tester, l10n.settingsUsageSectionTitle);
+    expect(find.text(l10n.settingsDataSectionTitle), findsOneWidget);
+    await tester.tap(find.text(l10n.settingsPrivacyNoteTitle));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.settingsPrivacyNoteDescription), findsOneWidget);
+
+    await _scrollToText(tester, l10n.settingsLimitsTitle);
+    await tester.tap(find.text(l10n.settingsLimitsTitle));
+    await tester.pumpAndSettle();
     expect(find.text(l10n.settingsAiUnitsValue(8)), findsOneWidget);
-    await _scrollToText(tester, l10n.settingsLanguageRussian);
+
+    await _scrollToText(tester, l10n.settingsLanguageSectionTitle);
+    await tester.tap(find.text(l10n.settingsLanguageSectionTitle));
+    await tester.pumpAndSettle();
     expect(find.text(l10n.settingsLanguageRussian), findsOneWidget);
-    final deleteAction = find.widgetWithText(
-      OutlinedButton,
-      l10n.settingsDeleteAccountAction,
-    );
-    await _scrollToFinder(tester, deleteAction);
-    expect(deleteAction, findsOneWidget);
-  });
 
-  testWidgets('enables optional AI processing from settings', (tester) async {
-    await _pumpScreen(tester, authRepository);
-    await tester.pumpAndSettle();
-    final l10n = AppLocalizations.of(
-      tester.element(find.byType(SettingsScreen)),
-    )!;
-
-    await _scrollToText(tester, l10n.settingsAiConsentTitle);
-    await tester.tap(find.byType(Switch));
-    await tester.pumpAndSettle();
-
-    verify(() => authRepository.updateAiConsent(true)).called(1);
-    expect(tester.takeException(), isNull);
+    expect(find.byType(Switch), findsNothing);
+    await _scrollToText(tester, l10n.settingsDeleteAccountTitle);
+    expect(find.text(l10n.settingsDeleteAccountTitle), findsOneWidget);
   });
 
   testWidgets('updates locale', (tester) async {
@@ -93,7 +71,9 @@ void main() {
       tester.element(find.byType(SettingsScreen)),
     )!;
 
-    await _scrollToText(tester, l10n.settingsLanguageRussian);
+    await _scrollToText(tester, l10n.settingsLanguageSectionTitle);
+    await tester.tap(find.text(l10n.settingsLanguageSectionTitle));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.settingsLanguageRussian));
     await tester.pumpAndSettle();
     verify(() => authRepository.updateLocale('ru')).called(1);
@@ -149,10 +129,7 @@ void main() {
       tester.element(find.byType(SettingsScreen)),
     )!;
 
-    final deleteAction = find.widgetWithText(
-      OutlinedButton,
-      l10n.settingsDeleteAccountAction,
-    );
+    final deleteAction = find.text(l10n.settingsDeleteAccountTitle);
     await _scrollToFinder(tester, deleteAction);
     await tester.tap(deleteAction);
     await tester.pumpAndSettle();

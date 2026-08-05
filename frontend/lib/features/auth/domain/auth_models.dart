@@ -59,53 +59,6 @@ class RegistrationResult {
   }
 }
 
-class ConsentStatus {
-  const ConsentStatus({
-    required this.privacyNoticeAccepted,
-    required this.privacyNoticeVersion,
-    required this.aiProcessingAllowed,
-  });
-
-  final bool privacyNoticeAccepted;
-  final String privacyNoticeVersion;
-  final bool aiProcessingAllowed;
-
-  factory ConsentStatus.fromJson(Map<String, dynamic> json) {
-    final privacy = json['privacy_notice'];
-    final ai = json['ai_processing'];
-    return ConsentStatus(
-      privacyNoticeAccepted:
-          _consentGranted(privacy) ||
-          (json['privacy_notice_accepted'] as bool? ?? false),
-      privacyNoticeVersion:
-          _consentVersion(privacy) ??
-          json['privacy_notice_version'] as String? ??
-          '',
-      aiProcessingAllowed:
-          _consentGranted(ai) ||
-          (json['ai_processing_consent'] as bool? ?? false),
-    );
-  }
-
-  factory ConsentStatus.fromRecords(Iterable<Map<String, dynamic>> records) {
-    Map<String, dynamic>? privacy;
-    Map<String, dynamic>? ai;
-    for (final record in records) {
-      switch (record['kind']) {
-        case 'privacy_notice':
-          privacy = record;
-        case 'ai_processing':
-          ai = record;
-      }
-    }
-    return ConsentStatus(
-      privacyNoticeAccepted: privacy?['granted'] as bool? ?? false,
-      privacyNoticeVersion: privacy?['notice_version'] as String? ?? '',
-      aiProcessingAllowed: ai?['granted'] as bool? ?? false,
-    );
-  }
-}
-
 class AccountUsage {
   const AccountUsage({
     required this.aiUnitsRemainingToday,
@@ -140,21 +93,6 @@ class AccountUsage {
           0,
     );
   }
-}
-
-bool _consentGranted(Object? value) {
-  if (value is bool) return value;
-  if (value is Map) {
-    return value['granted'] as bool? ?? value['accepted'] as bool? ?? false;
-  }
-  return false;
-}
-
-String? _consentVersion(Object? value) {
-  if (value is Map) {
-    return value['version'] as String? ?? value['notice_version'] as String?;
-  }
-  return null;
 }
 
 int? _readInt(Object? value, List<String> keys) {

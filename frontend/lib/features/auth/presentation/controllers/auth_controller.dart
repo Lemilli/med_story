@@ -23,7 +23,6 @@ class AuthController extends AsyncNotifier<AuthState> {
     required String fullName,
     required String locale,
     required bool acceptPrivacyNotice,
-    required bool aiProcessingConsent,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -35,7 +34,6 @@ class AuthController extends AsyncNotifier<AuthState> {
             fullName: fullName,
             locale: locale,
             acceptPrivacyNotice: acceptPrivacyNotice,
-            aiProcessingConsent: aiProcessingConsent,
           );
       state = const AsyncValue.data(AuthState.unauthenticated());
       return result;

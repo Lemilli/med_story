@@ -1,6 +1,6 @@
 # Processor and DPA Self-Review
 
-**Decision date:** 5 August 2026  
+**Decision date:** 6 August 2026
 **Decision owner:** MedStory operator  
 **Scope:** OVHcloud VPS hosting, Resend transactional email, and OpenAI API processing  
 **Review type:** founder/operator risk review based on the providers' published contracts and
@@ -25,9 +25,9 @@ be disabled if an account-specific setting or purchased product does not match t
    content, names of conditions, document titles, and timeline content must never be emailed.
 3. Resend open and click tracking must remain disabled. Its documented 30-day email-data retention
    is accepted for these security-only messages; MedStory does not claim zero retention.
-4. OpenAI processing must remain optional and require the recorded AI-processing consent. Only the
-   backend may call OpenAI, and the minimum content needed for OCR, transcription, organization, or
-   explanation may be sent.
+4. OpenAI processing is an intrinsic MedStory service function disclosed in the required combined
+   privacy notice. Only the backend may call OpenAI, and only the minimum content needed for OCR,
+   transcription, organization, or explanation may be sent.
 5. OpenAI Responses API calls must set `store=false`. MedStory accepts default abuse-monitoring
    retention of up to 30 days for eligible response content; it does not claim Zero Data Retention.
    Audio transcription currently has no abuse-monitoring or application-state retention in the
@@ -45,8 +45,8 @@ be disabled if an account-specific setting or purchased product does not match t
 
 - **Role/purpose:** processor providing the VPS on which the API, PostgreSQL, Redis, Garage,
   ClamAV, and workers run.
-- **Data:** account identifiers, encrypted original documents, structured health history, consent
-  records, and operational metadata. OVHcloud can necessarily access infrastructure-level data in
+- **Data:** account identifiers, encrypted original documents, structured health history,
+  privacy-notice acceptance records, and operational metadata. OVHcloud can necessarily access infrastructure-level data in
   support/security scenarios even though application originals are envelope-encrypted.
 - **Location/transfer decision:** persistent production workloads must remain in the selected
   EU/EEA VPS region. Any remote support/subprocessor access is governed by the applicable DPA and
@@ -77,7 +77,7 @@ be disabled if an account-specific setting or purchased product does not match t
 - **Residual risk accepted:** US processing and 30-day storage of addresses/security messages. The
   risk is reduced by short-lived, single-use codes and the prohibition on health content in email.
 
-### OpenAI — approved for optional organization/explanation features
+### OpenAI — approved for core organization/explanation features
 
 - **Role/purpose:** processor for LLM structuring and explanations, image/PDF OCR, and speech-to-text.
 - **Data:** user-selected document images/PDFs, extracted medical text, voice recordings,
@@ -95,9 +95,10 @@ be disabled if an account-specific setting or purchased product does not match t
   accepted by agreeing to or using the Services. Save the current DPA, Services Agreement, account
   entity, and project data-control screenshot/reference privately.
 - **Residual risk accepted:** transient cross-border processing and up-to-30-day abuse-monitoring
-  retention of highly sensitive content. This is accepted for an opt-in MVP because processing is
-  user initiated, purpose-limited, quota-limited, and can be disabled without removing manual
-  features.
+  retention of highly sensitive content. The operator accepts this for the MVP because mandatory
+  processing is disclosed before registration, remains user-initiated and purpose-limited, sends
+  minimum necessary content, and is protected by provider, quota, and emergency kill-switch
+  controls.
 
 ## Evidence index (public, non-secret)
 

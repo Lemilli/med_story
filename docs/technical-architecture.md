@@ -86,7 +86,7 @@ MedStory is a **mobile client + API backend + asynchronous AI pipeline**.
 ### 3.2 API Backend (Django + DRF)
 The synchronous request/response surface. Responsibilities:
 - **Auth**: inactive registration, email verification, login, JWT issue/refresh, password reset,
-  versioned consent records, and demonstration account-cap controls.
+  versioned privacy-notice acceptance records, and demonstration account-cap controls.
 - **Documents**: metadata, validated encrypted-original ingestion, authenticated content streaming,
   retry, deletion, and status polling.
 - **Medical Events**: CRUD for the structured medical history.
@@ -211,8 +211,9 @@ and provider spend. See `backend/deploy/ovh/README.md` for the operational runbo
 ### Environments
 - **dev** — docker-compose private storage stack and mock AI providers.
 - **staging** — production-like, real AI providers, synthetic data only.
-- **public demo** — dedicated EU host, private Garage, ClamAV, verified email, explicit consent,
-  and reviewed subprocessors. Garage S3/admin/RPC ports are not internet-exposed.
+- **public demo** — dedicated EU host, private Garage, ClamAV, verified email, required acceptance
+  of the combined privacy/AI notice, and reviewed subprocessors. Garage S3/admin/RPC ports are not
+  internet-exposed.
 
 ## 7. Cross-Cutting Concerns
 

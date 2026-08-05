@@ -518,6 +518,18 @@ abstract class AppLocalizations {
   /// **'Privacy'**
   String get settingsPrivacySectionTitle;
 
+  /// No description provided for @settingsDataSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy & data'**
+  String get settingsDataSectionTitle;
+
+  /// No description provided for @settingsPreferencesSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get settingsPreferencesSectionTitle;
+
   /// No description provided for @settingsLanguageSectionTitle.
   ///
   /// In en, this message translates to:
@@ -535,6 +547,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'How originals are stored'**
   String get settingsPrivacyNoteTitle;
+
+  /// No description provided for @settingsPrivacySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Private storage and processing details'**
+  String get settingsPrivacySummary;
 
   /// No description provided for @settingsPrivacyNoteDescription.
   ///
@@ -644,47 +662,29 @@ abstract class AppLocalizations {
   /// **'MedStory helps organize and explain your records. It does not diagnose, recommend treatment, or replace care from a clinician.'**
   String get settingsOrganizerNoticeDescription;
 
-  /// No description provided for @settingsAiSectionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'AI processing'**
-  String get settingsAiSectionTitle;
-
-  /// No description provided for @settingsAiConsentTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Allow AI-assisted organization'**
-  String get settingsAiConsentTitle;
-
-  /// No description provided for @settingsAiConsentDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'When enabled, MedStory can send the minimum necessary content to its configured AI provider to organize and explain it. Turn this off at any time to stop future AI processing. Manual timeline features remain available.'**
-  String get settingsAiConsentDescription;
-
-  /// No description provided for @settingsAiConsentUpdatedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'AI processing preference updated.'**
-  String get settingsAiConsentUpdatedMessage;
-
-  /// No description provided for @settingsAiConsentUpdateFailedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'We could not update your AI processing preference. Try again.'**
-  String get settingsAiConsentUpdateFailedMessage;
-
-  /// No description provided for @settingsConsentLoadFailedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'We could not load your AI processing preference.'**
-  String get settingsConsentLoadFailedMessage;
-
   /// No description provided for @settingsUsageSectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Demo limits'**
+  /// **'Limits'**
   String get settingsUsageSectionTitle;
+
+  /// No description provided for @settingsLimitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Limits'**
+  String get settingsLimitsTitle;
+
+  /// No description provided for @settingsLimitsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'AI and storage usage'**
+  String get settingsLimitsSummary;
+
+  /// No description provided for @settingsLimitsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking current usage'**
+  String get settingsLimitsLoading;
 
   /// No description provided for @settingsUsageLoadFailedMessage.
   ///
@@ -1649,7 +1649,7 @@ abstract class AppLocalizations {
   /// No description provided for @authPrivacyAiIntro.
   ///
   /// In en, this message translates to:
-  /// **'Choose how MedStory may handle your records.'**
+  /// **'Review how MedStory protects your records and uses AI as a core part of the service.'**
   String get authPrivacyAiIntro;
 
   /// No description provided for @authRequiredLabel.
@@ -1691,50 +1691,20 @@ abstract class AppLocalizations {
   /// No description provided for @authPrivacyDetailsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Privacy notice · 5 August 2026'**
+  /// **'Privacy notice · 6 August 2026'**
   String get authPrivacyDetailsTitle;
 
   /// No description provided for @authPrivacyDetailsMessage.
   ///
   /// In en, this message translates to:
-  /// **'Your medical records are private. MedStory uses the information you add to provide your account, keep it secure, and organize your personal health history.'**
+  /// **'Your medical records are private. AI-assisted organization and explanation are core MedStory features. MedStory sends only the content needed for those features to its configured AI provider and does not use AI to diagnose or recommend treatment.'**
   String get authPrivacyDetailsMessage;
 
   /// No description provided for @authPrivacyDetailsSecondaryMessage.
   ///
   /// In en, this message translates to:
-  /// **'You control what you add and can request access to or deletion of your information. AI permission is separate and is not required to use manual features.'**
+  /// **'You control what you add and can request access to or deletion of your information. Accepting this notice is required to use MedStory because AI processing cannot be disabled.'**
   String get authPrivacyDetailsSecondaryMessage;
-
-  /// No description provided for @authAiConsentTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Allow AI processing'**
-  String get authAiConsentTitle;
-
-  /// No description provided for @authAiConsentMeta.
-  ///
-  /// In en, this message translates to:
-  /// **'Optional · Off by default'**
-  String get authAiConsentMeta;
-
-  /// No description provided for @authAiConsentDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'AI can organize and explain records, but cannot diagnose. Manual features still work without it.'**
-  String get authAiConsentDescription;
-
-  /// No description provided for @authAiDetailsShowAction.
-  ///
-  /// In en, this message translates to:
-  /// **'How it works'**
-  String get authAiDetailsShowAction;
-
-  /// No description provided for @authAiDetailsMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'When enabled, MedStory may process the records you choose to help structure timelines and explain medical language. You can turn this off later.'**
-  String get authAiDetailsMessage;
 
   /// No description provided for @authForgotPasswordAction.
   ///

@@ -51,7 +51,6 @@ class AuthRepository {
     required String fullName,
     required String locale,
     required bool acceptPrivacyNotice,
-    required bool aiProcessingConsent,
   }) async {
     return api.register(
       email: email,
@@ -59,7 +58,6 @@ class AuthRepository {
       fullName: fullName,
       locale: locale,
       acceptPrivacyNotice: acceptPrivacyNotice,
-      aiProcessingConsent: aiProcessingConsent,
     );
   }
 
@@ -91,11 +89,6 @@ class AuthRepository {
     code: code,
     newPassword: newPassword,
   );
-
-  Future<ConsentStatus> consents() => api.consents();
-
-  Future<ConsentStatus> updateAiConsent(bool granted) =>
-      api.updateAiConsent(granted: granted);
 
   Future<AccountUsage> usage() => api.usage();
 

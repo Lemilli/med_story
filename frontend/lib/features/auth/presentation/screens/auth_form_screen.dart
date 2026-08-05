@@ -35,9 +35,7 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
   final _passwordFocusNode = FocusNode();
   final _privacyFocusNode = FocusNode();
   bool _privacyAccepted = false;
-  bool _aiConsent = false;
   bool _showPrivacyDetails = false;
-  bool _showAiDetails = false;
   bool _showPrivacyError = false;
   bool _showPassword = false;
   bool _submitted = false;
@@ -250,11 +248,9 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                                 const SizedBox(height: AppSpacing.md),
                                 _ConsentGroup(
                                   privacyAccepted: _privacyAccepted,
-                                  aiConsent: _aiConsent,
                                   enabled: !isLoading,
                                   showError: _showPrivacyError,
                                   showPrivacyDetails: _showPrivacyDetails,
-                                  showAiDetails: _showAiDetails,
                                   privacyFocusNode: _privacyFocusNode,
                                   onPrivacyChanged: (value) {
                                     setState(() {
@@ -263,16 +259,9 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                                     });
                                     _clearSubmissionError();
                                   },
-                                  onAiChanged: (value) {
-                                    setState(() => _aiConsent = value);
-                                    _clearSubmissionError();
-                                  },
                                   onTogglePrivacyDetails: () => setState(
                                     () => _showPrivacyDetails =
                                         !_showPrivacyDetails,
-                                  ),
-                                  onToggleAiDetails: () => setState(
-                                    () => _showAiDetails = !_showAiDetails,
                                   ),
                                 ),
                                 if (_showPrivacyError) ...[
@@ -532,7 +521,6 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
         fullName: _fullNameController.text.trim(),
         locale: locale,
         acceptPrivacyNotice: _privacyAccepted,
-        aiProcessingConsent: _aiConsent,
       );
       if (result != null && mounted) {
         context.go(
@@ -643,29 +631,21 @@ class _RegistrationField extends StatelessWidget {
 class _ConsentGroup extends StatelessWidget {
   const _ConsentGroup({
     required this.privacyAccepted,
-    required this.aiConsent,
     required this.enabled,
     required this.showError,
     required this.showPrivacyDetails,
-    required this.showAiDetails,
     required this.privacyFocusNode,
     required this.onPrivacyChanged,
-    required this.onAiChanged,
     required this.onTogglePrivacyDetails,
-    required this.onToggleAiDetails,
   });
 
   final bool privacyAccepted;
-  final bool aiConsent;
   final bool enabled;
   final bool showError;
   final bool showPrivacyDetails;
-  final bool showAiDetails;
   final FocusNode privacyFocusNode;
   final ValueChanged<bool> onPrivacyChanged;
-  final ValueChanged<bool> onAiChanged;
   final VoidCallback onTogglePrivacyDetails;
-  final VoidCallback onToggleAiDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -707,19 +687,6 @@ class _ConsentGroup extends StatelessWidget {
               onChanged: onPrivacyChanged,
               onToggleDetails: onTogglePrivacyDetails,
             ),
-            const Divider(height: 1, color: AppColors.clinicalLine),
-            _ConsentChoice(
-              value: aiConsent,
-              enabled: enabled,
-              title: l10n.authAiConsentTitle,
-              meta: l10n.authAiConsentMeta,
-              explanation: l10n.authAiConsentDescription,
-              showDetails: showAiDetails,
-              detailsAction: l10n.authAiDetailsShowAction,
-              detailsParagraphs: [l10n.authAiDetailsMessage],
-              onChanged: onAiChanged,
-              onToggleDetails: onToggleAiDetails,
-            ),
           ],
         ),
       ),
@@ -740,7 +707,6 @@ class _ConsentChoice extends StatelessWidget {
     required this.onToggleDetails,
     this.focusNode,
     this.badge,
-    this.explanation,
   });
 
   final bool value;
@@ -754,7 +720,6 @@ class _ConsentChoice extends StatelessWidget {
   final VoidCallback onToggleDetails;
   final FocusNode? focusNode;
   final String? badge;
-  final String? explanation;
 
   @override
   Widget build(BuildContext context) {
@@ -821,16 +786,6 @@ class _ConsentChoice extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (explanation != null) ...[
-                    Text(
-                      explanation!,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.secondaryInk,
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                  ],
                   TextButton.icon(
                     onPressed: enabled ? onToggleDetails : null,
                     style: TextButton.styleFrom(

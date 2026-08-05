@@ -17,7 +17,6 @@ from medical.tasks import purge_storage_deletions_task
 from config.throttling import ClientIPScopedRateThrottle
 from users.models import ConsentRecord, EmailChallenge
 from users.serializers import (
-    AIConsentSerializer,
     ConsentRecordSerializer,
     CurrentLegalNoticeSerializer,
     EmailCodeSerializer,
@@ -33,7 +32,6 @@ from users.services import (
     consume_email_challenge,
     create_email_challenge,
     latest_consent,
-    record_consent,
 )
 
 User = get_user_model()
@@ -168,12 +166,10 @@ class CurrentLegalNoticeView(generics.GenericAPIView):
             locale = "en"
         notices = {
             "en": {
-                "privacy_notice": "MedStory is a demonstration service. Data is retained until you delete it or the demo infrastructure is lost; recovery is not guaranteed. Infrastructure-provider snapshots may retain deleted bytes temporarily.",
-                "ai_processing": "If enabled, the health content needed for a requested AI feature is sent to the configured AI provider for explanatory and organizational processing. MedStory does not diagnose or recommend treatment.",
+                "privacy_notice": "MedStory is a demonstration service whose core features use AI to organize and explain health records. The minimum content needed for those features is sent to the configured AI provider; MedStory does not diagnose or recommend treatment. Data is retained until you delete it or the demo infrastructure is lost; recovery is not guaranteed. Infrastructure-provider snapshots may retain deleted bytes temporarily.",
             },
             "ru": {
-                "privacy_notice": "MedStory — демонстрационный сервис. Данные хранятся до их удаления вами или утраты инфраструктуры демо; восстановление не гарантируется. Снимки инфраструктурного провайдера могут временно сохранять удалённые данные.",
-                "ai_processing": "Если функция включена, необходимые медицинские данные передаются настроенному ИИ-провайдеру для пояснения и организации. MedStory не ставит диагнозы и не рекомендует лечение.",
+                "privacy_notice": "MedStory — демонстрационный сервис, основные функции которого используют ИИ для упорядочивания и пояснения медицинских записей. Настроенному ИИ-провайдеру передаются только данные, необходимые для этих функций; MedStory не ставит диагнозы и не рекомендует лечение. Данные хранятся до их удаления вами или утраты инфраструктуры демо; восстановление не гарантируется. Снимки инфраструктурного провайдера могут временно сохранять удалённые данные.",
             },
         }
         return Response({"version": PRIVACY_NOTICE_VERSION, "locale": locale, **notices[locale]})
@@ -185,21 +181,6 @@ class ConsentListView(generics.GenericAPIView):
     def get(self, request):
         records = [latest_consent(request.user, kind) for kind in ConsentRecord.Kind.values]
         return Response(self.get_serializer([record for record in records if record], many=True).data)
-
-
-class AIConsentView(generics.GenericAPIView):
-    serializer_class = AIConsentSerializer
-
-    def put(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        record = record_consent(
-            user=request.user,
-            kind=ConsentRecord.Kind.AI_PROCESSING,
-            granted=serializer.validated_data["granted"],
-            notice_version=serializer.validated_data["notice_version"],
-        )
-        return Response(ConsentRecordSerializer(record).data)
 
 
 class UsageView(generics.GenericAPIView):

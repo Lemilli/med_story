@@ -118,9 +118,9 @@ frontend/lib/
 /subjects              → manage/switch patient profiles
 ```
 
-Registration requires acceptance of the current privacy notice. AI processing consent is shown as
-a separate optional choice and is never preselected. Settings exposes the latest AI consent and the
-user/global AI and retained-storage usage counters. All of these flows are localized in English and
+Registration requires acceptance of the current combined privacy and AI-processing notice. AI is a
+core service capability and has no separate checkbox or Settings switch. Settings exposes the
+user/global AI and retained-storage usage counters. These flows are localized in English and
 Russian and keep the existing 48 dp minimum target and large-text behavior.
 
 ## 7. Key Flows

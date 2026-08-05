@@ -85,7 +85,6 @@ def reserve_ai_for_request(request, *, operation, units=1):
         reserve_ai_quota(user=request.user, operation=operation, units=units)
     except AIUnavailableError as exc:
         status_code = {
-            "ai_consent_required": status.HTTP_403_FORBIDDEN,
             "ai_disabled": status.HTTP_503_SERVICE_UNAVAILABLE,
             "ai_quota_exceeded": status.HTTP_429_TOO_MANY_REQUESTS,
         }.get(exc.code, status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -94,7 +93,6 @@ def reserve_ai_for_request(request, *, operation, units=1):
             request,
             code=exc.code,
             message={
-                "ai_consent_required": "Enable AI processing consent to use this feature.",
                 "ai_disabled": "AI features are temporarily unavailable.",
                 "ai_quota_exceeded": "The AI usage limit has been reached.",
             }.get(exc.code, "AI processing is unavailable."),

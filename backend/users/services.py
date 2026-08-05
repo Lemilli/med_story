@@ -11,7 +11,7 @@ from django.utils import timezone
 from users.models import ConsentRecord, EmailChallenge
 
 
-PRIVACY_NOTICE_VERSION = getattr(settings, "PRIVACY_NOTICE_VERSION", "2026-08-05")
+PRIVACY_NOTICE_VERSION = getattr(settings, "PRIVACY_NOTICE_VERSION", "2026-08-06")
 
 
 def _challenge_ttl():
@@ -95,8 +95,3 @@ def record_consent(*, user, kind, granted, notice_version=PRIVACY_NOTICE_VERSION
 
 def latest_consent(user, kind):
     return user.consent_records.filter(kind=kind).order_by("-created_at").first()
-
-
-def has_ai_consent(user):
-    consent = latest_consent(user, ConsentRecord.Kind.AI_PROCESSING)
-    return bool(consent and consent.granted and consent.notice_version == PRIVACY_NOTICE_VERSION)

@@ -71,7 +71,6 @@ class EmailChallenge(models.Model):
 class ConsentRecord(models.Model):
     class Kind(models.TextChoices):
         PRIVACY_NOTICE = "privacy_notice", "Privacy notice"
-        AI_PROCESSING = "ai_processing", "AI processing"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="consent_records")

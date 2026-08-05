@@ -20,7 +20,6 @@ class AuthApi {
     required String fullName,
     required String locale,
     required bool acceptPrivacyNotice,
-    required bool aiProcessingConsent,
   }) async {
     final response = await _post<Map<String, dynamic>>(
       '/auth/register',
@@ -29,9 +28,8 @@ class AuthApi {
         'password': password,
         'full_name': fullName,
         'locale': locale,
-        'privacy_notice_version': '2026-08-05',
+        'privacy_notice_version': '2026-08-06',
         'privacy_accepted': acceptPrivacyNotice,
-        'ai_processing_accepted': aiProcessingConsent,
       },
     );
     final data = response.data ?? <String, dynamic>{};
@@ -73,24 +71,6 @@ class AuthApi {
       '/auth/password-reset/confirm',
       data: {'email': email, 'code': code, 'new_password': newPassword},
     );
-  }
-
-  Future<ConsentStatus> consents() async {
-    final response = await _get<Object?>('/me/consents');
-    final data = response.data;
-    if (data is List) {
-      return ConsentStatus.fromRecords(
-        data.whereType<Map>().map((record) => record.cast<String, dynamic>()),
-      );
-    }
-    return ConsentStatus.fromJson(
-      data is Map<String, dynamic> ? data : <String, dynamic>{},
-    );
-  }
-
-  Future<ConsentStatus> updateAiConsent({required bool granted}) async {
-    await _put<void>('/me/consents/ai-processing', data: {'granted': granted});
-    return consents();
   }
 
   Future<AccountUsage> usage() async {
@@ -157,14 +137,6 @@ class AuthApi {
   Future<Response<T>> _patch<T>(String path, {Object? data}) async {
     try {
       return await _dio.patch<T>(path, data: data);
-    } on DioException catch (error) {
-      throw _mapDioException(error, path: path);
-    }
-  }
-
-  Future<Response<T>> _put<T>(String path, {Object? data}) async {
-    try {
-      return await _dio.put<T>(path, data: data);
     } on DioException catch (error) {
       throw _mapDioException(error, path: path);
     }
