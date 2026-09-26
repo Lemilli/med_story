@@ -16,4 +16,4 @@ gunicorn>=22.0,<23.0
 openai>=1.95,<2.0
 reportlab>=4.2,<4.3
 boto3>=1.39,<2.0
-aws-encryption-sdk>=4.0,<5.0
+aws-encryption-sdk>=4.0.7,<5.0
