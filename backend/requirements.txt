@@ -29,11 +29,11 @@ aws-encryption-sdk==4.0.6
     # via -r requirements.in
 billiard==4.2.4
     # via celery
-boto3==1.43.64
+boto3==1.43.100
     # via
     #   -r requirements.in
     #   aws-encryption-sdk
-botocore==1.43.64
+botocore==1.43.103
     # via
     #   boto3
     #   s3transfer
