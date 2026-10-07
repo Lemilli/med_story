@@ -48,6 +48,39 @@ x-app-environment: &app_environment
   CLAMAV_HOST: "${CLAMAV_HOST:-clamav}"
 
 services:
+  prepare-secrets:
+    image: alpine:3.24.2
+    user: "0:0"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+    command: ["sh", "/prepare-container-secrets.sh"]
+    network_mode: none
+    volumes:
+      - ./deploy/prepare-container-secrets.sh:/prepare-container-secrets.sh:ro
+      - api_secrets:/secrets/api
+      - worker_secrets:/secrets/worker
+      - proxy_secrets:/secrets/proxy
+    secrets:
+      - original_master_key
+      - storage_ca_certificate
+      - garage_upload_access_key
+      - garage_upload_secret_key
+      - garage_read_access_key
+      - garage_read_secret_key
+      - garage_processing_access_key
+      - garage_processing_secret_key
+      - garage_deletion_access_key
+      - garage_deletion_secret_key
+      - storage_tls_certificate
+      - storage_tls_private_key
+
   api:
     build: .
     command: >-
@@ -94,15 +127,8 @@ services:
     tmpfs:
       - /var/run/medstory-uploads:size=268435456,mode=0700,uid=10001,gid=10001
       - /tmp:size=67108864,mode=1777
-    secrets:
-      - original_master_key
-      - garage_upload_access_key
-      - garage_upload_secret_key
-      - garage_read_access_key
-      - garage_read_secret_key
-      - garage_deletion_access_key
-      - garage_deletion_secret_key
-      - storage_ca_certificate
+    volumes:
+      - api_secrets:/run/secrets:ro
     ports:
       - "127.0.0.1:${API_HOST_PORT:-8000}:8000"
     healthcheck:
@@ -116,6 +142,8 @@ services:
       retries: 3
       start_period: 60s
     depends_on:
+      prepare-secrets:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       redis:
@@ -161,14 +189,11 @@ services:
     tmpfs:
       - /var/run/medstory-uploads:size=268435456,mode=0700,uid=10001,gid=10001
       - /tmp:size=67108864,mode=1777
-    secrets:
-      - original_master_key
-      - garage_processing_access_key
-      - garage_processing_secret_key
-      - garage_deletion_access_key
-      - garage_deletion_secret_key
-      - storage_ca_certificate
+    volumes:
+      - worker_secrets:/run/secrets:ro
     depends_on:
+      prepare-secrets:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       redis:
@@ -297,11 +322,12 @@ services:
       - /tmp:size=16777216,mode=1777,uid=101,gid=101
     volumes:
       - ./garage-proxy.conf:/etc/nginx/nginx.conf:ro
-    secrets:
-      - storage_tls_certificate
-      - storage_tls_private_key
+      - proxy_secrets:/run/secrets:ro
     depends_on:
-      - garage
+      garage:
+        condition: service_started
+      prepare-secrets:
+        condition: service_completed_successfully
     healthcheck:
       test:
         - CMD-SHELL
@@ -379,6 +405,9 @@ services:
       retries: 5
 
 volumes:
+  api_secrets:
+  worker_secrets:
+  proxy_secrets:
   postgres_data:
   redis_data:
   garage_data:

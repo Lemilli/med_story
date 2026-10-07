@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'medical_event.dart';
@@ -9,6 +9,7 @@ part of 'medical_event.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $MedicalEventCopyWith<MedicalEvent> get copyWith => _$MedicalEventCopyWithImpl<M
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MedicalEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.eventType, eventType) || other.eventType == eventType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.eventDate, eventDate) || other.eventDate == eventDate)&&(identical(other.eventEndDate, eventEndDate) || other.eventEndDate == eventEndDate)&&const DeepCollectionEquality().equals(other.attributes, attributes)&&(identical(other.source, source) || other.source == source)&&(identical(other.sourceDocumentId, sourceDocumentId) || other.sourceDocumentId == sourceDocumentId)&&(identical(other.sourceText, sourceText) || other.sourceText == sourceText)&&(identical(other.sourceAssetCount, sourceAssetCount) || other.sourceAssetCount == sourceAssetCount)&&const DeepCollectionEquality().equals(other.sourcePagePositions, sourcePagePositions)&&(identical(other.pendingRevision, pendingRevision) || other.pendingRevision == pendingRevision)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  final _this = this as MedicalEvent;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MedicalEvent&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.eventType, _this.eventType) || other.eventType == _this.eventType)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.eventDate, _this.eventDate) || other.eventDate == _this.eventDate)&&(identical(other.eventEndDate, _this.eventEndDate) || other.eventEndDate == _this.eventEndDate)&&const DeepCollectionEquality().equals(other.attributes, _this.attributes)&&(identical(other.source, _this.source) || other.source == _this.source)&&(identical(other.sourceDocumentId, _this.sourceDocumentId) || other.sourceDocumentId == _this.sourceDocumentId)&&(identical(other.sourceText, _this.sourceText) || other.sourceText == _this.sourceText)&&(identical(other.sourceAssetCount, _this.sourceAssetCount) || other.sourceAssetCount == _this.sourceAssetCount)&&const DeepCollectionEquality().equals(other.sourcePagePositions, _this.sourcePagePositions)&&(identical(other.pendingRevision, _this.pendingRevision) || other.pendingRevision == _this.pendingRevision)&&(identical(other.confidence, _this.confidence) || other.confidence == _this.confidence)&&const DeepCollectionEquality().equals(other.tags, _this.tags)&&(identical(other.subjectId, _this.subjectId) || other.subjectId == _this.subjectId)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,eventType,title,description,eventDate,eventEndDate,const DeepCollectionEquality().hash(attributes),source,sourceDocumentId,sourceText,sourceAssetCount,const DeepCollectionEquality().hash(sourcePagePositions),pendingRevision,confidence,const DeepCollectionEquality().hash(tags),subjectId,createdAt,updatedAt);
+int get hashCode {
+  final _this = this as MedicalEvent;
+  return Object.hash(runtimeType,_this.id,_this.eventType,_this.title,_this.description,_this.eventDate,_this.eventEndDate,const DeepCollectionEquality().hash(_this.attributes),_this.source,_this.sourceDocumentId,_this.sourceText,_this.sourceAssetCount,const DeepCollectionEquality().hash(_this.sourcePagePositions),_this.pendingRevision,_this.confidence,const DeepCollectionEquality().hash(_this.tags),_this.subjectId,_this.createdAt,_this.updatedAt);
+}
 
 @override
 String toString() {
-  return 'MedicalEvent(id: $id, eventType: $eventType, title: $title, description: $description, eventDate: $eventDate, eventEndDate: $eventEndDate, attributes: $attributes, source: $source, sourceDocumentId: $sourceDocumentId, sourceText: $sourceText, sourceAssetCount: $sourceAssetCount, sourcePagePositions: $sourcePagePositions, pendingRevision: $pendingRevision, confidence: $confidence, tags: $tags, subjectId: $subjectId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  final _this = this as MedicalEvent;
+  return 'MedicalEvent(id: ${_this.id}, eventType: ${_this.eventType}, title: ${_this.title}, description: ${_this.description}, eventDate: ${_this.eventDate}, eventEndDate: ${_this.eventEndDate}, attributes: ${_this.attributes}, source: ${_this.source}, sourceDocumentId: ${_this.sourceDocumentId}, sourceText: ${_this.sourceText}, sourceAssetCount: ${_this.sourceAssetCount}, sourcePagePositions: ${_this.sourcePagePositions}, pendingRevision: ${_this.pendingRevision}, confidence: ${_this.confidence}, tags: ${_this.tags}, subjectId: ${_this.subjectId}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -66,7 +72,7 @@ class _$MedicalEventCopyWithImpl<$Res>
 /// Create a copy of MedicalEvent
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? eventType = null,Object? title = null,Object? description = null,Object? eventDate = null,Object? eventEndDate = freezed,Object? attributes = null,Object? source = null,Object? sourceDocumentId = freezed,Object? sourceText = freezed,Object? sourceAssetCount = null,Object? sourcePagePositions = null,Object? pendingRevision = freezed,Object? confidence = freezed,Object? tags = null,Object? subjectId = null,Object? createdAt = null,Object? updatedAt = null,}) {
-  return _then(_self.copyWith(
+  return _then(MedicalEvent(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,eventType: null == eventType ? _self.eventType : eventType // ignore: cast_nullable_to_non_nullable
 as MedicalEventType,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -238,7 +244,7 @@ return $default(_that.id,_that.eventType,_that.title,_that.description,_that.eve
 @JsonSerializable()
 
 class _MedicalEvent implements MedicalEvent {
-  const _MedicalEvent({required this.id, @JsonKey(name: 'event_type') required this.eventType, required this.title, this.description = '', @JsonKey(name: 'event_date') required this.eventDate, @JsonKey(name: 'event_end_date') this.eventEndDate, final  Map<String, dynamic> attributes = const <String, dynamic>{}, this.source = EventSource.userManual, @JsonKey(name: 'source_document_id') this.sourceDocumentId, @JsonKey(name: 'source_text') this.sourceText, @JsonKey(name: 'source_asset_count') this.sourceAssetCount = 0, @JsonKey(name: 'source_page_positions') final  List<int> sourcePagePositions = const <int>[], @JsonKey(name: 'pending_revision') this.pendingRevision, this.confidence, final  List<String> tags = const <String>[], @JsonKey(name: 'subject_id') required this.subjectId, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt}): _attributes = attributes,_sourcePagePositions = sourcePagePositions,_tags = tags;
+  const _MedicalEvent({required this.id, @JsonKey(name: 'event_type') required this.eventType, required this.title, this.description = '', @JsonKey(name: 'event_date') required this.eventDate, @JsonKey(name: 'event_end_date') this.eventEndDate,  Map<String, dynamic> attributes = const <String, dynamic>{}, this.source = EventSource.userManual, @JsonKey(name: 'source_document_id') this.sourceDocumentId, @JsonKey(name: 'source_text') this.sourceText, @JsonKey(name: 'source_asset_count') this.sourceAssetCount = 0, @JsonKey(name: 'source_page_positions')  List<int> sourcePagePositions = const <int>[], @JsonKey(name: 'pending_revision') this.pendingRevision, this.confidence,  List<String> tags = const <String>[], @JsonKey(name: 'subject_id') required this.subjectId, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt}): _attributes = attributes,_sourcePagePositions = sourcePagePositions,_tags = tags;
   factory _MedicalEvent.fromJson(Map<String, dynamic> json) => _$MedicalEventFromJson(json);
 
 @override final  String id;
@@ -291,16 +297,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MedicalEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.eventType, eventType) || other.eventType == eventType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.eventDate, eventDate) || other.eventDate == eventDate)&&(identical(other.eventEndDate, eventEndDate) || other.eventEndDate == eventEndDate)&&const DeepCollectionEquality().equals(other._attributes, _attributes)&&(identical(other.source, source) || other.source == source)&&(identical(other.sourceDocumentId, sourceDocumentId) || other.sourceDocumentId == sourceDocumentId)&&(identical(other.sourceText, sourceText) || other.sourceText == sourceText)&&(identical(other.sourceAssetCount, sourceAssetCount) || other.sourceAssetCount == sourceAssetCount)&&const DeepCollectionEquality().equals(other._sourcePagePositions, _sourcePagePositions)&&(identical(other.pendingRevision, pendingRevision) || other.pendingRevision == pendingRevision)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MedicalEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.eventType, eventType) || other.eventType == eventType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.eventDate, eventDate) || other.eventDate == eventDate)&&(identical(other.eventEndDate, eventEndDate) || other.eventEndDate == eventEndDate)&&const DeepCollectionEquality().equals(other.attributes, _attributes)&&(identical(other.source, source) || other.source == source)&&(identical(other.sourceDocumentId, sourceDocumentId) || other.sourceDocumentId == sourceDocumentId)&&(identical(other.sourceText, sourceText) || other.sourceText == sourceText)&&(identical(other.sourceAssetCount, sourceAssetCount) || other.sourceAssetCount == sourceAssetCount)&&const DeepCollectionEquality().equals(other.sourcePagePositions, _sourcePagePositions)&&(identical(other.pendingRevision, pendingRevision) || other.pendingRevision == pendingRevision)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other.tags, _tags)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,eventType,title,description,eventDate,eventEndDate,const DeepCollectionEquality().hash(_attributes),source,sourceDocumentId,sourceText,sourceAssetCount,const DeepCollectionEquality().hash(_sourcePagePositions),pendingRevision,confidence,const DeepCollectionEquality().hash(_tags),subjectId,createdAt,updatedAt);
+int get hashCode {
+    return Object.hash(runtimeType,id,eventType,title,description,eventDate,eventEndDate,const DeepCollectionEquality().hash(_attributes),source,sourceDocumentId,sourceText,sourceAssetCount,const DeepCollectionEquality().hash(_sourcePagePositions),pendingRevision,confidence,const DeepCollectionEquality().hash(_tags),subjectId,createdAt,updatedAt);
+}
 
 @override
 String toString() {
-  return 'MedicalEvent(id: $id, eventType: $eventType, title: $title, description: $description, eventDate: $eventDate, eventEndDate: $eventEndDate, attributes: $attributes, source: $source, sourceDocumentId: $sourceDocumentId, sourceText: $sourceText, sourceAssetCount: $sourceAssetCount, sourcePagePositions: $sourcePagePositions, pendingRevision: $pendingRevision, confidence: $confidence, tags: $tags, subjectId: $subjectId, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'MedicalEvent(id: $id, eventType: $eventType, title: $title, description: $description, eventDate: $eventDate, eventEndDate: $eventEndDate, attributes: $attributes, source: $source, sourceDocumentId: $sourceDocumentId, sourceText: $sourceText, sourceAssetCount: $sourceAssetCount, sourcePagePositions: $sourcePagePositions, pendingRevision: $pendingRevision, confidence: $confidence, tags: $tags, subjectId: $subjectId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -384,16 +392,21 @@ $EventRevisionCopyWith<EventRevision> get copyWith => _$EventRevisionCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventRevision&&(identical(other.id, id) || other.id == id)&&const DeepCollectionEquality().equals(other.currentSnapshot, currentSnapshot)&&const DeepCollectionEquality().equals(other.suggestedChanges, suggestedChanges)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt));
+  final _this = this as EventRevision;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventRevision&&(identical(other.id, _this.id) || other.id == _this.id)&&const DeepCollectionEquality().equals(other.currentSnapshot, _this.currentSnapshot)&&const DeepCollectionEquality().equals(other.suggestedChanges, _this.suggestedChanges)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.resolvedAt, _this.resolvedAt) || other.resolvedAt == _this.resolvedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,const DeepCollectionEquality().hash(currentSnapshot),const DeepCollectionEquality().hash(suggestedChanges),status,createdAt,resolvedAt);
+int get hashCode {
+  final _this = this as EventRevision;
+  return Object.hash(runtimeType,_this.id,const DeepCollectionEquality().hash(_this.currentSnapshot),const DeepCollectionEquality().hash(_this.suggestedChanges),_this.status,_this.createdAt,_this.resolvedAt);
+}
 
 @override
 String toString() {
-  return 'EventRevision(id: $id, currentSnapshot: $currentSnapshot, suggestedChanges: $suggestedChanges, status: $status, createdAt: $createdAt, resolvedAt: $resolvedAt)';
+  final _this = this as EventRevision;
+  return 'EventRevision(id: ${_this.id}, currentSnapshot: ${_this.currentSnapshot}, suggestedChanges: ${_this.suggestedChanges}, status: ${_this.status}, createdAt: ${_this.createdAt}, resolvedAt: ${_this.resolvedAt})';
 }
 
 
@@ -422,7 +435,7 @@ class _$EventRevisionCopyWithImpl<$Res>
 /// Create a copy of EventRevision
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? currentSnapshot = null,Object? suggestedChanges = null,Object? status = null,Object? createdAt = freezed,Object? resolvedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(EventRevision(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,currentSnapshot: null == currentSnapshot ? _self.currentSnapshot : currentSnapshot // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,suggestedChanges: null == suggestedChanges ? _self.suggestedChanges : suggestedChanges // ignore: cast_nullable_to_non_nullable
@@ -570,7 +583,7 @@ return $default(_that.id,_that.currentSnapshot,_that.suggestedChanges,_that.stat
 @JsonSerializable()
 
 class _EventRevision implements EventRevision {
-  const _EventRevision({required this.id, @JsonKey(name: 'current_snapshot') final  Map<String, dynamic> currentSnapshot = const <String, dynamic>{}, @JsonKey(name: 'suggested_changes') final  Map<String, dynamic> suggestedChanges = const <String, dynamic>{}, this.status = 'pending', @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'resolved_at') this.resolvedAt}): _currentSnapshot = currentSnapshot,_suggestedChanges = suggestedChanges;
+  const _EventRevision({required this.id, @JsonKey(name: 'current_snapshot')  Map<String, dynamic> currentSnapshot = const <String, dynamic>{}, @JsonKey(name: 'suggested_changes')  Map<String, dynamic> suggestedChanges = const <String, dynamic>{}, this.status = 'pending', @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'resolved_at') this.resolvedAt}): _currentSnapshot = currentSnapshot,_suggestedChanges = suggestedChanges;
   factory _EventRevision.fromJson(Map<String, dynamic> json) => _$EventRevisionFromJson(json);
 
 @override final  String id;
@@ -605,16 +618,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventRevision&&(identical(other.id, id) || other.id == id)&&const DeepCollectionEquality().equals(other._currentSnapshot, _currentSnapshot)&&const DeepCollectionEquality().equals(other._suggestedChanges, _suggestedChanges)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventRevision&&(identical(other.id, id) || other.id == id)&&const DeepCollectionEquality().equals(other.currentSnapshot, _currentSnapshot)&&const DeepCollectionEquality().equals(other.suggestedChanges, _suggestedChanges)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,const DeepCollectionEquality().hash(_currentSnapshot),const DeepCollectionEquality().hash(_suggestedChanges),status,createdAt,resolvedAt);
+int get hashCode {
+    return Object.hash(runtimeType,id,const DeepCollectionEquality().hash(_currentSnapshot),const DeepCollectionEquality().hash(_suggestedChanges),status,createdAt,resolvedAt);
+}
 
 @override
 String toString() {
-  return 'EventRevision(id: $id, currentSnapshot: $currentSnapshot, suggestedChanges: $suggestedChanges, status: $status, createdAt: $createdAt, resolvedAt: $resolvedAt)';
+    return 'EventRevision(id: $id, currentSnapshot: $currentSnapshot, suggestedChanges: $suggestedChanges, status: $status, createdAt: $createdAt, resolvedAt: $resolvedAt)';
 }
 
 

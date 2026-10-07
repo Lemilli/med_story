@@ -3359,32 +3359,30 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
   ];
 }
 
-typedef $$SubjectsTableCreateCompanionBuilder =
-    SubjectsCompanion Function({
-      required String id,
-      required String displayName,
-      required String relationship,
-      Value<String?> dateOfBirth,
-      Value<String?> biologicalSex,
-      required bool isDefault,
-      required DateTime createdAt,
-      required DateTime updatedAt,
-      required DateTime syncedAt,
-      Value<int> rowid,
-    });
-typedef $$SubjectsTableUpdateCompanionBuilder =
-    SubjectsCompanion Function({
-      Value<String> id,
-      Value<String> displayName,
-      Value<String> relationship,
-      Value<String?> dateOfBirth,
-      Value<String?> biologicalSex,
-      Value<bool> isDefault,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-      Value<DateTime> syncedAt,
-      Value<int> rowid,
-    });
+typedef $$SubjectsTableCreateCompanionBuilder = SubjectsCompanion Function({
+  required String id,
+  required String displayName,
+  required String relationship,
+  Value<String?> dateOfBirth,
+  Value<String?> biologicalSex,
+  required bool isDefault,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  required DateTime syncedAt,
+  Value<int> rowid,
+});
+typedef $$SubjectsTableUpdateCompanionBuilder = SubjectsCompanion Function({
+  Value<String> id,
+  Value<String> displayName,
+  Value<String> relationship,
+  Value<String?> dateOfBirth,
+  Value<String?> biologicalSex,
+  Value<bool> isDefault,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<DateTime> syncedAt,
+  Value<int> rowid,
+});
 
 class $$SubjectsTableFilterComposer
     extends Composer<_$LocalDatabase, $SubjectsTable> {
@@ -3616,7 +3614,16 @@ class $$SubjectsTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$SubjectsTable, Subject>(table),
+                  BaseReferences<_$LocalDatabase, $SubjectsTable, Subject>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4088,7 +4095,18 @@ class $$CachedMedicalEventsTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$CachedMedicalEventsTable, CachedMedicalEvent>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$LocalDatabase,
+                    $CachedMedicalEventsTable,
+                    CachedMedicalEvent
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4408,7 +4426,19 @@ class $$CachedMedicalSummariesTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<
+                    $CachedMedicalSummariesTable,
+                    CachedMedicalSummary
+                  >(table),
+                  BaseReferences<
+                    _$LocalDatabase,
+                    $CachedMedicalSummariesTable,
+                    CachedMedicalSummary
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4900,7 +4930,16 @@ class $$UploadQueueItemsTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$UploadQueueItemsTable, UploadQueueItem>(table),
+                  BaseReferences<
+                    _$LocalDatabase,
+                    $UploadQueueItemsTable,
+                    UploadQueueItem
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),

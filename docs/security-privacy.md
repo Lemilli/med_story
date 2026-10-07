@@ -61,6 +61,12 @@ control. This document defines the controls to achieve that.
 
 - Garage runs single-node on a dedicated encrypted EU/EEA volume. S3, admin, and RPC ports are
   absent from public networks; API/workers reach S3 through a verified private TLS proxy.
+- Host secret files remain `0600`. A one-shot provisioning container without networking copies
+  service-specific allowlists into separate private Docker volumes owned by API/worker UID 10001
+  and proxy UID 101 (`0700` directories, `0400` files). Runtime containers mount only their own
+  secret volume read-only; this also works with Linux Compose's preserved host-file ownership.
+  Docker's data directory must reside on encrypted host storage because those volumes contain
+  private key copies.
 - ClamAV exposes no host port. It joins the application network for outbound signature refreshes
   and the private storage network for API/worker scan requests.
 - Upload, authenticated user read, processing read, and deletion use independent bucket-scoped
@@ -139,6 +145,8 @@ control. This document defines the controls to achieve that.
   are 10 units/user/day, 20 globally/day, and 150 globally/month.
 - **Dependency hygiene**: automated `pip-audit` and OSV scans cover Python and Flutter
   dependencies, and Dependabot proposes weekly updates for supported manifests and CI actions.
+  Python and Flutter updates are grouped to keep runtime/generator versions compatible; Django
+  remains on the supported 5.2 LTS line. CI checks run on commits, with no scheduled runs.
 - **Secrets scanning**: Gitleaks scans full committed history in CI.
 - **CORS** locked to known clients; security headers (HSTS, no-sniff, etc.) at the proxy.
 - **CSRF**: API is token-based (JWT in header), not cookie-session, reducing CSRF surface.

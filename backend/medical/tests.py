@@ -3,7 +3,6 @@ import hashlib
 import json
 import uuid
 from datetime import date
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -45,7 +44,7 @@ from medical.services import (
     reserve_ai_quota,
 )
 from medical.tasks import ingest_document_task
-TEST_ASSET_DIR = Path(__file__).resolve().parents[2] / "test_assets"
+from medical.test_fixtures import LAB_RESULT_BYTES, PNG_BYTES, PRESCRIPTION_BYTES
 
 
 class MedicalApiTests(APITestCase):
@@ -513,7 +512,7 @@ class MedicalApiTests(APITestCase):
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_lab_result_creates_ai_event(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
-        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        payload = LAB_RESULT_BYTES
 
         response = self.client.post(
             f"/api/v1/documents/{document.id}/ingest",
@@ -545,7 +544,7 @@ class MedicalApiTests(APITestCase):
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_document_explanation_detail_and_availability(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
-        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        payload = LAB_RESULT_BYTES
 
         ingest_response = self.client.post(
             f"/api/v1/documents/{document.id}/ingest",
@@ -663,7 +662,7 @@ class MedicalApiTests(APITestCase):
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_prescription_creates_medication_event(self):
         document = self._create_document(Document.DocumentType.PRESCRIPTION)
-        payload = (TEST_ASSET_DIR / "prescription_basic.txt").read_bytes()
+        payload = PRESCRIPTION_BYTES
 
         response = self.client.post(
             f"/api/v1/documents/{document.id}/ingest",
@@ -756,9 +755,9 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(Document.objects.count(), 0)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    def test_ingest_real_png_asset_runs_ocr_and_structuring(self):
+    def test_ingest_synthetic_png_runs_ocr_and_structuring(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT, mime_type="image/png")
-        payload = (TEST_ASSET_DIR / "olymp_blood_test.png").read_bytes()
+        payload = PNG_BYTES
         captured = {}
 
         class AssetOCRProvider:
@@ -767,7 +766,7 @@ class MedicalApiTests(APITestCase):
                 captured["ocr_mime"] = mime
                 return OCRResult(
                     text=(
-                        "Olymp clinical laboratory blood test. "
+                        "Synthetic clinical laboratory blood test. "
                         "Date: 2024-05-03. Hemoglobin 140 g/L. Platelets 458 10^9/L."
                     ),
                     language="ru",
@@ -789,11 +788,11 @@ class MedicalApiTests(APITestCase):
                 captured["structuring_prompt"] = user_prompt
                 return {
                     "document_date": "2024-05-03",
-                    "suggested_title": "Olymp blood test results",
+                    "suggested_title": "Synthetic blood test results",
                     "events": [
                         {
                             "event_type": "examination",
-                            "title": "Olymp blood test results",
+                            "title": "Synthetic blood test results",
                             "description": "Blood test results from the uploaded lab image.",
                             "event_date": "2024-05-03",
                             "attributes": {
@@ -814,7 +813,7 @@ class MedicalApiTests(APITestCase):
         ):
             response = self.client.post(
                 f"/api/v1/documents/{document.id}/ingest",
-                {"file": self._upload("olymp_blood_test.png", payload, "image/png")},
+                {"file": self._upload("synthetic-blood-test.png", payload, "image/png")},
                 format="multipart",
             )
 
@@ -828,7 +827,7 @@ class MedicalApiTests(APITestCase):
         self.assertEqual(document.status, Document.Status.PROCESSED)
         self.assertEqual(document.language, "ru")
         self.assertEqual(document.document_date, date(2024, 5, 3))
-        self.assertEqual(document.title, "Olymp blood test results")
+        self.assertEqual(document.title, "Synthetic blood test results")
         self.assertTrue(document.explanations.exists())
         explanation_prompt = captured["explanation_prompt"]
         self.assertIn("1-2 short sentences", explanation_prompt)
@@ -856,7 +855,7 @@ class MedicalApiTests(APITestCase):
             Document.DocumentType.LAB_RESULT,
             mime_type="image/png",
         )
-        payload = (TEST_ASSET_DIR / "olymp_blood_test.png").read_bytes()
+        payload = PNG_BYTES
         fake_client = FakeOpenAIClient(
             output_text=json.dumps(
                 {
@@ -893,7 +892,7 @@ class MedicalApiTests(APITestCase):
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_ingest_is_idempotent_for_processed_document(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
-        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        payload = LAB_RESULT_BYTES
 
         first_response = self.client.post(
             f"/api/v1/documents/{document.id}/ingest",
@@ -942,7 +941,7 @@ class MedicalApiTests(APITestCase):
     def test_ingest_deduplicates_exact_file_within_same_user(self):
         original = self._create_document(Document.DocumentType.LAB_RESULT)
         duplicate = self._create_document(Document.DocumentType.LAB_RESULT)
-        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        payload = LAB_RESULT_BYTES
 
         first_response = self.client.post(
             f"/api/v1/documents/{original.id}/ingest",
@@ -968,7 +967,7 @@ class MedicalApiTests(APITestCase):
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_original_content_is_streamed_only_to_owning_user_with_private_headers(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
-        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        payload = LAB_RESULT_BYTES
         ingest = self.client.post(
             f"/api/v1/documents/{document.id}/ingest",
             {"file": self._upload("lab.pdf", payload, "application/pdf")},
@@ -1024,7 +1023,7 @@ class MedicalApiTests(APITestCase):
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_tampered_ciphertext_fails_closed(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
-        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        payload = LAB_RESULT_BYTES
         response = self.client.post(
             f"/api/v1/documents/{document.id}/ingest",
             {"file": self._upload("lab.pdf", payload, "application/pdf")},
@@ -1049,7 +1048,7 @@ class MedicalApiTests(APITestCase):
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_processing_failure_preserves_original_and_retry_reuses_it(self):
         document = self._create_document(Document.DocumentType.LAB_RESULT)
-        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        payload = LAB_RESULT_BYTES
         with patch(
             "medical.services.validate_event_extraction",
             side_effect=SchemaValidationError("invalid structured output"),
@@ -1106,7 +1105,7 @@ class MedicalApiTests(APITestCase):
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_identical_originals_are_not_deduplicated_across_users(self):
-        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        payload = LAB_RESULT_BYTES
         own_document = self._create_document(Document.DocumentType.LAB_RESULT)
         self.client.post(
             f"/api/v1/documents/{own_document.id}/ingest",
@@ -1209,7 +1208,7 @@ class MedicalApiTests(APITestCase):
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_reference_counted_deletion_crypto_erases_final_reference(self):
-        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        payload = LAB_RESULT_BYTES
         first = self._create_document(Document.DocumentType.LAB_RESULT)
         second = self._create_document(Document.DocumentType.LAB_RESULT)
         self.client.post(
@@ -1266,7 +1265,7 @@ class MedicalApiTests(APITestCase):
     def test_ingest_allows_exact_file_after_original_document_is_deleted(self):
         original = self._create_document(Document.DocumentType.LAB_RESULT)
         replacement = self._create_document(Document.DocumentType.LAB_RESULT)
-        payload = (TEST_ASSET_DIR / "lab_result_basic.txt").read_bytes()
+        payload = LAB_RESULT_BYTES
 
         self.client.post(
             f"/api/v1/documents/{original.id}/ingest",
@@ -2083,7 +2082,7 @@ class AIProviderTests(SimpleTestCase):
     def test_openai_ocr_provider_sends_png_asset_as_image_input(self):
         from ai.providers.openai import OpenAIOCRProvider
 
-        payload = (TEST_ASSET_DIR / "olymp_blood_test.png").read_bytes()
+        payload = PNG_BYTES
         fake_client = FakeOpenAIClient(
             output_text=json.dumps(
                 {"text": " Extracted blood test text \n", "language": " EN "}

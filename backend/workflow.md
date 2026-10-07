@@ -43,12 +43,22 @@ the result:
 
 ```bash
 python -m pip install pip-tools==7.5.3 pip-audit==2.10.1
-python -m piptools compile --resolver=backtracking --strip-extras \
+python -m piptools compile --upgrade --resolver=backtracking --strip-extras \
   --output-file=requirements.txt requirements.in
 python -m pip install --requirement requirements.txt
 python -m pip check
 python -m pip_audit --requirement requirements.txt --no-deps --disable-pip
 ```
+
+GitHub CI runs on pushes to `main`/`master` and pull-request commits; the production Compose
+smoke workflow runs on `main` and pull-request commits touching the backend or its workflow.
+Neither workflow has a scheduled or manual trigger. Dependabot still checks weekly and groups
+Python and Flutter updates so coupled libraries and generators are reviewed together. Django
+stays on the supported 5.2 LTS line with Python 3.12. Flutter CI uses SDK 3.47.6; use that SDK
+when refreshing `frontend/pubspec.lock` and generated Dart code.
+
+Backend tests use tracked synthetic fixtures in `medical/test_fixtures.py`, including when run
+inside Docker. They do not require the ignored root `test_assets/` directory.
 
 Useful URLs:
 

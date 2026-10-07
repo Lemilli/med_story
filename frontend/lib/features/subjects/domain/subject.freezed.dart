@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'subject.dart';
@@ -9,6 +9,7 @@ part of 'subject.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $SubjectCopyWith<Subject> get copyWith => _$SubjectCopyWithImpl<Subject>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Subject&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.relationship, relationship) || other.relationship == relationship)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.biologicalSex, biologicalSex) || other.biologicalSex == biologicalSex)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  final _this = this as Subject;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Subject&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.relationship, _this.relationship) || other.relationship == _this.relationship)&&(identical(other.dateOfBirth, _this.dateOfBirth) || other.dateOfBirth == _this.dateOfBirth)&&(identical(other.biologicalSex, _this.biologicalSex) || other.biologicalSex == _this.biologicalSex)&&(identical(other.isDefault, _this.isDefault) || other.isDefault == _this.isDefault)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,displayName,relationship,dateOfBirth,biologicalSex,isDefault,createdAt,updatedAt);
+int get hashCode {
+  final _this = this as Subject;
+  return Object.hash(runtimeType,_this.id,_this.displayName,_this.relationship,_this.dateOfBirth,_this.biologicalSex,_this.isDefault,_this.createdAt,_this.updatedAt);
+}
 
 @override
 String toString() {
-  return 'Subject(id: $id, displayName: $displayName, relationship: $relationship, dateOfBirth: $dateOfBirth, biologicalSex: $biologicalSex, isDefault: $isDefault, createdAt: $createdAt, updatedAt: $updatedAt)';
+  final _this = this as Subject;
+  return 'Subject(id: ${_this.id}, displayName: ${_this.displayName}, relationship: ${_this.relationship}, dateOfBirth: ${_this.dateOfBirth}, biologicalSex: ${_this.biologicalSex}, isDefault: ${_this.isDefault}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -66,7 +72,7 @@ class _$SubjectCopyWithImpl<$Res>
 /// Create a copy of Subject
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? displayName = null,Object? relationship = null,Object? dateOfBirth = freezed,Object? biologicalSex = freezed,Object? isDefault = null,Object? createdAt = null,Object? updatedAt = null,}) {
-  return _then(_self.copyWith(
+  return _then(Subject(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,relationship: null == relationship ? _self.relationship : relationship // ignore: cast_nullable_to_non_nullable
@@ -241,16 +247,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Subject&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.relationship, relationship) || other.relationship == relationship)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.biologicalSex, biologicalSex) || other.biologicalSex == biologicalSex)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Subject&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.relationship, relationship) || other.relationship == relationship)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.biologicalSex, biologicalSex) || other.biologicalSex == biologicalSex)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,displayName,relationship,dateOfBirth,biologicalSex,isDefault,createdAt,updatedAt);
+int get hashCode {
+    return Object.hash(runtimeType,id,displayName,relationship,dateOfBirth,biologicalSex,isDefault,createdAt,updatedAt);
+}
 
 @override
 String toString() {
-  return 'Subject(id: $id, displayName: $displayName, relationship: $relationship, dateOfBirth: $dateOfBirth, biologicalSex: $biologicalSex, isDefault: $isDefault, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Subject(id: $id, displayName: $displayName, relationship: $relationship, dateOfBirth: $dateOfBirth, biologicalSex: $biologicalSex, isDefault: $isDefault, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 

@@ -7,6 +7,13 @@
 
 # The following line activates a set of recommended lints for Flutter apps,
 # packages, and plugins designed to encourage good coding practices.
+analyzer:
+  # Flutter 3.47 adds these generated-build and native-scaffold exclusions.
+  # App and test Dart sources remain under lib/ and test/ and are analyzed.
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
 include: package:flutter_lints/flutter.yaml
 
 linter:

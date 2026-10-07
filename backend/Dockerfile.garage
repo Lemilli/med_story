@@ -1,6 +1,6 @@
 FROM dxflrs/garage:v2.3.0 AS garage
 
-FROM alpine:3.22.5
+FROM alpine:3.24.2
 
 RUN apk add --no-cache ca-certificates
 COPY --from=garage /garage /garage

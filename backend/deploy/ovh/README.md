@@ -513,6 +513,17 @@ encrypted offline copy. Losing that master key makes stored originals unreadable
 Do not upload either file to Git, ordinary cloud storage, email, chat, or a ticket. Keep every
 remaining file under `backend/secrets/` and `.env.production` at permission mode `0600`.
 
+Compose file-backed secrets retain the host owner's UID on Linux. The one-shot `prepare-secrets`
+service copies allowlisted secrets into separate private Docker volumes for API/worker UID 10001 and
+proxy UID 101, with directories `0700` and files `0400`. Each runtime service mounts only its
+own volume read-only. This keeps host files `0600` while allowing non-root containers to read
+their keys; no container secret contents are printed. The provisioning service has no network
+and exits before those services start. Recreate the stack after rotating the host secret files
+so provisioning reruns with the new values.
+Keep Docker's data directory on encrypted storage as well as the source secret directory; these
+volumes contain private key copies. `docker compose down --volumes` removes those copies along
+with the other stack volumes and must only be used for disposable stacks.
+
 ### 4. Configure HTTPS
 
 Copy the supplied Caddy configuration, edit it, validate it, and reload Caddy:

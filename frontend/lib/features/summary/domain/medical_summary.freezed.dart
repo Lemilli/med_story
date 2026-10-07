@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'medical_summary.dart';
@@ -9,6 +9,7 @@ part of 'medical_summary.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $MedicalSummaryCopyWith<MedicalSummary> get copyWith => _$MedicalSummaryCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MedicalSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.version, version) || other.version == version)&&(identical(other.isCurrent, isCurrent) || other.isCurrent == isCurrent)&&const DeepCollectionEquality().equals(other.content, content)&&(identical(other.narrativeText, narrativeText) || other.narrativeText == narrativeText)&&(identical(other.language, language) || other.language == language)&&(identical(other.generatedFromEventCount, generatedFromEventCount) || other.generatedFromEventCount == generatedFromEventCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  final _this = this as MedicalSummary;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MedicalSummary&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.subjectId, _this.subjectId) || other.subjectId == _this.subjectId)&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.isCurrent, _this.isCurrent) || other.isCurrent == _this.isCurrent)&&const DeepCollectionEquality().equals(other.content, _this.content)&&(identical(other.narrativeText, _this.narrativeText) || other.narrativeText == _this.narrativeText)&&(identical(other.language, _this.language) || other.language == _this.language)&&(identical(other.generatedFromEventCount, _this.generatedFromEventCount) || other.generatedFromEventCount == _this.generatedFromEventCount)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,subjectId,version,isCurrent,const DeepCollectionEquality().hash(content),narrativeText,language,generatedFromEventCount,createdAt);
+int get hashCode {
+  final _this = this as MedicalSummary;
+  return Object.hash(runtimeType,_this.id,_this.subjectId,_this.version,_this.isCurrent,const DeepCollectionEquality().hash(_this.content),_this.narrativeText,_this.language,_this.generatedFromEventCount,_this.createdAt);
+}
 
 @override
 String toString() {
-  return 'MedicalSummary(id: $id, subjectId: $subjectId, version: $version, isCurrent: $isCurrent, content: $content, narrativeText: $narrativeText, language: $language, generatedFromEventCount: $generatedFromEventCount, createdAt: $createdAt)';
+  final _this = this as MedicalSummary;
+  return 'MedicalSummary(id: ${_this.id}, subjectId: ${_this.subjectId}, version: ${_this.version}, isCurrent: ${_this.isCurrent}, content: ${_this.content}, narrativeText: ${_this.narrativeText}, language: ${_this.language}, generatedFromEventCount: ${_this.generatedFromEventCount}, createdAt: ${_this.createdAt})';
 }
 
 
@@ -66,7 +72,7 @@ class _$MedicalSummaryCopyWithImpl<$Res>
 /// Create a copy of MedicalSummary
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? subjectId = null,Object? version = null,Object? isCurrent = null,Object? content = null,Object? narrativeText = null,Object? language = null,Object? generatedFromEventCount = null,Object? createdAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(MedicalSummary(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,subjectId: null == subjectId ? _self.subjectId : subjectId // ignore: cast_nullable_to_non_nullable
 as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
@@ -217,7 +223,7 @@ return $default(_that.id,_that.subjectId,_that.version,_that.isCurrent,_that.con
 @JsonSerializable()
 
 class _MedicalSummary implements MedicalSummary {
-  const _MedicalSummary({required this.id, @JsonKey(name: 'subject_id') required this.subjectId, required this.version, @JsonKey(name: 'is_current') this.isCurrent = false, final  Map<String, dynamic> content = const <String, dynamic>{}, @JsonKey(name: 'narrative_text') this.narrativeText = '', this.language = '', @JsonKey(name: 'generated_from_event_count') this.generatedFromEventCount = 0, @JsonKey(name: 'created_at') this.createdAt}): _content = content;
+  const _MedicalSummary({required this.id, @JsonKey(name: 'subject_id') required this.subjectId, required this.version, @JsonKey(name: 'is_current') this.isCurrent = false,  Map<String, dynamic> content = const <String, dynamic>{}, @JsonKey(name: 'narrative_text') this.narrativeText = '', this.language = '', @JsonKey(name: 'generated_from_event_count') this.generatedFromEventCount = 0, @JsonKey(name: 'created_at') this.createdAt}): _content = content;
   factory _MedicalSummary.fromJson(Map<String, dynamic> json) => _$MedicalSummaryFromJson(json);
 
 @override final  String id;
@@ -249,16 +255,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MedicalSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.version, version) || other.version == version)&&(identical(other.isCurrent, isCurrent) || other.isCurrent == isCurrent)&&const DeepCollectionEquality().equals(other._content, _content)&&(identical(other.narrativeText, narrativeText) || other.narrativeText == narrativeText)&&(identical(other.language, language) || other.language == language)&&(identical(other.generatedFromEventCount, generatedFromEventCount) || other.generatedFromEventCount == generatedFromEventCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MedicalSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.version, version) || other.version == version)&&(identical(other.isCurrent, isCurrent) || other.isCurrent == isCurrent)&&const DeepCollectionEquality().equals(other.content, _content)&&(identical(other.narrativeText, narrativeText) || other.narrativeText == narrativeText)&&(identical(other.language, language) || other.language == language)&&(identical(other.generatedFromEventCount, generatedFromEventCount) || other.generatedFromEventCount == generatedFromEventCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,subjectId,version,isCurrent,const DeepCollectionEquality().hash(_content),narrativeText,language,generatedFromEventCount,createdAt);
+int get hashCode {
+    return Object.hash(runtimeType,id,subjectId,version,isCurrent,const DeepCollectionEquality().hash(_content),narrativeText,language,generatedFromEventCount,createdAt);
+}
 
 @override
 String toString() {
-  return 'MedicalSummary(id: $id, subjectId: $subjectId, version: $version, isCurrent: $isCurrent, content: $content, narrativeText: $narrativeText, language: $language, generatedFromEventCount: $generatedFromEventCount, createdAt: $createdAt)';
+    return 'MedicalSummary(id: $id, subjectId: $subjectId, version: $version, isCurrent: $isCurrent, content: $content, narrativeText: $narrativeText, language: $language, generatedFromEventCount: $generatedFromEventCount, createdAt: $createdAt)';
 }
 
 
@@ -321,16 +329,21 @@ $SummaryRegenerateResultCopyWith<SummaryRegenerateResult> get copyWith => _$Summ
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SummaryRegenerateResult&&(identical(other.jobId, jobId) || other.jobId == jobId)&&(identical(other.status, status) || other.status == status));
+  final _this = this as SummaryRegenerateResult;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SummaryRegenerateResult&&(identical(other.jobId, _this.jobId) || other.jobId == _this.jobId)&&(identical(other.status, _this.status) || other.status == _this.status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,jobId,status);
+int get hashCode {
+  final _this = this as SummaryRegenerateResult;
+  return Object.hash(runtimeType,_this.jobId,_this.status);
+}
 
 @override
 String toString() {
-  return 'SummaryRegenerateResult(jobId: $jobId, status: $status)';
+  final _this = this as SummaryRegenerateResult;
+  return 'SummaryRegenerateResult(jobId: ${_this.jobId}, status: ${_this.status})';
 }
 
 
@@ -359,7 +372,7 @@ class _$SummaryRegenerateResultCopyWithImpl<$Res>
 /// Create a copy of SummaryRegenerateResult
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? jobId = null,Object? status = null,}) {
-  return _then(_self.copyWith(
+  return _then(SummaryRegenerateResult(
 jobId: null == jobId ? _self.jobId : jobId // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,
@@ -522,16 +535,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SummaryRegenerateResult&&(identical(other.jobId, jobId) || other.jobId == jobId)&&(identical(other.status, status) || other.status == status));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SummaryRegenerateResult&&(identical(other.jobId, jobId) || other.jobId == jobId)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,jobId,status);
+int get hashCode {
+    return Object.hash(runtimeType,jobId,status);
+}
 
 @override
 String toString() {
-  return 'SummaryRegenerateResult(jobId: $jobId, status: $status)';
+    return 'SummaryRegenerateResult(jobId: $jobId, status: $status)';
 }
 
 

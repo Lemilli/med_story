@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'medical_document.dart';
@@ -9,6 +9,7 @@ part of 'medical_document.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $MedicalDocumentCopyWith<MedicalDocument> get copyWith => _$MedicalDocumentCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MedicalDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.status, status) || other.status == status)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.language, language) || other.language == language)&&(identical(other.localOnly, localOnly) || other.localOnly == localOnly)&&(identical(other.extractedTextAvailable, extractedTextAvailable) || other.extractedTextAvailable == extractedTextAvailable)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&const DeepCollectionEquality().equals(other.assets, assets)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  final _this = this as MedicalDocument;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MedicalDocument&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.docType, _this.docType) || other.docType == _this.docType)&&(identical(other.mimeType, _this.mimeType) || other.mimeType == _this.mimeType)&&(identical(other.localUriHint, _this.localUriHint) || other.localUriHint == _this.localUriHint)&&(identical(other.sizeBytes, _this.sizeBytes) || other.sizeBytes == _this.sizeBytes)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.subjectId, _this.subjectId) || other.subjectId == _this.subjectId)&&(identical(other.documentDate, _this.documentDate) || other.documentDate == _this.documentDate)&&(identical(other.language, _this.language) || other.language == _this.language)&&(identical(other.localOnly, _this.localOnly) || other.localOnly == _this.localOnly)&&(identical(other.extractedTextAvailable, _this.extractedTextAvailable) || other.extractedTextAvailable == _this.extractedTextAvailable)&&(identical(other.eventCount, _this.eventCount) || other.eventCount == _this.eventCount)&&(identical(other.eventId, _this.eventId) || other.eventId == _this.eventId)&&const DeepCollectionEquality().equals(other.assets, _this.assets)&&(identical(other.errorMessage, _this.errorMessage) || other.errorMessage == _this.errorMessage)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,docType,mimeType,localUriHint,sizeBytes,status,subjectId,documentDate,language,localOnly,extractedTextAvailable,eventCount,eventId,const DeepCollectionEquality().hash(assets),errorMessage,createdAt,updatedAt);
+int get hashCode {
+  final _this = this as MedicalDocument;
+  return Object.hash(runtimeType,_this.id,_this.title,_this.docType,_this.mimeType,_this.localUriHint,_this.sizeBytes,_this.status,_this.subjectId,_this.documentDate,_this.language,_this.localOnly,_this.extractedTextAvailable,_this.eventCount,_this.eventId,const DeepCollectionEquality().hash(_this.assets),_this.errorMessage,_this.createdAt,_this.updatedAt);
+}
 
 @override
 String toString() {
-  return 'MedicalDocument(id: $id, title: $title, docType: $docType, mimeType: $mimeType, localUriHint: $localUriHint, sizeBytes: $sizeBytes, status: $status, subjectId: $subjectId, documentDate: $documentDate, language: $language, localOnly: $localOnly, extractedTextAvailable: $extractedTextAvailable, eventCount: $eventCount, eventId: $eventId, assets: $assets, errorMessage: $errorMessage, createdAt: $createdAt, updatedAt: $updatedAt)';
+  final _this = this as MedicalDocument;
+  return 'MedicalDocument(id: ${_this.id}, title: ${_this.title}, docType: ${_this.docType}, mimeType: ${_this.mimeType}, localUriHint: ${_this.localUriHint}, sizeBytes: ${_this.sizeBytes}, status: ${_this.status}, subjectId: ${_this.subjectId}, documentDate: ${_this.documentDate}, language: ${_this.language}, localOnly: ${_this.localOnly}, extractedTextAvailable: ${_this.extractedTextAvailable}, eventCount: ${_this.eventCount}, eventId: ${_this.eventId}, assets: ${_this.assets}, errorMessage: ${_this.errorMessage}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -66,7 +72,7 @@ class _$MedicalDocumentCopyWithImpl<$Res>
 /// Create a copy of MedicalDocument
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? docType = null,Object? mimeType = null,Object? localUriHint = null,Object? sizeBytes = null,Object? status = null,Object? subjectId = freezed,Object? documentDate = freezed,Object? language = null,Object? localOnly = null,Object? extractedTextAvailable = null,Object? eventCount = null,Object? eventId = freezed,Object? assets = null,Object? errorMessage = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(MedicalDocument(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,docType: null == docType ? _self.docType : docType // ignore: cast_nullable_to_non_nullable
@@ -226,7 +232,7 @@ return $default(_that.id,_that.title,_that.docType,_that.mimeType,_that.localUri
 @JsonSerializable()
 
 class _MedicalDocument implements MedicalDocument {
-  const _MedicalDocument({required this.id, this.title = '', @JsonKey(name: 'doc_type') this.docType = DocumentType.other, @JsonKey(name: 'mime_type') this.mimeType = '', @JsonKey(name: 'local_uri_hint') this.localUriHint = '', @JsonKey(name: 'size_bytes') this.sizeBytes = 0, this.status = DocumentStatus.pendingIngest, @JsonKey(name: 'subject_id') this.subjectId, @JsonKey(name: 'document_date') this.documentDate, this.language = '', @JsonKey(name: 'local_only') this.localOnly = false, @JsonKey(name: 'extracted_text_available') this.extractedTextAvailable = false, @JsonKey(name: 'event_count') this.eventCount = 0, @JsonKey(name: 'event_id') this.eventId, final  List<DocumentAssetMetadata> assets = const <DocumentAssetMetadata>[], @JsonKey(name: 'error_message') this.errorMessage = '', @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt}): _assets = assets;
+  const _MedicalDocument({required this.id, this.title = '', @JsonKey(name: 'doc_type') this.docType = DocumentType.other, @JsonKey(name: 'mime_type') this.mimeType = '', @JsonKey(name: 'local_uri_hint') this.localUriHint = '', @JsonKey(name: 'size_bytes') this.sizeBytes = 0, this.status = DocumentStatus.pendingIngest, @JsonKey(name: 'subject_id') this.subjectId, @JsonKey(name: 'document_date') this.documentDate, this.language = '', @JsonKey(name: 'local_only') this.localOnly = false, @JsonKey(name: 'extracted_text_available') this.extractedTextAvailable = false, @JsonKey(name: 'event_count') this.eventCount = 0, @JsonKey(name: 'event_id') this.eventId,  List<DocumentAssetMetadata> assets = const <DocumentAssetMetadata>[], @JsonKey(name: 'error_message') this.errorMessage = '', @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt}): _assets = assets;
   factory _MedicalDocument.fromJson(Map<String, dynamic> json) => _$MedicalDocumentFromJson(json);
 
 @override final  String id;
@@ -267,16 +273,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MedicalDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.status, status) || other.status == status)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.language, language) || other.language == language)&&(identical(other.localOnly, localOnly) || other.localOnly == localOnly)&&(identical(other.extractedTextAvailable, extractedTextAvailable) || other.extractedTextAvailable == extractedTextAvailable)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&const DeepCollectionEquality().equals(other._assets, _assets)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MedicalDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.status, status) || other.status == status)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.language, language) || other.language == language)&&(identical(other.localOnly, localOnly) || other.localOnly == localOnly)&&(identical(other.extractedTextAvailable, extractedTextAvailable) || other.extractedTextAvailable == extractedTextAvailable)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&const DeepCollectionEquality().equals(other.assets, _assets)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,docType,mimeType,localUriHint,sizeBytes,status,subjectId,documentDate,language,localOnly,extractedTextAvailable,eventCount,eventId,const DeepCollectionEquality().hash(_assets),errorMessage,createdAt,updatedAt);
+int get hashCode {
+    return Object.hash(runtimeType,id,title,docType,mimeType,localUriHint,sizeBytes,status,subjectId,documentDate,language,localOnly,extractedTextAvailable,eventCount,eventId,const DeepCollectionEquality().hash(_assets),errorMessage,createdAt,updatedAt);
+}
 
 @override
 String toString() {
-  return 'MedicalDocument(id: $id, title: $title, docType: $docType, mimeType: $mimeType, localUriHint: $localUriHint, sizeBytes: $sizeBytes, status: $status, subjectId: $subjectId, documentDate: $documentDate, language: $language, localOnly: $localOnly, extractedTextAvailable: $extractedTextAvailable, eventCount: $eventCount, eventId: $eventId, assets: $assets, errorMessage: $errorMessage, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'MedicalDocument(id: $id, title: $title, docType: $docType, mimeType: $mimeType, localUriHint: $localUriHint, sizeBytes: $sizeBytes, status: $status, subjectId: $subjectId, documentDate: $documentDate, language: $language, localOnly: $localOnly, extractedTextAvailable: $extractedTextAvailable, eventCount: $eventCount, eventId: $eventId, assets: $assets, errorMessage: $errorMessage, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -348,16 +356,21 @@ $DocumentAssetMetadataCopyWith<DocumentAssetMetadata> get copyWith => _$Document
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentAssetMetadata&&(identical(other.id, id) || other.id == id)&&(identical(other.position, position) || other.position == position)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.available, available) || other.available == available));
+  final _this = this as DocumentAssetMetadata;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentAssetMetadata&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.position, _this.position) || other.position == _this.position)&&(identical(other.fileName, _this.fileName) || other.fileName == _this.fileName)&&(identical(other.mimeType, _this.mimeType) || other.mimeType == _this.mimeType)&&(identical(other.sizeBytes, _this.sizeBytes) || other.sizeBytes == _this.sizeBytes)&&(identical(other.available, _this.available) || other.available == _this.available));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,position,fileName,mimeType,sizeBytes,available);
+int get hashCode {
+  final _this = this as DocumentAssetMetadata;
+  return Object.hash(runtimeType,_this.id,_this.position,_this.fileName,_this.mimeType,_this.sizeBytes,_this.available);
+}
 
 @override
 String toString() {
-  return 'DocumentAssetMetadata(id: $id, position: $position, fileName: $fileName, mimeType: $mimeType, sizeBytes: $sizeBytes, available: $available)';
+  final _this = this as DocumentAssetMetadata;
+  return 'DocumentAssetMetadata(id: ${_this.id}, position: ${_this.position}, fileName: ${_this.fileName}, mimeType: ${_this.mimeType}, sizeBytes: ${_this.sizeBytes}, available: ${_this.available})';
 }
 
 
@@ -386,7 +399,7 @@ class _$DocumentAssetMetadataCopyWithImpl<$Res>
 /// Create a copy of DocumentAssetMetadata
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? position = null,Object? fileName = null,Object? mimeType = null,Object? sizeBytes = null,Object? available = null,}) {
-  return _then(_self.copyWith(
+  return _then(DocumentAssetMetadata(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
@@ -557,16 +570,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentAssetMetadata&&(identical(other.id, id) || other.id == id)&&(identical(other.position, position) || other.position == position)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.available, available) || other.available == available));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentAssetMetadata&&(identical(other.id, id) || other.id == id)&&(identical(other.position, position) || other.position == position)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.available, available) || other.available == available));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,position,fileName,mimeType,sizeBytes,available);
+int get hashCode {
+    return Object.hash(runtimeType,id,position,fileName,mimeType,sizeBytes,available);
+}
 
 @override
 String toString() {
-  return 'DocumentAssetMetadata(id: $id, position: $position, fileName: $fileName, mimeType: $mimeType, sizeBytes: $sizeBytes, available: $available)';
+    return 'DocumentAssetMetadata(id: $id, position: $position, fileName: $fileName, mimeType: $mimeType, sizeBytes: $sizeBytes, available: $available)';
 }
 
 
@@ -626,16 +641,21 @@ $DocumentCreateRequestCopyWith<DocumentCreateRequest> get copyWith => _$Document
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentCreateRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.language, language) || other.language == language));
+  final _this = this as DocumentCreateRequest;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentCreateRequest&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.docType, _this.docType) || other.docType == _this.docType)&&(identical(other.mimeType, _this.mimeType) || other.mimeType == _this.mimeType)&&(identical(other.sizeBytes, _this.sizeBytes) || other.sizeBytes == _this.sizeBytes)&&(identical(other.subjectId, _this.subjectId) || other.subjectId == _this.subjectId)&&(identical(other.documentDate, _this.documentDate) || other.documentDate == _this.documentDate)&&(identical(other.localUriHint, _this.localUriHint) || other.localUriHint == _this.localUriHint)&&(identical(other.language, _this.language) || other.language == _this.language));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,title,docType,mimeType,sizeBytes,subjectId,documentDate,localUriHint,language);
+int get hashCode {
+  final _this = this as DocumentCreateRequest;
+  return Object.hash(runtimeType,_this.title,_this.docType,_this.mimeType,_this.sizeBytes,_this.subjectId,_this.documentDate,_this.localUriHint,_this.language);
+}
 
 @override
 String toString() {
-  return 'DocumentCreateRequest(title: $title, docType: $docType, mimeType: $mimeType, sizeBytes: $sizeBytes, subjectId: $subjectId, documentDate: $documentDate, localUriHint: $localUriHint, language: $language)';
+  final _this = this as DocumentCreateRequest;
+  return 'DocumentCreateRequest(title: ${_this.title}, docType: ${_this.docType}, mimeType: ${_this.mimeType}, sizeBytes: ${_this.sizeBytes}, subjectId: ${_this.subjectId}, documentDate: ${_this.documentDate}, localUriHint: ${_this.localUriHint}, language: ${_this.language})';
 }
 
 
@@ -664,7 +684,7 @@ class _$DocumentCreateRequestCopyWithImpl<$Res>
 /// Create a copy of DocumentCreateRequest
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? title = null,Object? docType = null,Object? mimeType = null,Object? sizeBytes = null,Object? subjectId = freezed,Object? documentDate = freezed,Object? localUriHint = freezed,Object? language = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(DocumentCreateRequest(
 title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,docType: null == docType ? _self.docType : docType // ignore: cast_nullable_to_non_nullable
 as DocumentType,mimeType: null == mimeType ? _self.mimeType : mimeType // ignore: cast_nullable_to_non_nullable
@@ -839,16 +859,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentCreateRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.language, language) || other.language == language));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentCreateRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.docType, docType) || other.docType == docType)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.documentDate, documentDate) || other.documentDate == documentDate)&&(identical(other.localUriHint, localUriHint) || other.localUriHint == localUriHint)&&(identical(other.language, language) || other.language == language));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,title,docType,mimeType,sizeBytes,subjectId,documentDate,localUriHint,language);
+int get hashCode {
+    return Object.hash(runtimeType,title,docType,mimeType,sizeBytes,subjectId,documentDate,localUriHint,language);
+}
 
 @override
 String toString() {
-  return 'DocumentCreateRequest(title: $title, docType: $docType, mimeType: $mimeType, sizeBytes: $sizeBytes, subjectId: $subjectId, documentDate: $documentDate, localUriHint: $localUriHint, language: $language)';
+    return 'DocumentCreateRequest(title: $title, docType: $docType, mimeType: $mimeType, sizeBytes: $sizeBytes, subjectId: $subjectId, documentDate: $documentDate, localUriHint: $localUriHint, language: $language)';
 }
 
 
@@ -910,16 +932,21 @@ $DocumentStatusUpdateCopyWith<DocumentStatusUpdate> get copyWith => _$DocumentSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentStatusUpdate&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status));
+  final _this = this as DocumentStatusUpdate;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentStatusUpdate&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.status, _this.status) || other.status == _this.status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,status);
+int get hashCode {
+  final _this = this as DocumentStatusUpdate;
+  return Object.hash(runtimeType,_this.id,_this.status);
+}
 
 @override
 String toString() {
-  return 'DocumentStatusUpdate(id: $id, status: $status)';
+  final _this = this as DocumentStatusUpdate;
+  return 'DocumentStatusUpdate(id: ${_this.id}, status: ${_this.status})';
 }
 
 
@@ -948,7 +975,7 @@ class _$DocumentStatusUpdateCopyWithImpl<$Res>
 /// Create a copy of DocumentStatusUpdate
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? status = null,}) {
-  return _then(_self.copyWith(
+  return _then(DocumentStatusUpdate(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as DocumentStatus,
@@ -1111,16 +1138,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentStatusUpdate&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentStatusUpdate&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,status);
+int get hashCode {
+    return Object.hash(runtimeType,id,status);
+}
 
 @override
 String toString() {
-  return 'DocumentStatusUpdate(id: $id, status: $status)';
+    return 'DocumentStatusUpdate(id: $id, status: $status)';
 }
 
 

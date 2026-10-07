@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'timeline_filters.dart';
@@ -9,6 +9,7 @@ part of 'timeline_filters.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $TimelineFiltersCopyWith<TimelineFilters> get copyWith => _$TimelineFiltersCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TimelineFilters&&const DeepCollectionEquality().equals(other.types, types)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&(identical(other.tag, tag) || other.tag == tag)&&(identical(other.query, query) || other.query == query));
+  final _this = this as TimelineFilters;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TimelineFilters&&const DeepCollectionEquality().equals(other.types, _this.types)&&(identical(other.from, _this.from) || other.from == _this.from)&&(identical(other.to, _this.to) || other.to == _this.to)&&(identical(other.tag, _this.tag) || other.tag == _this.tag)&&(identical(other.query, _this.query) || other.query == _this.query));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(types),from,to,tag,query);
+int get hashCode {
+  final _this = this as TimelineFilters;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.types),_this.from,_this.to,_this.tag,_this.query);
+}
 
 @override
 String toString() {
-  return 'TimelineFilters(types: $types, from: $from, to: $to, tag: $tag, query: $query)';
+  final _this = this as TimelineFilters;
+  return 'TimelineFilters(types: ${_this.types}, from: ${_this.from}, to: ${_this.to}, tag: ${_this.tag}, query: ${_this.query})';
 }
 
 
@@ -63,7 +69,7 @@ class _$TimelineFiltersCopyWithImpl<$Res>
 /// Create a copy of TimelineFilters
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? types = null,Object? from = freezed,Object? to = freezed,Object? tag = null,Object? query = null,}) {
-  return _then(_self.copyWith(
+  return _then(TimelineFilters(
 types: null == types ? _self.types : types // ignore: cast_nullable_to_non_nullable
 as Set<MedicalEventType>,from: freezed == from ? _self.from : from // ignore: cast_nullable_to_non_nullable
 as DateTime?,to: freezed == to ? _self.to : to // ignore: cast_nullable_to_non_nullable
@@ -210,7 +216,7 @@ return $default(_that.types,_that.from,_that.to,_that.tag,_that.query);case _:
 
 
 class _TimelineFilters implements TimelineFilters {
-  const _TimelineFilters({final  Set<MedicalEventType> types = const <MedicalEventType>{}, this.from, this.to, this.tag = '', this.query = ''}): _types = types;
+  const _TimelineFilters({ Set<MedicalEventType> types = const <MedicalEventType>{}, this.from, this.to, this.tag = '', this.query = ''}): _types = types;
   
 
  final  Set<MedicalEventType> _types;
@@ -235,16 +241,18 @@ _$TimelineFiltersCopyWith<_TimelineFilters> get copyWith => __$TimelineFiltersCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TimelineFilters&&const DeepCollectionEquality().equals(other._types, _types)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&(identical(other.tag, tag) || other.tag == tag)&&(identical(other.query, query) || other.query == query));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TimelineFilters&&const DeepCollectionEquality().equals(other.types, _types)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&(identical(other.tag, tag) || other.tag == tag)&&(identical(other.query, query) || other.query == query));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_types),from,to,tag,query);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_types),from,to,tag,query);
+}
 
 @override
 String toString() {
-  return 'TimelineFilters(types: $types, from: $from, to: $to, tag: $tag, query: $query)';
+    return 'TimelineFilters(types: $types, from: $from, to: $to, tag: $tag, query: $query)';
 }
 
 

@@ -34,7 +34,7 @@ safe_diagnostics() {
     echo "Production smoke service state:" >&2
     "${compose[@]}" ps >&2 || true
     echo "Selected privacy-safe infrastructure logs:" >&2
-    "${compose[@]}" logs --no-color --tail=40 db redis clamav 2>&1 \
+    "${compose[@]}" logs --no-color --tail=40 db redis clamav garage-proxy 2>&1 \
       | sed -E 's#(postgres(ql)?://)[^@[:space:]]+@#\1[REDACTED]@#g' >&2 || true
   fi
 }
@@ -182,6 +182,34 @@ assert_service_environment_allowlists() {
   fi
 }
 
+assert_service_secret_allowlists() {
+  local service
+  local expected
+  local actual
+  for service in api worker garage-proxy; do
+    case "${service}" in
+      api)
+        expected=$'garage_deletion_access_key\ngarage_deletion_secret_key\ngarage_read_access_key\ngarage_read_secret_key\ngarage_upload_access_key\ngarage_upload_secret_key\noriginal_master_key\nstorage_ca_certificate'
+        ;;
+      worker)
+        expected=$'garage_deletion_access_key\ngarage_deletion_secret_key\ngarage_processing_access_key\ngarage_processing_secret_key\noriginal_master_key\nstorage_ca_certificate'
+        ;;
+      garage-proxy)
+        expected=$'storage_tls_certificate\nstorage_tls_private_key'
+        ;;
+    esac
+    actual="$("${compose[@]}" exec -T "${service}" sh -c '
+      for file in /run/secrets/*; do
+        test -r "$file" && test "$(stat -c %a "$file")" = 400 || exit 1
+        basename "$file"
+      done' | LC_ALL=C sort)"
+    if [[ "${actual}" != "${expected}" ]]; then
+      echo "${service} has an unexpected secret allowlist or unreadable secrets." >&2
+      return 1
+    fi
+  done
+}
+
 assert_dirty_deploy_preflights() {
   local output
   local tracked_file="${smoke_repo}/backend/deploy/ovh/README.md"
@@ -232,6 +260,7 @@ run_cycle() {
   wait_for_configured_health
   assert_no_public_data_ports
   assert_service_environment_allowlists
+  assert_service_secret_allowlists
 
   proxy_uid="$("${compose[@]}" exec -T garage-proxy id -u)"
   if [[ "${proxy_uid}" != "101" ]]; then
