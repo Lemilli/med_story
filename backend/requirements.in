@@ -4,17 +4,17 @@
 
 # Stay on the supported Django 5.2 LTS line for the Python 3.12 runtime.
 Django>=5.2.17,<5.3
-djangorestframework>=3.17.2,<3.18
+djangorestframework>=3.18.3,<3.19
 djangorestframework-simplejwt>=5.5.1,<5.6
 drf-spectacular>=0.30,<0.31
-django-environ>=0.11,<0.12
-django-cors-headers>=4.4,<4.5
-psycopg[binary]>=3.2,<3.3
-celery>=5.4,<5.5
-redis>=5.0,<5.1
-argon2-cffi>=23.1,<24.0
-gunicorn>=22.0,<23.0
-openai>=1.95,<2.0
+django-environ>=0.14.0,<0.15
+django-cors-headers>=4.9.0,<4.10
+psycopg[binary]>=3.3.6,<3.4
+celery>=5.6.3,<5.7
+redis>=8.1.0,<8.2
+argon2-cffi>=25.1.0,<26.0
+gunicorn>=26.2.0,<27.0
+openai>=3.26.0,<4.0
 reportlab>=5.0.1,<6.0
 boto3>=1.43.100,<2.0
 aws-encryption-sdk>=4.0.7,<5.0
