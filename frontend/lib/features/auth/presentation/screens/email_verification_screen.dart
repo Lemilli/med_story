@@ -71,7 +71,7 @@ class _EmailVerificationScreenState
                     const Icon(
                       Icons.mark_email_read_outlined,
                       size: 44,
-                      color: AppColors.deepClinicalBlue,
+                      color: AppColors.cobalt,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     Text(
@@ -80,7 +80,7 @@ class _EmailVerificationScreenState
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(
                             color: AppColors.patientInk,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w600,
                           ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -208,11 +208,9 @@ class _StatusMessage extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.quietSurface,
           border: Border.all(
-            color: isError
-                ? AppColors.controlledCrimson
-                : AppColors.clinicalLine,
+            color: isError ? AppColors.error : AppColors.clinicalLine,
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),

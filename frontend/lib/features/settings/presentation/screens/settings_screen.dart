@@ -130,53 +130,68 @@ class _ProfileHeader extends StatelessWidget {
         ? '?'
         : displayName.trim().characters.first.toUpperCase();
 
+    final avatar = CircleAvatar(
+      radius: 28,
+      backgroundColor: AppColors.selectedSurface,
+      foregroundColor: AppColors.cobalt,
+      child: Text(
+        initial,
+        style: Theme.of(context).textTheme.titleLarge
+            ?.copyWith(fontWeight: FontWeight.w600),
+      ),
+    );
+    final details = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.settingsTitle,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            color: AppColors.patientInk,
+            fontWeight: FontWeight.w600,
+            height: 1.08,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          displayName,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: AppColors.patientInk,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          user.email,
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: AppColors.secondaryInk),
+        ),
+      ],
+    );
     return Semantics(
       header: true,
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: AppColors.selectedSurface,
-            foregroundColor: AppColors.controlledCrimson,
-            child: Text(
-              initial,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stackProfile =
+              constraints.maxWidth < 320 &&
+              MediaQuery.textScalerOf(context).scale(16) >= 20;
+          if (stackProfile) {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.settingsTitle,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.patientInk,
-                    fontWeight: FontWeight.w900,
-                    height: 1.08,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  displayName,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.patientInk,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  user.email,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.secondaryInk,
-                  ),
-                ),
+                avatar,
+                const SizedBox(height: AppSpacing.lg),
+                details,
               ],
-            ),
-          ),
-        ],
+            );
+          }
+          return Row(
+            children: [
+              avatar,
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(child: details),
+            ],
+          );
+        },
       ),
     );
   }
@@ -202,15 +217,15 @@ class _SettingsGroup extends StatelessWidget {
             title,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: AppColors.secondaryInk,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
         Material(
-          color: AppColors.quietSurface,
+          color: AppColors.clinicalWhite,
           shape: RoundedRectangleBorder(
             side: const BorderSide(color: AppColors.clinicalLine),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(4),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(children: children),
@@ -248,10 +263,8 @@ class _PrivacyDisclosureState extends State<_PrivacyDisclosure> {
       onTap: () => setState(() => _expanded = !_expanded),
       expandedChild: Text(
         l10n.settingsPrivacyNoteDescription,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: AppColors.secondaryInk,
-          height: 1.4,
-        ),
+        style: Theme.of(context).textTheme.bodyMedium
+            ?.copyWith(color: AppColors.secondaryInk, height: 1.4),
       ),
     );
   }
@@ -389,7 +402,7 @@ class _DisclosureRow extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(icon, color: AppColors.deepClinicalBlue),
+                  Icon(icon, color: AppColors.cobalt),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
@@ -400,7 +413,7 @@ class _DisclosureRow extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 color: AppColors.patientInk,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w600,
                               ),
                         ),
                         const SizedBox(height: 2),
@@ -458,18 +471,19 @@ class _MetricRow extends StatelessWidget {
       Expanded(
         child: Text(
           label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppColors.secondaryInk),
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: AppColors.secondaryInk),
         ),
       ),
       const SizedBox(width: AppSpacing.md),
-      Text(
-        value,
-        textAlign: TextAlign.end,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: AppColors.patientInk,
-          fontWeight: FontWeight.w800,
+      Flexible(
+        child: Text(
+          value,
+          textAlign: TextAlign.end,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.patientInk,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     ],
@@ -488,9 +502,8 @@ class _SettingsRetry extends StatelessWidget {
     children: [
       Text(
         message,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(color: AppColors.secondaryInk),
+        style: Theme.of(context).textTheme.bodyMedium
+            ?.copyWith(color: AppColors.secondaryInk),
       ),
       const SizedBox(height: AppSpacing.sm),
       OutlinedButton(
@@ -537,15 +550,12 @@ class _LanguageOption extends ConsumerWidget {
                 selected
                     ? Icons.check_circle_rounded
                     : Icons.radio_button_unchecked_rounded,
-                color: selected
-                    ? AppColors.deepClinicalBlue
-                    : AppColors.secondaryInk,
+                color: selected ? AppColors.cobalt : AppColors.secondaryInk,
               ),
         title: Text(
           label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(context).textTheme.bodyLarge
+              ?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -615,9 +625,7 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive
-        ? AppColors.controlledCrimson
-        : AppColors.deepClinicalBlue;
+    final color = destructive ? AppColors.error : AppColors.cobalt;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -644,18 +652,14 @@ class _ActionRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(color: color, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     description,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.secondaryInk,
-                      height: 1.35,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: AppColors.secondaryInk, height: 1.35),
                   ),
                 ],
               ),
@@ -699,10 +703,8 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           Text(
             l10n.settingsDeleteAccountDialogMessage,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.secondaryInk,
-              height: 1.35,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: AppColors.secondaryInk, height: 1.35),
           ),
           const SizedBox(height: AppSpacing.lg),
           TextField(
@@ -718,9 +720,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
       ),
       primaryAction: FilledButton(
         onPressed: canDelete ? () => Navigator.of(context).pop(true) : null,
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.controlledCrimson,
-        ),
+        style: FilledButton.styleFrom(backgroundColor: AppColors.error),
         child: Text(l10n.settingsDeleteAccountConfirmAction),
       ),
       secondaryAction: TextButton(

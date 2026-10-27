@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../documents/data/document_api.dart';
@@ -80,7 +81,11 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(l10n.writeNoteDescription),
+                Text(
+                  l10n.writeNoteDescription,
+                  style: Theme.of(context).textTheme.bodyLarge
+                      ?.copyWith(color: AppColors.secondaryInk, height: 1.4),
+                ),
                 const SizedBox(height: AppSpacing.md),
                 if (_message != null) ...[
                   Text(
@@ -94,7 +99,24 @@ class _QuickNoteScreenState extends ConsumerState<QuickNoteScreen> {
                 if (_transcribing) const LinearProgressIndicator(),
                 if (recording == true) ...[
                   const SizedBox(height: AppSpacing.sm),
-                  Text(l10n.voiceRecordingInProgress),
+                  DecoratedBox(
+                    decoration: const BoxDecoration(
+                      color: AppColors.selectedSurface,
+                      border: Border(
+                        left: BorderSide(color: AppColors.cobalt, width: 2),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Text(
+                        l10n.voiceRecordingInProgress,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.cobalt,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
                 const SizedBox(height: AppSpacing.sm),
                 Expanded(

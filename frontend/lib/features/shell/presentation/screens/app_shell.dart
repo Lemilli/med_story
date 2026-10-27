@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../core/storage/secure_token_storage.dart';
+import '../../../../core/widgets/clear_index_navigation_bar.dart';
 import '../../../../l10n/l10n.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -27,37 +28,11 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
     return Scaffold(
       body: widget.navigationShell,
-      bottomNavigationBar: DecoratedBox(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.clinicalLine)),
-        ),
-        child: NavigationBar(
-          selectedIndex: widget.navigationShell.currentIndex,
-          backgroundColor: AppColors.clinicalWhite,
-          indicatorColor: AppColors.quietSurface,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          onDestinationSelected: (index) => _goToBranch(context, index),
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.history_rounded),
-              label: l10n.navTimeline,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.add_circle_outline_rounded),
-              selectedIcon: const Icon(Icons.add_circle_rounded),
-              label: l10n.navCapture,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.assignment_outlined),
-              selectedIcon: const Icon(Icons.assignment_rounded),
-              label: l10n.navSummary,
-            ),
-          ],
-        ),
+      bottomNavigationBar: ClearIndexNavigationBar(
+        selectedIndex: widget.navigationShell.currentIndex,
+        onDestinationSelected: (index) => _goToBranch(context, index),
       ),
     );
   }
@@ -79,7 +54,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       isScrollControlled: true,
       backgroundColor: AppColors.clinicalWhite,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       builder: (sheetContext) => _OnboardingSheet(
         onStart: () {
@@ -137,7 +112,7 @@ class _OnboardingSheet extends StatelessWidget {
               child: const ExcludeSemantics(
                 child: Icon(
                   Icons.auto_stories_rounded,
-                  color: AppColors.controlledCrimson,
+                  color: AppColors.cobalt,
                   size: 30,
                 ),
               ),

@@ -1,0 +1,16 @@
+/* Clear Index v1.0. Derived from original concept 03. Independent of the reference bundle. */
+:root {
+ --ci-font:'IBM Plex Sans',sans-serif;
+ --ci-white:#FFFFFF;--ci-ink:#233043;--ci-muted:#5F6C7E;--ci-cobalt:#2757BD;
+ --ci-pale:#EDF2FC;--ci-subtle:#F3F6FA;--ci-line:#DCE2EB;--ci-input-line:#8997AA;
+ --ci-danger:#B42332;--ci-danger-bg:#FFF1F2;--ci-success:#23634B;--ci-success-bg:#EFF7F2;
+ --ci-warning:#78561D;--ci-warning-bg:#FBF6E9;
+ --ci-border:1px;--ci-rule:2px;--ci-radius:4px;--ci-sheet-radius:12px;
+ --ci-space-1:4px;--ci-space-2:8px;--ci-space-3:12px;--ci-space-4:16px;--ci-space-5:20px;--ci-space-6:24px;--ci-space-8:32px;
+ --ci-scale:1;--ci-title:32px;--ci-heading:24px;--ci-subheading:20px;--ci-event:18px;--ci-body:16px;--ci-meta:14px;--ci-caption:13px;
+ --ci-leading:1.55;--ci-content-pad:24px;--ci-hit:48px;
+ --ci-nav-columns:3;--ci-nav-gap:8px;--ci-nav-pad:8px 16px 4px;--ci-nav-item-height:64px;--ci-nav-item-gap:5px;--ci-nav-icon:22px;--ci-nav-wrap-width:52px;--ci-nav-wrap-height:28px;--ci-nav-add-height:32px;--ci-nav-add-radius:6px;--ci-nav-label:12px;
+ --ci-enter:200ms;--ci-exit:140ms;
+ --phone-screen-bg:var(--ci-white);--phone-system-fg:var(--ci-ink);
+}
+.ci-large {--ci-scale:1.5;}

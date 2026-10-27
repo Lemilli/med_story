@@ -23,7 +23,11 @@ class AppAlertDialog extends StatelessWidget {
       backgroundColor: AppColors.clinicalWhite,
       surfaceTintColor: AppColors.clinicalWhite,
       insetPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.clinicalLine),
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
         child: SingleChildScrollView(
@@ -43,17 +47,14 @@ class AppAlertDialog extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: AppColors.patientInk,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 content,
                 const SizedBox(height: AppSpacing.lg),
                 primaryAction,
-                Align(
-                  alignment: Alignment.center,
-                  child: secondaryAction,
-                ),
+                Align(alignment: Alignment.center, child: secondaryAction),
               ],
             ),
           ),

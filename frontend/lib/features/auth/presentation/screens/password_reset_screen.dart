@@ -65,7 +65,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                             style: Theme.of(context).textTheme.headlineMedium
                                 ?.copyWith(
                                   color: AppColors.patientInk,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w600,
                                 ),
                           ),
                           const SizedBox(height: AppSpacing.sm),
@@ -240,7 +240,7 @@ class _CompleteView extends StatelessWidget {
         const Icon(
           Icons.check_circle_outline_rounded,
           size: 48,
-          color: AppColors.deepClinicalBlue,
+          color: AppColors.cobalt,
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
@@ -248,7 +248,7 @@ class _CompleteView extends StatelessWidget {
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: AppColors.patientInk,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: AppSpacing.sm),

@@ -89,6 +89,8 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
               const SizedBox(height: AppSpacing.md),
               DropdownButtonFormField<MedicalEventType>(
                 initialValue: _eventType,
+                isExpanded: true,
+                itemHeight: null,
                 decoration: InputDecoration(labelText: l10n.eventTypeLabel),
                 items: MedicalEventType.values
                     .map(
@@ -292,7 +294,7 @@ class _ErrorNotice extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.quietSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: AppColors.clinicalLine),
       ),
       child: Padding(

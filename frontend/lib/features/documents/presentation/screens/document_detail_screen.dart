@@ -65,8 +65,8 @@ class _DocumentDetailBody extends ConsumerWidget {
               document.title,
               style: textTheme.headlineMedium?.copyWith(
                 color: AppColors.patientInk,
-                fontWeight: FontWeight.w900,
-                height: 1.08,
+                fontWeight: FontWeight.w500,
+                height: 1.2,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -147,7 +147,7 @@ class _DocumentDetailBody extends ConsumerWidget {
                   children: [
                     const Icon(
                       Icons.error_outline_rounded,
-                      color: AppColors.controlledCrimson,
+                      color: AppColors.error,
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
@@ -208,6 +208,7 @@ class _DocumentDetailBody extends ConsumerWidget {
             ],
             OutlinedButton.icon(
               onPressed: () => _confirmDelete(context, ref),
+              style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
               icon: const Icon(Icons.delete_outline_rounded),
               label: Text(l10n.documentDeleteAction),
             ),
@@ -238,6 +239,7 @@ class _DocumentDetailBody extends ConsumerWidget {
           ),
         ),
         primaryAction: FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: AppColors.error),
           onPressed: () => Navigator.of(dialogContext).pop(true),
           child: Text(l10n.documentDeleteAction),
         ),
@@ -287,18 +289,19 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 136,
+          Expanded(
+            flex: 2,
             child: Text(
               label,
               style: textTheme.bodyMedium?.copyWith(
                 color: AppColors.secondaryInk,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
+            flex: 3,
             child: Text(
               value,
               style: textTheme.bodyMedium?.copyWith(
@@ -322,7 +325,7 @@ class _StatusBadge extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.quietSurface,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: AppColors.clinicalLine),
       ),
       child: Padding(
@@ -344,10 +347,11 @@ class _Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.quietSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.clinicalLine),
+      decoration: const BoxDecoration(
+        color: AppColors.clinicalWhite,
+        border: Border(
+          left: BorderSide(color: AppColors.clinicalLine, width: 2),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),

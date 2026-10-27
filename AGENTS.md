@@ -115,6 +115,9 @@
 - Use `docs/mvp-roadmap.md` for phase scope and status.
 - `PRODUCT.md` and `DESIGN.md` may contain additional product/design context outside the docs folder.
 
+## Design Tooling
+- Always use Local Codex for OpenDesign work unless the user explicitly requests a different mode.
+
 ## Editing Hygiene
 - Keep changes scoped; do not revert unrelated dirty work.
 - Use `apply_patch` for manual file edits.

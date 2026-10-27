@@ -33,7 +33,7 @@ Open the result to inspect the AI analysis, make corrections, and return to the 
   </tr>
   <tr>
     <td align="center"><img src="assets/screenshots/capture.png" width="280" alt="Capture options for photos, document scans, files, and notes"></td>
-    <td align="center"><img src="assets/screenshots/event-detail.png" width="280" alt="A symptom record preserving the original note and context for a migraine pattern review"></td>
+    <td align="center"><img src="assets/screenshots/event-detail.png" width="280" alt="A migraine record with the original voice transcript and organized details"></td>
   </tr>
 </table>
 
@@ -47,12 +47,12 @@ Search your records by keyword and narrow the timeline by year or record type. K
     <th>Arrive with your story in order</th>
   </tr>
   <tr>
-    <td align="center"><img src="assets/screenshots/search.png" width="280" alt="Search results for migraine showing related symptom and medication records"></td>
+    <td align="center"><img src="assets/screenshots/search.png" width="280" alt="Search results for migraine showing related symptom records and visit questions"></td>
     <td align="center"><img src="assets/screenshots/visit-preparation.png" width="280" alt="Visit preparation summary with recorded concerns and links to source events"></td>
   </tr>
 </table>
 
-*Real app screenshots using demo data. Available in English and Russian.*
+*Clear Index screenshots rendered from the app’s Flutter widgets with fictional demo data. Available in English and Russian. [Screenshot details and regeneration](assets/screenshots/README.md).*
 
 MedStory organizes and explains recorded information; it does not diagnose conditions or recommend treatment. AI output can be inspected and edited. Private originals are encrypted on the server, access is scoped to your account, and account deletion is available in settings.
 

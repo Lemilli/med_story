@@ -13,8 +13,8 @@ enum AuthFormMode { login, register }
 class _RegistrationColors {
   const _RegistrationColors._();
 
-  static const danger = Color(0xFF9F3D00);
-  static const dangerSurface = Color(0xFFFFF2E4);
+  static const danger = AppColors.error;
+  static const dangerSurface = Color(0xFFFFF1F2);
 }
 
 class AuthFormScreen extends ConsumerStatefulWidget {
@@ -233,7 +233,7 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
                                         color: AppColors.patientInk,
-                                        fontWeight: FontWeight.w800,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                 ),
                                 const SizedBox(height: AppSpacing.xs),
@@ -389,24 +389,24 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
   ThemeData _registrationTheme(BuildContext context) {
     final base = Theme.of(context);
     final fieldBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(13),
-      borderSide: const BorderSide(color: AppColors.clinicalLine, width: 1.5),
+      borderRadius: BorderRadius.circular(4),
+      borderSide: const BorderSide(color: AppColors.inputOutline),
     );
 
     return base.copyWith(
       colorScheme: base.colorScheme.copyWith(
-        primary: AppColors.deepClinicalBlue,
+        primary: AppColors.cobalt,
         error: _RegistrationColors.danger,
       ),
       textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: AppColors.deepClinicalBlue,
-        selectionColor: Color(0x3363B3FF),
-        selectionHandleColor: AppColors.deepClinicalBlue,
+        cursorColor: AppColors.cobalt,
+        selectionColor: Color(0x332757BD),
+        selectionHandleColor: AppColors.cobalt,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.clinicalWhite,
-        hintStyle: const TextStyle(color: Color(0xFF8994A6)),
+        hintStyle: const TextStyle(color: AppColors.secondaryInk),
         suffixIconColor: AppColors.secondaryInk,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
@@ -419,10 +419,7 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
           borderSide: const BorderSide(color: AppColors.clinicalLine),
         ),
         focusedBorder: fieldBorder.copyWith(
-          borderSide: const BorderSide(
-            color: AppColors.deepClinicalBlue,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: AppColors.cobalt, width: 1.5),
         ),
         errorBorder: fieldBorder.copyWith(
           borderSide: const BorderSide(
@@ -586,7 +583,7 @@ class _RegistrationField extends StatelessWidget {
                   label,
                   style: textTheme.bodyMedium?.copyWith(
                     color: AppColors.patientInk,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -658,16 +655,16 @@ class _ConsentGroup extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: AppColors.clinicalWhite,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(4),
         ),
         foregroundDecoration: BoxDecoration(
           border: Border.all(
             color: showError
                 ? _RegistrationColors.danger
                 : AppColors.clinicalLine,
-            width: 1.5,
+            width: 1,
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: Column(
           children: [
@@ -736,10 +733,10 @@ class _ConsentChoice extends StatelessWidget {
               value: value,
               enabled: enabled,
               focusNode: focusNode,
-              activeColor: AppColors.deepClinicalBlue,
+              activeColor: AppColors.cobalt,
               checkColor: AppColors.clinicalWhite,
               checkboxShape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(4),
               ),
               side: const BorderSide(color: AppColors.secondaryInk, width: 1.5),
               onChanged: (next) => onChanged(next ?? false),
@@ -755,7 +752,7 @@ class _ConsentChoice extends StatelessWidget {
                     title,
                     style: textTheme.bodyMedium?.copyWith(
                       color: AppColors.patientInk,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       height: 1.3,
                     ),
                   ),
@@ -763,8 +760,8 @@ class _ConsentChoice extends StatelessWidget {
                     Text(
                       badge!,
                       style: textTheme.labelSmall?.copyWith(
-                        color: _RegistrationColors.danger,
-                        fontWeight: FontWeight.w800,
+                        color: AppColors.secondaryInk,
+                        fontWeight: FontWeight.w600,
                         letterSpacing: 0.45,
                       ),
                     ),
@@ -789,7 +786,7 @@ class _ConsentChoice extends StatelessWidget {
                   TextButton.icon(
                     onPressed: enabled ? onToggleDetails : null,
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.controlledCrimson,
+                      foregroundColor: AppColors.cobalt,
                       minimumSize: const Size(48, 48),
                       padding: EdgeInsets.zero,
                       tapTargetSize: MaterialTapTargetSize.padded,
@@ -804,7 +801,7 @@ class _ConsentChoice extends StatelessWidget {
                     ),
                     label: Text(
                       detailsAction,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
                   if (showDetails)
@@ -836,7 +833,9 @@ class _DisclosureNotice extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: AppColors.quietSurface,
-          borderRadius: BorderRadius.circular(10),
+          border: const Border(
+            left: BorderSide(color: AppColors.clinicalLine, width: 2),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -922,7 +921,7 @@ class _RegistrationActions extends StatelessWidget {
                   TextButton(
                     onPressed: isLoading ? null : onLogin,
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.controlledCrimson,
+                      foregroundColor: AppColors.cobalt,
                       minimumSize: const Size.fromHeight(48),
                     ),
                     child: Text(l10n.authAlreadyHaveAccountAction),
@@ -952,7 +951,7 @@ class _RegistrationHeader extends StatelessWidget {
           l10n.authRegisterTitle,
           style: textTheme.headlineMedium?.copyWith(
             color: AppColors.patientInk,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
             height: 1.12,
             letterSpacing: -0.6,
           ),
@@ -1020,7 +1019,7 @@ class _AuthHeader extends StatelessWidget {
           l10n.authLoginTitle,
           style: textTheme.headlineMedium?.copyWith(
             color: AppColors.patientInk,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w600,
             height: 1.1,
           ),
         ),
@@ -1069,9 +1068,7 @@ class _AuthErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final errorColor = Theme.of(context).colorScheme.error;
-    final errorSurface = errorColor == _RegistrationColors.danger
-        ? _RegistrationColors.dangerSurface
-        : const Color(0xFFFFF6F1);
+    const errorSurface = _RegistrationColors.dangerSurface;
 
     return Semantics(
       container: true,
@@ -1080,8 +1077,8 @@ class _AuthErrorBanner extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: errorSurface,
-          border: Border.all(color: const Color(0xFFD6A47A)),
-          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: errorColor),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -1094,7 +1091,7 @@ class _AuthErrorBanner extends StatelessWidget {
                 child: Text(
                   message,
                   style: textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF6B3626),
+                    color: errorColor,
                     fontWeight: FontWeight.w600,
                     height: 1.4,
                   ),

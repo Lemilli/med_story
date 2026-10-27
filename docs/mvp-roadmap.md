@@ -153,6 +153,17 @@ reset instead of converted.
   events during an explicit refresh; it is treated as untrusted input.
 - First-use onboarding reinforces the organizer-only boundary; reminders, caregiver mode, bulk import, and semantic search remain deferred.
 
+### Interface Redesign — Clear Index
+**Status:** Safe Flutter visual implementation completed on 28 October 2026, following the approved prototype. Existing feature behavior remains authoritative.
+- Selected Clear Index's white/slate/cobalt palette, IBM Plex Sans typography, and date-led timeline, with Quiet Ledger's compact vertical bottom-navigation geometry.
+- The OpenDesign prototype covers 56 screens, sheets, and states, with a shared component system and six connected synthetic journeys across access, history/review, capture, documents/events, visit preparation, and account settings.
+- Browser-renderer verification covered desktop, 375px/390px widths, and representative 150% text layouts. These are prototype checks, not Flutter or production acceptance tests.
+- [Design handoff](design/clear-index/README.md) records exact tokens, navigation dimensions, route references, proposed screens requiring later wiring, and the visual overview. The original four-concept study is preserved.
+- Flutter now uses the white/slate/cobalt palette, flat controls, date-led ruled timeline, restrained hierarchy, and compact vertical root navigation. Existing auth, capture, notes/voice, events, documents/viewer, visit preparation/summary, settings, and overlays are restyled in place.
+- The system font remains in use because the available IBM Plex Sans subsets cover Latin only. Dedicated review inbox, explanation, and revision comparison remain unwired; prototype flow changes are deferred to preserve working behavior.
+- [Flutter implementation record](design/clear-index/FLUTTER-IMPLEMENTATION.md) gives screen coverage, screenshots, verification, and intentional deferrals. No backend, API, model, AI, dependency, or route changes are part of this milestone.
+- Flutter 3.47.6 verification: analysis has no issues; 84 tests pass; 12 opt-in Flutter render checks pass. Russian narrow/large-text regressions are included. Device and live service acceptance remain outstanding.
+
 ## 4. Dependency Order
 
 ```

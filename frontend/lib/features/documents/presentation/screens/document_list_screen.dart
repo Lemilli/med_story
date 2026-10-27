@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../subjects/presentation/controllers/subject_controller.dart';
 import '../../data/document_repository.dart';
 import '../../data/document_api.dart';
 import '../../domain/medical_document.dart';
+import '../document_l10n.dart';
 
 class DocumentListScreen extends ConsumerStatefulWidget {
   const DocumentListScreen({super.key});
@@ -86,25 +88,26 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
                       AppSpacing.xxxl,
                     ),
                     itemCount: documents.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: AppSpacing.sm),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (_, index) {
                       final document = documents[index];
                       return ListTile(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
                         ),
-                        tileColor: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerLowest,
+                        tileColor: AppColors.clinicalWhite,
                         leading: Icon(
                           document.docType == DocumentType.audio
                               ? Icons.mic_none_rounded
                               : Icons.description_outlined,
                         ),
-                        title: Text(document.title),
+                        title: Text(
+                          document.title,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w500),
+                        ),
                         subtitle: Text(
-                          '${document.status.apiName} · ${document.eventCount}',
+                          '${document.status.label(l10n)} · ${document.eventCount}',
                         ),
                         onTap: () => context.push('/documents/${document.id}'),
                       );
@@ -139,7 +142,7 @@ class _DocumentListScreenState extends ConsumerState<DocumentListScreen> {
           ),
           for (final status in DocumentStatus.values)
             ListTile(
-              title: Text(status.apiName),
+              title: Text(status.label(context.l10n)),
               onTap: () => Navigator.pop(context, status),
             ),
         ],

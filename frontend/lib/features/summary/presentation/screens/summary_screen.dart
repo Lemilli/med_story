@@ -119,8 +119,8 @@ class _SummaryHeader extends ConsumerWidget {
           l10n.summaryHeadline,
           style: textTheme.headlineMedium?.copyWith(
             color: AppColors.patientInk,
-            fontWeight: FontWeight.w900,
-            height: 1.08,
+            fontWeight: FontWeight.w600,
+            height: 1.2,
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -184,8 +184,6 @@ class _SummaryStatusRow extends StatelessWidget {
                     Expanded(
                       child: Text(
                         updatedAt,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.secondaryInk,
                           fontWeight: FontWeight.w600,
@@ -225,12 +223,13 @@ class _VisitReasonRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(4),
       onTap: enabled ? () => _editReason(context, ref, reason) : null,
       child: Ink(
         decoration: BoxDecoration(
           color: AppColors.quietSurface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: AppColors.clinicalLine),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -255,14 +254,12 @@ class _VisitReasonRow extends ConsumerWidget {
                       l10n.summaryVisitReasonLabel,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: AppColors.secondaryInk,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       reason.isEmpty ? l10n.summaryVisitReasonEmpty : reason,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: reason.isEmpty
                             ? AppColors.secondaryInk
@@ -270,7 +267,7 @@ class _VisitReasonRow extends ConsumerWidget {
                         fontWeight: reason.isEmpty
                             ? FontWeight.w400
                             : FontWeight.w600,
-                        height: 1.25,
+                        height: 1.45,
                       ),
                     ),
                   ],
@@ -376,7 +373,7 @@ class _SummaryNotReady extends ConsumerWidget {
             l10n.summaryNotReadyTitle,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: AppColors.patientInk,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -434,31 +431,39 @@ class _StructuredSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.patientInk, width: 2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(section.icon, size: 21, color: AppColors.deepClinicalBlue),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Text(
-                section.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.patientInk,
-                  fontWeight: FontWeight.w900,
+            Row(
+              children: [
+                Icon(section.icon, size: 21, color: AppColors.deepClinicalBlue),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    section.title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.patientInk,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final item in section.items.take(5))
+              _SummaryItemRow(
+                item: item,
+                showSourceAction: section.showSourceAction,
+              ),
           ],
         ),
-        const SizedBox(height: AppSpacing.sm),
-        for (final item in section.items.take(5))
-          _SummaryItemRow(
-            item: item,
-            showSourceAction: section.showSourceAction,
-          ),
-      ],
+      ),
     );
   }
 }
@@ -500,8 +505,8 @@ class _SummaryItemRow extends StatelessWidget {
                   item.text,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppColors.patientInk,
-                    fontWeight: FontWeight.w600,
-                    height: 1.35,
+                    fontWeight: FontWeight.w400,
+                    height: 1.55,
                   ),
                 ),
                 if (item.detail.trim().isNotEmpty)
@@ -509,7 +514,7 @@ class _SummaryItemRow extends StatelessWidget {
                     item.detail,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.secondaryInk,
-                      height: 1.35,
+                      height: 1.55,
                     ),
                   ),
               ],
@@ -555,7 +560,7 @@ Future<void> _openSources(
               context.l10n.summarySourcesTitle,
               style: Theme.of(
                 context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
           Flexible(

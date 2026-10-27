@@ -157,6 +157,52 @@ void main() {
 
     verify(() => authRepository.deleteAccount()).called(1);
   });
+
+  testWidgets(
+    'Russian settings remain actionable at narrow width and large text',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 900);
+      tester.view.devicePixelRatio = 1;
+      tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await _pumpScreen(tester, authRepository, locale: const Locale('ru'));
+      await tester.pumpAndSettle();
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(SettingsScreen)),
+      )!;
+
+      await _scrollToText(tester, l10n.settingsLimitsTitle);
+      await tester.tap(find.text(l10n.settingsLimitsTitle));
+      await tester.pumpAndSettle();
+      await _scrollToText(tester, l10n.settingsAiUnitsValue(8));
+      expect(tester.takeException(), isNull);
+
+      await _scrollToText(tester, l10n.settingsDeleteAccountTitle);
+      await tester.tap(find.text(l10n.settingsDeleteAccountTitle));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'delete');
+      await tester.pump();
+      final delete = find.widgetWithText(
+        FilledButton,
+        l10n.settingsDeleteAccountConfirmAction,
+      );
+      expect(tester.widget<FilledButton>(delete).onPressed, isNull);
+      final cancel = find.text(l10n.settingsDeleteAccountCancelAction);
+      await tester.ensureVisible(cancel);
+      await tester.tap(cancel);
+      await tester.pumpAndSettle();
+      verifyNever(() => authRepository.deleteAccount());
+
+      await _scrollToText(tester, l10n.authLogoutAction);
+      await tester.tap(find.text(l10n.authLogoutAction));
+      await tester.pumpAndSettle();
+      verify(() => authRepository.logout()).called(1);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 Future<void> _scrollToText(WidgetTester tester, String text) {
@@ -174,8 +220,9 @@ Future<void> _scrollToFinder(WidgetTester tester, Finder finder) async {
 
 Future<void> _pumpScreen(
   WidgetTester tester,
-  AuthRepository authRepository,
-) async {
+  AuthRepository authRepository, {
+  Locale locale = const Locale('en'),
+}) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [authRepositoryProvider.overrideWithValue(authRepository)],
@@ -183,7 +230,7 @@ Future<void> _pumpScreen(
         theme: AppTheme.light(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
+        locale: locale,
         home: const Scaffold(body: SettingsScreen()),
       ),
     ),

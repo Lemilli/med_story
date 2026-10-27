@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:med_story/app/app.dart';
 import 'package:med_story/app/theme/app_theme.dart';
 import 'package:med_story/core/storage/secure_token_storage.dart';
+import 'package:med_story/core/widgets/clear_index_navigation_bar.dart';
 import 'package:med_story/features/auth/domain/auth_models.dart';
 import 'package:med_story/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:med_story/features/settings/presentation/screens/settings_screen.dart';
@@ -41,6 +42,162 @@ class _EmptySubjectController extends SubjectController {
 }
 
 void main() {
+  testWidgets(
+    'branch state and nested route survive switching root destinations',
+    (tester) async {
+      final router = GoRouter(
+        initialLocation: '/timeline',
+        routes: [
+          StatefulShellRoute.indexedStack(
+            builder: (_, _, shell) => AppShell(navigationShell: shell),
+            branches: [
+              StatefulShellBranch(
+                routes: [
+                  GoRoute(
+                    path: '/timeline',
+                    builder: (context, _) => Column(
+                      children: [
+                        const TextField(key: Key('retained-search')),
+                        TextButton(
+                          onPressed: () => context.push('/timeline/detail'),
+                          child: const Text('Open detail'),
+                        ),
+                      ],
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'detail',
+                        builder: (_, _) => const Text('Retained detail'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              StatefulShellBranch(
+                routes: [
+                  GoRoute(
+                    path: '/capture',
+                    builder: (_, _) => const Text('Capture branch'),
+                  ),
+                ],
+              ),
+              StatefulShellBranch(
+                routes: [
+                  GoRoute(
+                    path: '/summary',
+                    builder: (_, _) => const Text('Summary branch'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            secureTokenStorageProvider.overrideWithValue(
+              const _OnboardingSeenStorage(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: AppTheme.light(),
+            routerConfig: router,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('retained-search')),
+        'User draft',
+      );
+      await tester.tap(find.text('Open detail'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+      expect(find.text('Capture branch'), findsOneWidget);
+      await tester.tap(find.text('My Story'));
+      await tester.pumpAndSettle();
+      expect(find.text('Retained detail'), findsOneWidget);
+      expect(router.canPop(), isTrue);
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.text('User draft'), findsOneWidget);
+      await tester.tap(find.text('For Visits'));
+      await tester.pumpAndSettle();
+      expect(find.text('Summary branch'), findsOneWidget);
+      await tester.tap(find.text('My Story'));
+      await tester.pumpAndSettle();
+      expect(find.text('User draft'), findsOneWidget);
+    },
+  );
+
+  for (final scale in [1.0, 2.0]) {
+    testWidgets(
+      'navigation wraps Russian labels at 320px and scale $scale with one safe inset',
+      (tester) async {
+        tester.view.physicalSize = const Size(320, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        int? selected;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('ru'),
+            home: MediaQuery(
+              data: MediaQueryData(
+                size: const Size(320, 800),
+                padding: const EdgeInsets.only(bottom: 24),
+                viewPadding: const EdgeInsets.only(bottom: 24),
+                textScaler: TextScaler.linear(scale),
+              ),
+              child: Scaffold(
+                bottomNavigationBar: ClearIndexNavigationBar(
+                  selectedIndex: 0,
+                  onDestinationSelected: (index) => selected = index,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final bar = find.byType(ClearIndexNavigationBar);
+        final localizedPosition = MaterialLocalizations.of(tester.element(bar))
+            .tabLabel(tabIndex: 1, tabCount: 3);
+        expect(
+          find.bySemanticsLabel('Моя история\n$localizedPosition'),
+          findsOneWidget,
+        );
+        expect(find.byTooltip('Моя история'), findsOneWidget);
+        final targets = find.descendant(
+          of: bar,
+          matching: find.byType(InkWell),
+        );
+        expect(targets, findsNWidgets(3));
+        for (final element in targets.evaluate()) {
+          final size = tester.getSize(find.byWidget(element.widget));
+          expect(size.width, greaterThanOrEqualTo(48));
+          expect(size.height, greaterThanOrEqualTo(64));
+        }
+        // Wrapped localized labels may grow; the device inset is added once.
+        expect(
+          tester.getSize(bar).height,
+          tester.getSize(targets.first).height + 12 + 24,
+        );
+        await tester.tap(find.text('Добавить'));
+        expect(selected, 1);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('middle navigation item opens the dedicated capture tab', (
     tester,
   ) async {
@@ -105,7 +262,9 @@ void main() {
     expect(find.text('Capture tab'), findsOneWidget);
     expect(find.byType(BottomSheet), findsNothing);
     expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      tester
+          .widget<ClearIndexNavigationBar>(find.byType(ClearIndexNavigationBar))
+          .selectedIndex,
       1,
     );
   });
@@ -141,9 +300,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(SettingsScreen), findsOneWidget);
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(ClearIndexNavigationBar), findsOneWidget);
       expect(
-        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        tester
+            .widget<ClearIndexNavigationBar>(
+              find.byType(ClearIndexNavigationBar),
+            )
+            .selectedIndex,
         0,
       );
       expect(
@@ -158,9 +321,8 @@ void main() {
 
       await tester.tap(
         find.byTooltip(
-          MaterialLocalizations.of(
-            tester.element(find.byType(SettingsScreen)),
-          ).backButtonTooltip,
+          MaterialLocalizations.of(tester.element(find.byType(SettingsScreen)))
+              .backButtonTooltip,
         ),
       );
       await tester.pumpAndSettle();
@@ -169,7 +331,7 @@ void main() {
       router.go('/settings');
       await tester.pumpAndSettle();
       expect(find.byType(SettingsScreen), findsOneWidget);
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(ClearIndexNavigationBar), findsOneWidget);
       expect(
         GoRouterState.of(tester.element(find.byType(SettingsScreen))).uri.path,
         '/timeline/settings',

@@ -68,8 +68,8 @@ class _EventDetailBody extends ConsumerWidget {
             event.title,
             style: textTheme.headlineMedium?.copyWith(
               color: AppColors.patientInk,
-              fontWeight: FontWeight.w900,
-              height: 1.08,
+              fontWeight: FontWeight.w500,
+              height: 1.2,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -77,7 +77,7 @@ class _EventDetailBody extends ConsumerWidget {
             '${event.eventType.label(l10n)} • $formattedDate',
             style: textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryInk,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -140,6 +140,9 @@ class _EventDetailBody extends ConsumerWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _confirmDelete(context, ref),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                  ),
                   icon: const Icon(Icons.delete_outline_rounded),
                   label: Text(l10n.eventDeleteAction),
                 ),
@@ -167,6 +170,7 @@ class _EventDetailBody extends ConsumerWidget {
           ),
         ),
         primaryAction: FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: AppColors.error),
           onPressed: () => Navigator.of(dialogContext).pop(true),
           child: Text(l10n.eventDeleteAction),
         ),
@@ -213,7 +217,7 @@ class _DetailSection extends StatelessWidget {
           title,
           style: textTheme.titleSmall?.copyWith(
             color: AppColors.patientInk,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -612,7 +616,7 @@ class _PageIndicator extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: AppColors.quietSurface,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(4),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -623,7 +627,7 @@ class _PageIndicator extends StatelessWidget {
               label,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: AppColors.patientInk,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -670,10 +674,11 @@ class _Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.quietSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.clinicalLine),
+      decoration: const BoxDecoration(
+        color: AppColors.clinicalWhite,
+        border: Border(
+          left: BorderSide(color: AppColors.clinicalLine, width: 2),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),

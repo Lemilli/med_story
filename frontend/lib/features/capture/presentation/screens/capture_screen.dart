@@ -81,7 +81,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               l10n.captureHeadline,
               style: textTheme.headlineLarge?.copyWith(
                 color: AppColors.patientInk,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w600,
                 letterSpacing: -0.4,
                 height: 1.05,
               ),
@@ -91,7 +91,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               l10n.captureSubtitle,
               style: textTheme.titleMedium?.copyWith(
                 color: AppColors.secondaryInk,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w400,
                 height: 1.35,
               ),
             ),
@@ -266,12 +266,10 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   }
 
   Future<void> _pickFile() async {
-    final result = await FilePicker.pickFiles(
+    final file = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'png', 'jpg', 'jpeg', 'heic', 'heif'],
-      withData: false,
     );
-    final file = result?.files.singleOrNull;
     final path = file?.path;
     if (file == null || path == null) {
       return;
@@ -280,7 +278,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       path: path,
       fileName: file.name,
       mimeType: _mimeTypeForName(file.name),
-      sizeBytes: file.size,
+      sizeBytes: file.lengthSync(),
     );
   }
 
@@ -336,9 +334,8 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
 
     final resolvedSize =
         sizeBytes ??
-        (await Future.wait(
-          sources.map((source) => File(source.path).length()),
-        )).fold<int>(0, (total, size) => total + size);
+        (await Future.wait(sources.map((source) => File(source.path).length())))
+            .fold<int>(0, (total, size) => total + size);
     if (resolvedSize > _maxDocumentBytes) {
       _showSnack(l10n.documentFileTooLargeMessage);
       return;
@@ -420,7 +417,7 @@ class _PhotoGroupingChoiceScreenState
       appBar: AppBar(),
       body: SafeArea(
         top: false,
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.xl,
             AppSpacing.sm,
@@ -432,17 +429,14 @@ class _PhotoGroupingChoiceScreenState
             children: [
               Text(
                 l10n.photoGroupingTitle,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+                style: Theme.of(context).textTheme.headlineMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 l10n.photoGroupingDescription(widget.images.length),
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.secondaryInk,
-                  height: 1.4,
-                ),
+                style: Theme.of(context).textTheme.bodyLarge
+                    ?.copyWith(color: AppColors.secondaryInk, height: 1.4),
               ),
               const SizedBox(height: AppSpacing.xl),
               _GroupingOption(
@@ -463,7 +457,7 @@ class _PhotoGroupingChoiceScreenState
                   () => _selection = _PhotoGrouping.separateDocuments,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: AppSpacing.xl),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(_selection),
                 child: Text(l10n.photoGroupingContinueAction),
@@ -498,7 +492,7 @@ class _GroupingOption extends StatelessWidget {
       selected: selected,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(4),
         child: Ink(
           padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
@@ -506,20 +500,16 @@ class _GroupingOption extends StatelessWidget {
                 ? AppColors.selectedSurface
                 : AppColors.clinicalWhite,
             border: Border.all(
-              color: selected
-                  ? AppColors.controlledCrimson
-                  : AppColors.clinicalLine,
+              color: selected ? AppColors.cobalt : AppColors.clinicalLine,
               width: selected ? 1.5 : 1,
             ),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
             children: [
               Icon(
                 selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                color: selected
-                    ? AppColors.controlledCrimson
-                    : AppColors.secondaryInk,
+                color: selected ? AppColors.cobalt : AppColors.secondaryInk,
               ),
               const SizedBox(width: AppSpacing.md),
               SizedBox(
@@ -531,7 +521,7 @@ class _GroupingOption extends StatelessWidget {
                       Positioned(
                         left: index * 18,
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(5),
+                          borderRadius: BorderRadius.circular(4),
                           child: Image.file(
                             File(images[index].path),
                             width: 40,
@@ -550,9 +540,8 @@ class _GroupingOption extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
@@ -608,9 +597,8 @@ class _DocumentPagesReviewScreenState
                 alignment: Alignment.centerLeft,
                 child: Text(
                   l10n.documentPagesCount(_pages.length),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -631,7 +619,7 @@ class _DocumentPagesReviewScreenState
                     vertical: AppSpacing.sm,
                   ),
                   leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(4),
                     child: Image.file(
                       File(_pages[index].path),
                       width: 56,
@@ -643,26 +631,32 @@ class _DocumentPagesReviewScreenState
                     l10n.documentPageLabel(index + 1),
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
-                  subtitle: Text(l10n.documentPageReorderHint),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ReorderableDragStartListener(
-                        index: index,
-                        child: Tooltip(
-                          message: l10n.documentPageReorderHint,
-                          child: const SizedBox.square(
-                            dimension: 48,
-                            child: Icon(Icons.drag_indicator_rounded),
+                      Text(l10n.documentPageReorderHint),
+                      const SizedBox(height: AppSpacing.xs),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ReorderableDragStartListener(
+                            index: index,
+                            child: Tooltip(
+                              message: l10n.documentPageReorderHint,
+                              child: const SizedBox.square(
+                                dimension: 48,
+                                child: Icon(Icons.drag_indicator_rounded),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: l10n.documentPageRemoveAction,
-                        onPressed: _pages.length == 1
-                            ? null
-                            : () => setState(() => _pages.removeAt(index)),
-                        icon: const Icon(Icons.delete_outline_rounded),
+                          IconButton(
+                            tooltip: l10n.documentPageRemoveAction,
+                            onPressed: _pages.length == 1
+                                ? null
+                                : () => setState(() => _pages.removeAt(index)),
+                            icon: const Icon(Icons.delete_outline_rounded),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -722,11 +716,7 @@ class _VoiceRecordingPanel extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.mic_rounded,
-                color: AppColors.controlledCrimson,
-                size: 32,
-              ),
+              const Icon(Icons.mic_rounded, color: AppColors.cobalt, size: 32),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
@@ -738,7 +728,7 @@ class _VoiceRecordingPanel extends StatelessWidget {
                           : l10n.voiceRecordingInProgress,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: AppColors.patientInk,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
@@ -815,7 +805,7 @@ class _RecordedVoicePanel extends StatelessWidget {
             l10n.voiceReviewTitle,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: AppColors.patientInk,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -835,7 +825,7 @@ class _RecordedVoicePanel extends StatelessWidget {
                       l10n.voiceNoteTitle,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: AppColors.patientInk,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
@@ -844,9 +834,8 @@ class _RecordedVoicePanel extends StatelessWidget {
                         _formatDuration(state.duration),
                         _formatBytes(state.sizeBytes),
                       ),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.secondaryInk,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: AppColors.secondaryInk),
                     ),
                     if (state.maxDurationReached) ...[
                       const SizedBox(height: AppSpacing.xs),
@@ -955,17 +944,17 @@ class _UploadQueue extends StatelessWidget {
             l10n.uploadQueueTitle,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: AppColors.patientInk,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           DecoratedBox(
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.clinicalLine),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(4),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(13),
+              borderRadius: BorderRadius.circular(4),
               child: Column(
                 children: [
                   for (var index = 0; index < items.length; index++) ...[
@@ -1040,7 +1029,7 @@ class _UploadQueueRow extends StatelessWidget {
               height: 40,
               child: isPhoto
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(4),
                       child: Image.file(
                         File(item.localFile.path),
                         fit: BoxFit.cover,
@@ -1057,8 +1046,6 @@ class _UploadQueueRow extends StatelessWidget {
               children: [
                 Text(
                   item.displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: AppColors.patientInk,
                     fontWeight: FontWeight.w700,
@@ -1068,9 +1055,7 @@ class _UploadQueueRow extends StatelessWidget {
                 Text(
                   stageLabel,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isFailed
-                        ? AppColors.controlledCrimson
-                        : AppColors.secondaryInk,
+                    color: isFailed ? AppColors.error : AppColors.secondaryInk,
                     fontWeight: isFailed ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
@@ -1082,50 +1067,51 @@ class _UploadQueueRow extends StatelessWidget {
                         : null,
                   ),
                 ],
+                if (isFailed || item.stage == UploadQueueStage.completed) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
+                    children: [
+                      if (isFailed && isAlreadyProcessed)
+                        TextButton.icon(
+                          onPressed: () => onOpenDocument(item.documentId!),
+                          icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                          label: Text(l10n.documentAlreadyProcessedAction),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.cobalt,
+                            minimumSize: const Size(48, 48),
+                          ),
+                        )
+                      else if (isFailed)
+                        TextButton.icon(
+                          onPressed: () => onRetry(item.id),
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: Text(l10n.documentRetryAction),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.cobalt,
+                            minimumSize: const Size(48, 48),
+                          ),
+                        ),
+                      TextButton.icon(
+                        onPressed: () => onDismiss(item.id),
+                        icon: Icon(
+                          isFailed
+                              ? Icons.close_rounded
+                              : Icons.check_circle_outline_rounded,
+                          size: 18,
+                        ),
+                        label: Text(l10n.uploadQueueDismissAction),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(48, 48),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
-          if (isFailed)
-            Column(
-              children: [
-                if (isAlreadyProcessed)
-                  TextButton.icon(
-                    onPressed: () => onOpenDocument(item.documentId!),
-                    icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                    label: Text(l10n.documentAlreadyProcessedAction),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.deepClinicalBlue,
-                      minimumSize: const Size(48, 48),
-                    ),
-                  )
-                else
-                  TextButton.icon(
-                    onPressed: () => onRetry(item.id),
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: Text(l10n.documentRetryAction),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.controlledCrimson,
-                      minimumSize: const Size(48, 48),
-                    ),
-                  ),
-                TextButton.icon(
-                  onPressed: () => onDismiss(item.id),
-                  icon: const Icon(Icons.close_rounded, size: 18),
-                  label: Text(l10n.uploadQueueDismissAction),
-                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
-                ),
-              ],
-            ),
-          if (item.stage == UploadQueueStage.completed)
-            TextButton.icon(
-              onPressed: () => onDismiss(item.id),
-              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-              label: Text(l10n.uploadQueueDismissAction),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.deepClinicalBlue,
-                minimumSize: const Size(48, 48),
-              ),
-            ),
         ],
       ),
     );
@@ -1162,7 +1148,7 @@ class _QueueFileIcon extends StatelessWidget {
   Widget build(BuildContext context) => const DecoratedBox(
     decoration: BoxDecoration(
       color: AppColors.quietSurface,
-      borderRadius: BorderRadius.all(Radius.circular(8)),
+      borderRadius: BorderRadius.all(Radius.circular(4)),
     ),
     child: Center(
       child: Icon(
@@ -1199,10 +1185,10 @@ class _CaptureActionGroup extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.clinicalLine),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(4),
         child: Column(
           children: [
             for (var index = 0; index < actions.length; index++) ...[
@@ -1339,7 +1325,7 @@ class _Panel extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.clinicalWhite,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: AppColors.clinicalLine),
       ),
       child: Padding(

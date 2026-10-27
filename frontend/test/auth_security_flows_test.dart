@@ -54,7 +54,7 @@ void main() {
       registrationTheme.inputDecorationTheme.fillColor,
       AppColors.clinicalWhite,
     );
-    expect(registrationTheme.colorScheme.primary, AppColors.deepClinicalBlue);
+    expect(registrationTheme.colorScheme.primary, AppColors.cobalt);
     final consentGroup = tester.widget<Container>(
       find.byKey(const ValueKey('registration-consent-group')),
     );
@@ -65,14 +65,14 @@ void main() {
     );
     expect(
       disclosure.style?.foregroundColor?.resolve(<WidgetState>{}),
-      AppColors.controlledCrimson,
+      AppColors.cobalt,
     );
     final existingAccountAction = tester.widget<TextButton>(
       find.widgetWithText(TextButton, l10n.authAlreadyHaveAccountAction),
     );
     expect(
       existingAccountAction.style?.foregroundColor?.resolve(<WidgetState>{}),
-      AppColors.controlledCrimson,
+      AppColors.cobalt,
     );
     final optional = find.byKey(
       const ValueKey('registration-full-name-optional'),

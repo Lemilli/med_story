@@ -117,10 +117,52 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                           orElse: () => const SizedBox.shrink(),
                         );
                       }
-                      return _TimelineEventRow(event: items[index]);
+                      final date = DateTime.tryParse(items[index].eventDate);
+                      final previous = index == 0
+                          ? null
+                          : DateTime.tryParse(items[index - 1].eventDate);
+                      final startsMonth =
+                          date != null &&
+                          (previous == null ||
+                              previous.year != date.year ||
+                              previous.month != date.month);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (startsMonth)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 24,
+                                bottom: 8,
+                              ),
+                              child: DecoratedBox(
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: AppColors.patientInk,
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Text(
+                                    DateFormat.yMMMM(
+                                      Localizations.localeOf(context)
+                                          .toLanguageTag(),
+                                    ).format(date),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          _TimelineEventRow(event: items[index]),
+                        ],
+                      );
                     },
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: AppSpacing.sm),
+                    separatorBuilder: (_, _) => const SizedBox.shrink(),
                     itemCount: timelineState.maybeWhen(
                       data: (state) =>
                           state.hasMore ? items.length + 1 : items.length,
@@ -147,13 +189,20 @@ class _TimelineHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: Text(
-            context.l10n.appTitle,
-            style: textTheme.headlineMedium?.copyWith(
-              color: AppColors.patientInk,
-              fontWeight: FontWeight.w900,
-              height: 1.08,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.l10n.appTitle.toUpperCase(),
+                style: textTheme.labelMedium?.copyWith(
+                  color: AppColors.cobalt,
+                  letterSpacing: 1,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(context.l10n.navTimeline, style: textTheme.headlineMedium),
+            ],
           ),
         ),
         IconButton(
@@ -321,9 +370,8 @@ class _TimelineFilterSheetState extends State<_TimelineFilterSheet> {
                   SliverToBoxAdapter(
                     child: Text(
                       l10n.timelineFiltersAction,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w500),
                     ),
                   ),
                   const SliverToBoxAdapter(
@@ -426,62 +474,86 @@ class _TimelineEventRow extends ConsumerWidget {
     final date = DateTime.tryParse(event.eventDate);
     final formattedDate = date == null
         ? event.eventDate
-        : DateFormat.yMMMd(
-            Localizations.localeOf(context).toLanguageTag(),
-          ).format(date);
+        : DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag())
+              .format(date);
 
     return Material(
       color: AppColors.clinicalWhite,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.clinicalLine),
-      ),
+      shape: const Border(bottom: BorderSide(color: AppColors.clinicalLine)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.push('/events/${event.id}'),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Text(
-                    formattedDate,
-                    style: textTheme.labelLarge?.copyWith(
-                      color: AppColors.deepClinicalBlue,
-                      fontWeight: FontWeight.w800,
+              SizedBox(
+                width: 68,
+                child: Semantics(
+                  label: formattedDate,
+                  child: ExcludeSemantics(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          date == null
+                              ? formattedDate
+                              : DateFormat.d().format(date),
+                          style: textTheme.headlineMedium?.copyWith(
+                            color: AppColors.cobalt,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        if (date != null)
+                          Text(
+                            DateFormat.MMM(
+                              Localizations.localeOf(context).toLanguageTag(),
+                            ).format(date).toUpperCase(),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: AppColors.secondaryInk,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  const Spacer(),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                event.title,
-                style: textTheme.titleMedium?.copyWith(
-                  color: AppColors.patientInk,
-                  fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                event.eventType.label(l10n),
-                style: textTheme.bodyMedium?.copyWith(
-                  color: AppColors.secondaryInk,
-                  height: 1.3,
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.only(left: 12),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: AppColors.clinicalLine),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.eventType.label(l10n).toUpperCase(),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.cobalt,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(event.title, style: textTheme.titleMedium),
+                      if (event.tags.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Wrap(
+                          spacing: AppSpacing.xs,
+                          runSpacing: AppSpacing.xs,
+                          children: event.tags
+                              .map((tag) => Chip(label: Text(tag)))
+                              .toList(growable: false),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
-              if (event.tags.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Wrap(
-                  spacing: AppSpacing.xs,
-                  runSpacing: AppSpacing.xs,
-                  children: event.tags
-                      .map((tag) => Chip(label: Text(tag)))
-                      .toList(growable: false),
-                ),
-              ],
             ],
           ),
         ),
@@ -540,7 +612,7 @@ class _EmptyTimeline extends StatelessWidget {
             textAlign: TextAlign.center,
             style: textTheme.titleLarge?.copyWith(
               color: AppColors.patientInk,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -568,7 +640,7 @@ class _InlineNotice extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.quietSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: AppColors.clinicalLine),
       ),
       child: Padding(

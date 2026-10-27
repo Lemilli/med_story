@@ -19,7 +19,7 @@ class SplashScreen extends StatelessWidget {
             child: const Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(color: AppColors.controlledCrimson),
+                CircularProgressIndicator(color: AppColors.cobalt),
                 SizedBox(height: AppSpacing.lg),
               ],
             ),

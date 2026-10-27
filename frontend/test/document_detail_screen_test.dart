@@ -39,12 +39,44 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets('narrow large-text metadata remains readable through scrolling', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    when(
+      () => repository.getDocument('document-1'),
+    ).thenAnswer((_) async => _document());
+    await _pumpScreen(
+      tester,
+      repository,
+      locale: const Locale('ru'),
+      textScale: 2,
+    );
+    await tester.pumpAndSettle();
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(DocumentDetailScreen)),
+    )!;
+    await tester.scrollUntilVisible(find.text(l10n.documentMimeTypeLabel), 160);
+    expect(find.text('application/pdf'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text(l10n.documentUpdatedAtLabel),
+      160,
+    );
+    expect(find.text(l10n.documentUpdatedAtLabel), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<void> _pumpScreen(
   WidgetTester tester,
-  DocumentRepository repository,
-) async {
+  DocumentRepository repository, {
+  Locale locale = const Locale('en'),
+  double textScale = 1,
+}) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [documentRepositoryProvider.overrideWithValue(repository)],
@@ -52,7 +84,13 @@ Future<void> _pumpScreen(
         theme: AppTheme.light(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
+        locale: locale,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: const DocumentDetailScreen(documentId: 'document-1'),
       ),
     ),

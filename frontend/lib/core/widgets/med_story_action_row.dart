@@ -27,7 +27,7 @@ class MedStoryActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final accentColor = isPrimary
-        ? AppColors.controlledCrimson
+        ? AppColors.cobalt
         : AppColors.deepClinicalBlue;
 
     return Semantics(
@@ -39,11 +39,9 @@ class MedStoryActionRow extends StatelessWidget {
         shape: isGrouped
             ? null
             : RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
                 side: BorderSide(
-                  color: isPrimary
-                      ? AppColors.controlledCrimson
-                      : AppColors.clinicalLine,
+                  color: isPrimary ? AppColors.cobalt : AppColors.clinicalLine,
                 ),
               ),
         clipBehavior: Clip.antiAlias,
@@ -58,7 +56,7 @@ class MedStoryActionRow extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(icon, color: accentColor, size: 32),
+                  Icon(icon, color: accentColor, size: 22),
                   const SizedBox(width: AppSpacing.lg),
                   Expanded(
                     child: Column(
@@ -68,7 +66,7 @@ class MedStoryActionRow extends StatelessWidget {
                         Text(
                           title,
                           style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w500,
                             color: AppColors.patientInk,
                           ),
                         ),
@@ -86,9 +84,7 @@ class MedStoryActionRow extends StatelessWidget {
                   const SizedBox(width: AppSpacing.md),
                   Icon(
                     Icons.chevron_right_rounded,
-                    color: isPrimary
-                        ? AppColors.controlledCrimson
-                        : AppColors.patientInk,
+                    color: isPrimary ? AppColors.cobalt : AppColors.patientInk,
                   ),
                 ],
               ),

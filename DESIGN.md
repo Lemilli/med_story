@@ -7,11 +7,15 @@ description: A calm, trustworthy medical memory app for organizing long-term hea
 
 ## 1. Overview
 
-**Creative North Star: "The Patient Ledger"**
+**Selected direction: "Clear Index"**
+
+The Flutter app applies concept 03's palette and editorial timeline with concept 01 Quiet Ledger's bottom-navigation geometry. Existing feature behavior takes priority over prototype compositions. The existing system font is retained until a licensed Cyrillic-capable IBM Plex Sans distribution can be bundled and verified.
+
+The [Clear Index design handoff](docs/design/clear-index/README.md) contains the screen map, detailed component specification, editable tokens, overview image, and prototype review instructions.
 
 MedStory should feel like a careful personal health record that belongs to the patient, not a hospital system and not an AI doctor. The visual system is restrained, readable, and task-first: it helps people capture stressful medical information, review years of history, and prepare for appointments without adding cognitive load.
 
-The product should borrow Apple Health's trust and familiarity: clear hierarchy, generous breathing room, strong accessibility defaults, and familiar mobile affordances. The design should feel warm through care and clarity, not decorative softness. MedStory must never imply diagnosis, medical authority, or gamified wellness tracking.
+Use precise date-led hierarchy, generous breathing room, fine dividers, and familiar mobile affordances. The design should feel considerate through care and clarity. MedStory must never imply diagnosis, medical authority, or gamified wellness tracking.
 
 **Key Characteristics:**
 
@@ -23,41 +27,36 @@ The product should borrow Apple Health's trust and familiarity: clear hierarchy,
 
 ## 2. Colors
 
-The starter strategy is restrained: pure or near-white surfaces, highly readable ink, and one controlled crimson accent used sparingly for primary action, capture, and important state.
+White surfaces, slate text, and controlled cobalt replace the previous crimson direction.
 
-### Primary
+| Role | Value | Use |
+|------|-------|-----|
+| Background / surface | `#FFFFFF` | Main canvas and navigation |
+| Patient ink | `#233043` | Titles and body text |
+| Secondary ink | `#5F6C7E` | Readable metadata and helper text |
+| Cobalt | `#2757BD` | Primary actions, selected navigation, dates, source links |
+| Accent tint | `#EDF2FC` | Quiet selected and review surfaces |
+| Subtle surface | `#F3F6FA` | Secondary sections and states |
+| Divider | `#DCE2EB` | Fine separators and provenance rules |
+| Strong line | `#8997AA` | Input outlines and stronger control boundaries |
 
-- **Controlled Crimson** ([to be resolved during implementation]): The primary brand accent. Use it for capture, primary actions, selected navigation, and urgent-but-not-alarming emphasis. It should be confident, not emergency-room red.
-
-### Neutral
-
-- **Clinical White** ([to be resolved during implementation]): The default app background. Keep the base clean and untinted so the product feels precise rather than generically warm.
-- **Quiet Surface** ([to be resolved during implementation]): The panel and container layer for timelines, summaries, document previews, and settings groups.
-- **Patient Ink** ([to be resolved during implementation]): The body text color. It must be dark enough for long medical explanations and multi-year timelines.
-- **Secondary Ink** ([to be resolved during implementation]): Supporting text for metadata, timestamps, helper copy, and secondary labels. It must remain readable for older users and tired users.
-- **Clinical Line** ([to be resolved during implementation]): Dividers, outlines, and input borders. Use it to structure information without turning the app into a grid.
-
-### Named Rules
-
-**The Ten Percent Crimson Rule.** Crimson is rare by default. If more than roughly 10% of a normal screen is crimson, the interface is shouting and should be pulled back.
-
-**The No Emergency Red Rule.** Crimson cannot be used as the generic error color without a distinct treatment. MedStory's primary accent must not make ordinary actions feel medically alarming.
+Use color to communicate interaction and state, with labels and icons as additional cues. Reserve destructive/error treatments for those actions and states; never use color to infer medical risk. Keep saturated surfaces small.
 
 ## 3. Typography
 
-**Display Font:** [humanist sans to be chosen at implementation]
-**Body Font:** [same humanist sans to be chosen at implementation]
-**Label/Mono Font:** [not required for seed]
+**Approved target:** IBM Plex Sans, weights 400–700 as needed. **Current Flutter implementation:** existing platform font, with Clear Index sizing, leading, and weight hierarchy.
 
-**Character:** Use one humanist sans family across the product. The voice should feel patient, modern, and readable, with enough warmth for sensitive health content and enough discipline for structured records.
+**Character:** One coherent sans-serif family with clear numerals and readable long-form text. The prototype's Latin-only subsets are not shipped in Flutter; English and Russian retain the existing platform font support.
 
 ### Hierarchy
 
-- **Display** ([to be resolved], fixed mobile scale, tight but readable line-height): Reserved for onboarding, empty states, and major summary moments. Do not use display type inside dense task screens.
-- **Headline** ([to be resolved], fixed mobile scale): Screen titles, timeline period headings, summary sections, and document explanation headings.
-- **Title** ([to be resolved], fixed mobile scale): Cards, list rows, confirmation prompts, and form groups.
-- **Body** ([to be resolved], comfortable line-height): Medical explanations, summaries, event notes, and instructions. Long prose should stay within a readable measure.
-- **Label** ([to be resolved], no aggressive uppercase): Buttons, chips, metadata, and field labels. Labels should remain clear at small sizes and with text scaling enabled.
+- **Screen title:** 32px reference size, adjusted for context and scaled with accessibility settings.
+- **Section / event title:** 18px reference size with restrained medium or semibold weight.
+- **Body:** 16px with comfortable line-height for explanations, summaries, and notes.
+- **Supporting text:** 14px; metadata 13px, with sufficient contrast.
+- **Index labels:** Restrained uppercase for event-type labels and the small brand eyebrow; sentence case for prose and ordinary controls.
+
+Treat these as logical mobile reference sizes, not a reason to disable OS text scaling. Allow wrapping and scrolling at larger sizes. Navigation geometry is specified separately below.
 
 ### Named Rules
 
@@ -72,6 +71,17 @@ MedStory is flat by default and layered through tone, spacing, and dividers. Sha
 **The State-Only Motion Rule.** Motion and elevation should explain state: pressed, selected, loading, expanded, confirmed, or failed. No page-load choreography.
 
 **The Quiet Surface Rule.** Cards and containers should feel organized, not precious. Use spacing and typography before reaching for shadow.
+
+## 5. Geometry and Navigation
+
+- Use a 4px spacing base: 4, 8, 12, 16, 20, 24, and 32px. Default content inset is 24px.
+- Inputs and ordinary buttons use a restrained 4px radius. Timeline records remain flat with fine horizontal separators and a vertical rule separating dates from record content.
+- Root destinations are **My Story**, **Add**, and **For Visits**, in three equal columns. Detail, form, authentication, and source-viewer screens use back/close navigation.
+- Match **Quiet Ledger's geometry**, recolored with Clear Index tokens: 8px column gap; bar padding 8px top, 16px horizontally, 4px bottom; minimum item height 64px; vertical icon-over-label stack with a 5px gap; 22px icons; 12px reference labels.
+- Ordinary icon wrappers are 52 × 28px. The central Add icon wrapper is 52 × 32px with a 6px radius and cobalt fill. Its label sits below the icon, like the other destinations.
+- The reference bar content is 76px high before the device's bottom safe area. Respect device insets without double-padding; larger text can increase height.
+- Use a white bar, a fine top divider, cobalt selected icons/labels, and slate inactive icons/labels. The active item has no top stripe. The Add destination does not use the previous wide horizontal button.
+- Compact icon artwork must sit inside at least 48 × 48px actionable targets. Sheets, dialogs, controls, and links need visible keyboard focus and semantic labels.
 
 ## 6. Do's and Don'ts
 
@@ -91,4 +101,4 @@ MedStory is flat by default and layered through tone, spacing, and dividers. Sha
 - **Don't** mimic a complex electronic health record designed for clinicians rather than patients.
 - **Don't** turn medical history into a productivity dashboard with metrics, streaks, or gamification.
 - **Don't** soften the product into a decorative wellness app that fails to communicate security, seriousness, and long-term reliability.
-- **Don't** use crimson as decoration, generic error red, or a large saturated surface on ordinary task screens.
+- **Don't** reintroduce the earlier crimson brand palette or oversized horizontal Add navigation button into this selected direction.
