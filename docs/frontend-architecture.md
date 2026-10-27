@@ -30,7 +30,7 @@ Translate the BRD's UX principles into the app:
 CI pins Flutter 3.47.6 (Dart 3.13.5); the package requires Dart 3.13 or newer. Refresh the
 committed lockfile and regenerate Freezed/Drift/localizations with that Flutter SDK. Freezed
 uses its stable 4.x release so it shares a compatible analyzer with the current Drift generator.
-Dependabot groups Flutter library and generator updates in one PR.
+Dependabot updates are disabled; keep Flutter library and generator updates compatible when updating manually.
 
 Android uses AGP 8.13.2 and the explicit Kotlin Android plugin while `open_app_file` and
 `share_plus` still apply the legacy Kotlin plugin. AGP 9 with built-in Kotlin disabled leaves

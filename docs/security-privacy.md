@@ -144,8 +144,8 @@ control. This document defines the controls to achieve that.
   capped at 100; AI quota reservations are atomic and charged before queue/provider work. Defaults
   are 10 units/user/day, 20 globally/day, and 150 globally/month.
 - **Dependency hygiene**: automated `pip-audit` and OSV scans cover Python and Flutter
-  dependencies, and Dependabot proposes weekly updates for supported manifests and CI actions.
-  Python and Flutter updates are grouped to keep runtime/generator versions compatible; Django
+  dependencies. Dependabot updates are disabled; dependency updates are managed manually.
+  Keep Python and Flutter runtime/generator versions compatible when updating; Django
   remains on the supported 5.2 LTS line. CI checks run on commits, with no scheduled runs.
 - **Secrets scanning**: Gitleaks scans full committed history in CI.
 - **CORS** locked to known clients; security headers (HSTS, no-sniff, etc.) at the proxy.

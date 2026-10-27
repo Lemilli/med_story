@@ -127,7 +127,7 @@ remaining launch checks are still required.
   isolation/lifecycle tests.
 - Cost controls: 100 verified-account cap, registration/AI kill switches, one constrained worker,
   and atomic 10/user/day, 20/global/day, 150/global/month AI-unit limits. **Implemented.**
-- CI: blocking dependency and full-history secret scans plus weekly Dependabot updates.
+- CI: blocking dependency and full-history secret scans. Dependabot updates are disabled.
 - Compliance launch gates: Garage AGPLv3 approval; verified EU/EEA hosting order and account copies
   of accepted provider terms; sealed offline master-key recovery copy; explicit acceptance of the
   Standard Automated Backup's one daily point and approximately 24-hour loss window; and a passed
