@@ -3,7 +3,7 @@
 // flutter test --dart-define=CLEAR_INDEX_SCREENSHOTS=true \
 //   --dart-define=FLUTTER_SCREENSHOT_SDK=/path/to/flutter \
 //   test/clear_index_visual_test.dart
-// Add --dart-define=README_SCREENSHOTS=true for the six README captures.
+// Add --dart-define=README_SCREENSHOTS=true for the diabetes README captures.
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -24,6 +24,7 @@ import 'package:med_story/features/capture/presentation/controllers/voice_captur
 import 'package:med_story/features/capture/presentation/screens/capture_screen.dart';
 import 'package:med_story/features/capture/presentation/screens/quick_note_screen.dart';
 import 'package:med_story/features/documents/data/document_api.dart';
+import 'package:med_story/features/documents/data/document_repository.dart';
 import 'package:med_story/features/documents/domain/medical_document.dart';
 import 'package:med_story/features/documents/presentation/controllers/document_controllers.dart';
 import 'package:med_story/features/documents/presentation/screens/document_detail_screen.dart';
@@ -95,10 +96,12 @@ void main() {
     if (_readme) ...[
       _Scene('timeline', '/timeline'),
       _Scene('capture', '/capture'),
-      _Scene('event-detail', '/events/synthetic-event'),
+      _Scene('document-result', '/capture'),
+      _Scene('event-detail', '/events/demo-voice-note'),
       _Scene('search', '/timeline'),
       _Scene('filters', '/timeline'),
       _Scene('visit-preparation', '/summary'),
+      _Scene('visit-sources', '/summary'),
     ] else ...[
       _Scene('01-my-story', '/timeline'),
       _Scene('02-add', '/capture'),
@@ -142,6 +145,12 @@ void main() {
       addTearDown(tester.view.resetPadding);
       addTearDown(tester.view.resetViewPadding);
       final boundaryKey = GlobalKey();
+      final uploads = _FixtureUploadController();
+      final documents = _FixtureDocumentRepository();
+      if (_readme) {
+        when(() => documents.getDocument('synthetic-document'))
+            .thenAnswer((_) async => readmeDocument);
+      }
       final detail =
           scene.path.startsWith('/events/') ||
           scene.path.startsWith('/documents/');
@@ -190,28 +199,35 @@ void main() {
             summaryControllerProvider.overrideWith(
               _FixtureSummaryController.new,
             ),
-            documentUploadControllerProvider.overrideWith(
-              _FixtureUploadController.new,
-            ),
+            documentUploadControllerProvider.overrideWith(() => uploads),
             voiceCaptureControllerProvider.overrideWith(
               _FixtureVoiceController.new,
             ),
             documentApiProvider.overrideWithValue(_UnusedDocumentApi()),
+            if (_readme)
+              documentRepositoryProvider.overrideWithValue(documents),
             eventDetailProvider('synthetic-event')
                 .overrideWith((_) async => _events.first),
+            if (_readme)
+              for (final event in readmeEvents)
+                if (event.id != 'synthetic-event')
+                  eventDetailProvider(event.id)
+                      .overrideWith((_) async => event),
             documentDetailProvider('synthetic-document').overrideWith(
-              (_) async => MedicalDocument(
-                id: 'synthetic-document',
-                title: 'Synthetic laboratory report',
-                status: DocumentStatus.processed,
-                docType: DocumentType.labResult,
-                documentDate: '2026-10-24',
-                mimeType: 'application/pdf',
-                eventId: 'synthetic-event',
-                eventCount: 1,
-                createdAt: _stamp,
-                updatedAt: _stamp,
-              ),
+              (_) async => _readme
+                  ? readmeDocument
+                  : MedicalDocument(
+                      id: 'synthetic-document',
+                      title: 'Synthetic laboratory report',
+                      status: DocumentStatus.processed,
+                      docType: DocumentType.labResult,
+                      documentDate: '2026-10-24',
+                      mimeType: 'application/pdf',
+                      eventId: 'synthetic-event',
+                      eventCount: 1,
+                      createdAt: _stamp,
+                      updatedAt: _stamp,
+                    ),
             ),
           ],
           child: MaterialApp.router(
@@ -253,12 +269,14 @@ void main() {
         await tester.pumpAndSettle();
       }
       if (_readme && scene.name == 'search') {
-        await tester.enterText(find.byType(TextField), 'migraine');
+        await tester.enterText(find.byType(TextField), 'metformin');
         await tester.testTextInput.receiveAction(TextInputAction.search);
         FocusManager.instance.primaryFocus?.unfocus();
         await tester.pumpAndSettle();
-        expect(find.text('Migraine after a busy day'), findsOneWidget);
-        expect(find.text('Annual blood test'), findsNothing);
+        expect(find.text('Metformin prescription renewed'), findsOneWidget);
+        expect(find.text('Metformin prescription updated'), findsOneWidget);
+        expect(find.text('First metformin prescription'), findsOneWidget);
+        expect(find.text('HbA1c · 7.1%'), findsNothing);
       }
       if (scene.scale == 1 &&
           const ['/timeline', '/capture', '/summary'].contains(scene.path)) {
@@ -303,6 +321,41 @@ void main() {
         await tester.tap(find.byIcon(Icons.tune_rounded));
         await tester.pumpAndSettle();
         expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+      }
+      if (_readme &&
+          const ['capture', 'document-result'].contains(scene.name)) {
+        // Show real queue widgets. Bounded pumping freezes a repeatable frame
+        // of the processing indicator, whose animation never settles.
+        uploads.showReadmeUploads();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 600));
+        expect(find.text('HbA1c · October 2026.pdf'), findsOneWidget);
+        expect(find.text('Processing'), findsOneWidget);
+        expect(find.text('Uploading 64%'), findsOneWidget);
+        expect(find.text('Completed'), findsOneWidget);
+        if (scene.name == 'document-result') {
+          await tester.tap(find.text('HbA1c · October 2026.pdf'));
+          await tester.pumpAndSettle();
+          expect(find.text('HbA1c · 7.1%'), findsOneWidget);
+          expect(find.text('AI analysis'), findsOneWidget);
+          expect(find.text('View original'), findsOneWidget);
+          verify(() => documents.getDocument('synthetic-document')).called(1);
+        }
+      }
+      if (_readme && scene.name == 'visit-sources') {
+        final result = find.text('HbA1c: 7.1% · 24 October 2026');
+        await tester.scrollUntilVisible(result, 180);
+        await tester.ensureVisible(result);
+        await tester.pumpAndSettle();
+        final row = find.ancestor(of: result, matching: find.byType(Row)).first;
+        await tester.tap(
+          find.descendant(of: row, matching: find.byType(IconButton)),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Sources'), findsOneWidget);
+        expect(find.text('HbA1c · 7.1%'), findsOneWidget);
+        expect(find.text('HbA1c · 7.4%'), findsOneWidget);
+        expect(find.text('HbA1c · 7.8%'), findsOneWidget);
       }
       expect(tester.takeException(), isNull);
       final boundary =
@@ -389,7 +442,8 @@ GoRouter _router(String initialLocation) => GoRouter(
     GoRoute(path: '/notes/new', builder: (_, _) => const QuickNoteScreen()),
     GoRoute(
       path: '/events/:id',
-      builder: (_, _) => const EventDetailScreen(eventId: 'synthetic-event'),
+      builder: (_, state) =>
+          EventDetailScreen(eventId: state.pathParameters['id']!),
     ),
     GoRoute(
       path: '/documents/:id',
@@ -476,6 +530,8 @@ class _FixtureSummaryController extends SummaryController {
 class _FixtureUploadController extends DocumentUploadController {
   @override
   Future<List<QueuedUpload>> build() async => const [];
+
+  void showReadmeUploads() => state = AsyncValue.data(readmeUploads);
 }
 
 class _FixtureVoiceController extends VoiceCaptureController {
@@ -488,6 +544,8 @@ class _FixtureVoiceController extends VoiceCaptureController {
 }
 
 class _UnusedDocumentApi extends Mock implements DocumentApi {}
+
+class _FixtureDocumentRepository extends Mock implements DocumentRepository {}
 
 final _stamp = DateTime.utc(2026, 10, 28);
 final _subject = Subject(
